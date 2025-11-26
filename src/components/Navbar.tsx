@@ -11,13 +11,13 @@ export const Navbar = () => {
       <div className="bg-primary text-primary-foreground py-2 px-4">
         <div className="container mx-auto flex flex-wrap justify-between items-center text-sm gap-2">
           <div className="flex items-center gap-4 flex-wrap">
-            <a href="tel:+237693965501" className="flex items-center gap-2 hover:text-accent transition-colors">
+            <a href="tel:+237693138292" className="flex items-center gap-2 hover:text-accent transition-colors">
               <Phone className="w-4 h-4" />
-              <span>+237 693 96 55 01</span>
+              <span>+237 693 13 82 92</span>
             </a>
-            <a href="mailto:contact@lafriends.com" className="flex items-center gap-2 hover:text-accent transition-colors">
+            <a href="mailto:lafriendsservices@gmail.com" className="flex items-center gap-2 hover:text-accent transition-colors">
               <Mail className="w-4 h-4" />
-              <span>contact@lafriends.com</span>
+              <span>lafriendsservices@gmail.com</span>
             </a>
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4" />
