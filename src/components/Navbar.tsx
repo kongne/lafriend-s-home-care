@@ -51,7 +51,10 @@ export const Navbar = () => {
             <a href="#contact" className="text-foreground hover:text-primary transition-colors font-medium">
               Contact
             </a>
-            <Button className="bg-accent text-accent-foreground hover:bg-accent/90 font-semibold">
+            <Button 
+              onClick={() => document.getElementById('booking')?.scrollIntoView({ behavior: 'smooth' })}
+              className="bg-accent text-accent-foreground hover:bg-accent/90 font-semibold"
+            >
               RÉSERVER UN SERVICE
             </Button>
           </div>
@@ -96,7 +99,13 @@ export const Navbar = () => {
             >
               Contact
             </a>
-            <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90 font-semibold">
+            <Button 
+              onClick={() => {
+                setIsMenuOpen(false);
+                document.getElementById('booking')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="w-full bg-accent text-accent-foreground hover:bg-accent/90 font-semibold"
+            >
               RÉSERVER UN SERVICE
             </Button>
           </div>
