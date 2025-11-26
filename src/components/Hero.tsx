@@ -34,6 +34,7 @@ export const Hero = () => {
             <div className="flex flex-wrap gap-4">
               <Button 
                 size="lg" 
+                onClick={() => document.getElementById('booking')?.scrollIntoView({ behavior: 'smooth' })}
                 className="bg-accent text-accent-foreground hover:bg-accent/90 font-semibold text-lg px-8 py-6"
               >
                 RÉSERVER UN SERVICE
@@ -41,6 +42,7 @@ export const Hero = () => {
               <Button 
                 size="lg" 
                 variant="outline" 
+                onClick={() => document.getElementById('apropos')?.scrollIntoView({ behavior: 'smooth' })}
                 className="border-2 border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary font-semibold text-lg px-8 py-6"
               >
                 EN SAVOIR PLUS
@@ -49,7 +51,7 @@ export const Hero = () => {
           </div>
 
           {/* Right content - Booking form */}
-          <div className="animate-in fade-in slide-in-from-right duration-700 delay-300">
+          <div id="booking" className="animate-in fade-in slide-in-from-right duration-700 delay-300">
             <BookingForm />
           </div>
         </div>
