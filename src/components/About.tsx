@@ -16,7 +16,7 @@ export const About = () => {
           <div className="space-y-6">
             <p className="text-accent font-semibold uppercase tracking-wider">À propos de la société</p>
             <h2 className="text-4xl md:text-5xl font-bold text-foreground">
-              Entreprise de nettoyage de confiance depuis 2019
+              Entreprise de nettoyage de confiance depuis 2020
             </h2>
             <div className="space-y-4 text-muted-foreground text-lg">
               <p>
