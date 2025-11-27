@@ -38,24 +38,30 @@ export const Navbar = () => {
           </a>
 
           {/* Desktop menu */}
-          <div className="hidden md:flex items-center gap-8">
-            <a href="#services" className="text-foreground hover:text-primary transition-colors font-medium">
+          <div className="hidden md:flex items-center gap-6">
+            <a href="#services" className="text-foreground hover:text-accent transition-colors font-medium">
               Services
             </a>
-            <a href="#tarifs" className="text-foreground hover:text-primary transition-colors font-medium">
-              Nos tarifs
+            <a href="#galerie" className="text-foreground hover:text-accent transition-colors font-medium">
+              Galerie
             </a>
-            <a href="#apropos" className="text-foreground hover:text-primary transition-colors font-medium">
-              À Propos
+            <a href="#tarifs" className="text-foreground hover:text-accent transition-colors font-medium">
+              Tarifs
             </a>
-            <a href="#contact" className="text-foreground hover:text-primary transition-colors font-medium">
+            <a href="#temoignages" className="text-foreground hover:text-accent transition-colors font-medium">
+              Témoignages
+            </a>
+            <a href="#faq" className="text-foreground hover:text-accent transition-colors font-medium">
+              FAQ
+            </a>
+            <a href="#contact" className="text-foreground hover:text-accent transition-colors font-medium">
               Contact
             </a>
             <Button 
               onClick={() => document.getElementById('booking')?.scrollIntoView({ behavior: 'smooth' })}
               className="bg-accent text-accent-foreground hover:bg-accent/90 font-semibold"
             >
-              RÉSERVER UN SERVICE
+              RÉSERVER
             </Button>
           </div>
 
@@ -70,35 +76,24 @@ export const Navbar = () => {
 
         {/* Mobile menu */}
         {isMenuOpen && (
-          <div className="md:hidden mt-4 pb-4 space-y-4 animate-in slide-in-from-top">
-            <a
-              href="#services"
-              className="block text-foreground hover:text-primary transition-colors font-medium py-2"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Services
-            </a>
-            <a
-              href="#tarifs"
-              className="block text-foreground hover:text-primary transition-colors font-medium py-2"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Nos tarifs
-            </a>
-            <a
-              href="#apropos"
-              className="block text-foreground hover:text-primary transition-colors font-medium py-2"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              À Propos
-            </a>
-            <a
-              href="#contact"
-              className="block text-foreground hover:text-primary transition-colors font-medium py-2"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Contact
-            </a>
+          <div className="md:hidden mt-4 pb-4 space-y-3 animate-in slide-in-from-top">
+            {[
+              { href: "#services", label: "Services" },
+              { href: "#galerie", label: "Galerie" },
+              { href: "#tarifs", label: "Tarifs" },
+              { href: "#temoignages", label: "Témoignages" },
+              { href: "#faq", label: "FAQ" },
+              { href: "#contact", label: "Contact" },
+            ].map((item) => (
+              <a
+                key={item.href}
+                href={item.href}
+                className="block text-foreground hover:text-accent transition-colors font-medium py-2"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                {item.label}
+              </a>
+            ))}
             <Button 
               onClick={() => {
                 setIsMenuOpen(false);
@@ -106,7 +101,7 @@ export const Navbar = () => {
               }}
               className="w-full bg-accent text-accent-foreground hover:bg-accent/90 font-semibold"
             >
-              RÉSERVER UN SERVICE
+              RÉSERVER
             </Button>
           </div>
         )}

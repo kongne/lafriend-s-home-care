@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
+import { useScrollReveal } from "@/hooks/useScrollReveal";
 
 const pricingPlans = [
   {
@@ -44,10 +45,17 @@ const pricingPlans = [
 ];
 
 export const Pricing = () => {
+  const { ref, isVisible } = useScrollReveal();
+
   return (
     <section id="tarifs" className="py-20 bg-background">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-16 space-y-4">
+        <div 
+          ref={ref}
+          className={`text-center mb-16 space-y-4 transition-all duration-700 ${
+            isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+          }`}
+        >
           <p className="text-accent font-semibold uppercase tracking-wider">Nos Tarifs</p>
           <h2 className="text-4xl md:text-5xl font-bold text-foreground">
             Tarifs Transparents et Compétitifs
@@ -61,14 +69,15 @@ export const Pricing = () => {
           {pricingPlans.map((plan, index) => (
             <Card
               key={index}
-              className={`p-8 relative ${
+              className={`p-8 relative transition-all duration-500 hover:-translate-y-2 ${
                 plan.popular
-                  ? "border-2 border-accent shadow-2xl scale-105"
+                  ? "border-2 border-accent shadow-2xl md:scale-105"
                   : "border border-border hover:shadow-xl"
-              } transition-all duration-300`}
+              } ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"}`}
+              style={{ transitionDelay: `${index * 150}ms` }}
             >
               {plan.popular && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-accent text-accent-foreground px-4 py-1 rounded-full text-sm font-semibold">
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-accent text-accent-foreground px-4 py-1 rounded-full text-sm font-semibold animate-bounce-subtle">
                   Populaire
                 </div>
               )}
@@ -92,7 +101,7 @@ export const Pricing = () => {
 
               <Button
                 onClick={() => document.getElementById('booking')?.scrollIntoView({ behavior: 'smooth' })}
-                className={`w-full font-semibold ${
+                className={`w-full font-semibold transition-transform hover:scale-105 ${
                   plan.popular
                     ? "bg-accent text-accent-foreground hover:bg-accent/90"
                     : "bg-primary text-primary-foreground hover:bg-primary/90"
