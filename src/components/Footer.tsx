@@ -33,26 +33,20 @@ export const Footer = () => {
           <div>
             <h4 className="text-lg font-bold mb-4">Liens Rapides</h4>
             <ul className="space-y-2">
-              <li>
-                <a href="#services" className="text-primary-foreground/80 hover:text-accent transition-colors">
-                  Services
-                </a>
-              </li>
-              <li>
-                <a href="#tarifs" className="text-primary-foreground/80 hover:text-accent transition-colors">
-                  Nos tarifs
-                </a>
-              </li>
-              <li>
-                <a href="#apropos" className="text-primary-foreground/80 hover:text-accent transition-colors">
-                  À Propos
-                </a>
-              </li>
-              <li>
-                <a href="#contact" className="text-primary-foreground/80 hover:text-accent transition-colors">
-                  Contact
-                </a>
-              </li>
+              {[
+                { href: "#services", label: "Services" },
+                { href: "#galerie", label: "Galerie" },
+                { href: "#tarifs", label: "Tarifs" },
+                { href: "#temoignages", label: "Témoignages" },
+                { href: "#faq", label: "FAQ" },
+                { href: "#contact", label: "Contact" },
+              ].map((item) => (
+                <li key={item.href}>
+                  <a href={item.href} className="text-primary-foreground/80 hover:text-accent transition-colors">
+                    {item.label}
+                  </a>
+                </li>
+              ))}
             </ul>
           </div>
 
