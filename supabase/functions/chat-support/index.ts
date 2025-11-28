@@ -1,9 +1,20 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Input validation schema
+const messageSchema = z.object({
+  role: z.enum(['user', 'assistant']),
+  content: z.string().min(1, "Message cannot be empty").max(1000, "Message too long (max 1000 characters)")
+});
+
+const requestSchema = z.object({
+  messages: z.array(messageSchema).min(1, "At least one message required").max(20, "Too many messages (max 20)")
+});
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -11,7 +22,19 @@ serve(async (req) => {
   }
 
   try {
-    const { messages } = await req.json();
+    const body = await req.json();
+    
+    // Validate input
+    const parseResult = requestSchema.safeParse(body);
+    if (!parseResult.success) {
+      console.error("Validation error:", parseResult.error.errors);
+      return new Response(
+        JSON.stringify({ error: "Format de requête invalide. Veuillez réessayer." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
+    const { messages } = parseResult.data;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 
     if (!LOVABLE_API_KEY) {
@@ -78,7 +101,7 @@ Provide helpful, friendly, and professional responses. If customers want to book
   } catch (error) {
     console.error("Error in chat-support function:", error);
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Une erreur est survenue" }),
+      JSON.stringify({ error: "Une erreur est survenue. Veuillez réessayer." }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
