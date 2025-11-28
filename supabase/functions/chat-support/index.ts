@@ -50,7 +50,7 @@ Our services include:
 - Deep cleaning, regular maintenance, move-in/move-out cleaning
 
 Business hours: Monday-Sunday, 8:00 AM - 6:00 PM
-Contact: +237 693 96 55 01 or contact@lafriends.com
+Contact: +237 693 13 82 92 or lafriendsservices@gmail.com
 
 Provide helpful, friendly, and professional responses. If customers want to book a service, guide them to use the booking form on the website. Keep responses concise and in French.`;
 
