@@ -1,9 +1,22 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Phone, Mail, Clock } from "lucide-react";
+import { Menu, X, Phone, Mail, Clock, User, LogOut } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 
 export const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user, signOut, loading } = useAuth();
+  const { toast } = useToast();
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast({
+      title: "Déconnexion réussie",
+      description: "À bientôt !",
+    });
+  };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
@@ -57,6 +70,34 @@ export const Navbar = () => {
             <a href="#contact" className="text-foreground hover:text-accent transition-colors font-medium">
               Contact
             </a>
+            
+            {!loading && (
+              user ? (
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-muted-foreground flex items-center gap-1">
+                    <User className="w-4 h-4" />
+                    {user.email?.split('@')[0]}
+                  </span>
+                  <Button
+                    onClick={handleSignOut}
+                    variant="outline"
+                    size="sm"
+                    className="gap-1"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Déconnexion
+                  </Button>
+                </div>
+              ) : (
+                <Link to="/auth">
+                  <Button variant="outline" size="sm" className="gap-1">
+                    <User className="w-4 h-4" />
+                    Connexion
+                  </Button>
+                </Link>
+              )
+            )}
+            
             <Button 
               onClick={() => document.getElementById('booking')?.scrollIntoView({ behavior: 'smooth' })}
               className="bg-accent text-accent-foreground hover:bg-accent/90 font-semibold"
@@ -94,6 +135,37 @@ export const Navbar = () => {
                 {item.label}
               </a>
             ))}
+            
+            {!loading && (
+              user ? (
+                <div className="py-2 space-y-2">
+                  <p className="text-sm text-muted-foreground flex items-center gap-1">
+                    <User className="w-4 h-4" />
+                    {user.email?.split('@')[0]}
+                  </p>
+                  <Button
+                    onClick={() => {
+                      handleSignOut();
+                      setIsMenuOpen(false);
+                    }}
+                    variant="outline"
+                    size="sm"
+                    className="w-full gap-1"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Déconnexion
+                  </Button>
+                </div>
+              ) : (
+                <Link to="/auth" onClick={() => setIsMenuOpen(false)}>
+                  <Button variant="outline" size="sm" className="w-full gap-1">
+                    <User className="w-4 h-4" />
+                    Connexion
+                  </Button>
+                </Link>
+              )
+            )}
+            
             <Button 
               onClick={() => {
                 setIsMenuOpen(false);

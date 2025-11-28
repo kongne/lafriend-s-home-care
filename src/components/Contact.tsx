@@ -1,19 +1,68 @@
+import { useState } from "react";
 import { Phone, Mail, MapPin, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { Loader2 } from "lucide-react";
 
 export const Contact = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    fullName: "",
+    email: "",
+    phone: "",
+    subject: "",
+    message: "",
+  });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: "Message envoyé!",
-      description: "Nous vous répondrons dans les plus brefs délais.",
-    });
+    setLoading(true);
+
+    try {
+      const { error } = await supabase.from("contact_submissions").insert({
+        user_id: user?.id || null,
+        full_name: formData.fullName,
+        email: formData.email,
+        phone: formData.phone || null,
+        subject: formData.subject,
+        message: formData.message,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Message envoyé!",
+        description: "Nous vous répondrons dans les plus brefs délais.",
+      });
+
+      setFormData({
+        fullName: "",
+        email: "",
+        phone: "",
+        subject: "",
+        message: "",
+      });
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue. Veuillez réessayer.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -77,26 +126,63 @@ export const Contact = () => {
           <form onSubmit={handleSubmit} className="space-y-6 bg-card p-8 rounded-lg shadow-lg">
             <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="contact-name">Nom</Label>
-                <Input id="contact-name" placeholder="Votre nom" required />
+                <Label htmlFor="contact-fullName">Nom</Label>
+                <Input 
+                  id="contact-fullName" 
+                  name="fullName"
+                  placeholder="Votre nom" 
+                  value={formData.fullName}
+                  onChange={handleChange}
+                  required 
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="contact-email">Email</Label>
-                <Input id="contact-email" type="email" placeholder="votre@email.com" required />
+                <Input 
+                  id="contact-email" 
+                  name="email"
+                  type="email" 
+                  placeholder="votre@email.com" 
+                  value={formData.email}
+                  onChange={handleChange}
+                  required 
+                />
               </div>
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="contact-phone">Téléphone (optionnel)</Label>
+              <Input 
+                id="contact-phone" 
+                name="phone"
+                type="tel" 
+                placeholder="+237 XXX XXX XXX" 
+                value={formData.phone}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="contact-subject">Sujet</Label>
-              <Input id="contact-subject" placeholder="Sujet de votre message" required />
+              <Input 
+                id="contact-subject" 
+                name="subject"
+                placeholder="Sujet de votre message" 
+                value={formData.subject}
+                onChange={handleChange}
+                required 
+              />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="contact-message">Message</Label>
               <Textarea 
                 id="contact-message" 
+                name="message"
                 placeholder="Votre message..." 
                 rows={6}
+                value={formData.message}
+                onChange={handleChange}
                 required 
               />
             </div>
@@ -104,8 +190,16 @@ export const Contact = () => {
             <Button 
               type="submit" 
               className="w-full bg-accent text-accent-foreground hover:bg-accent/90 font-semibold py-6"
+              disabled={loading}
             >
-              ENVOYER LE MESSAGE
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Envoi en cours...
+                </>
+              ) : (
+                "ENVOYER LE MESSAGE"
+              )}
             </Button>
           </form>
         </div>
