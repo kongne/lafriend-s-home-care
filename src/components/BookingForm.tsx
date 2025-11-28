@@ -9,10 +9,13 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2 } from "lucide-react";
-
 export const BookingForm = () => {
-  const { toast } = useToast();
-  const { user } = useAuth();
+  const {
+    toast
+  } = useToast();
+  const {
+    user
+  } = useAuth();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     fullName: "",
@@ -22,20 +25,25 @@ export const BookingForm = () => {
     serviceType: "",
     preferredDate: "",
     preferredTime: "",
-    message: "",
+    message: ""
   });
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const {
+      name,
+      value
+    } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
     try {
-      const { error } = await supabase.from("bookings").insert({
+      const {
+        error
+      } = await supabase.from("bookings").insert({
         user_id: user?.id || null,
         full_name: formData.fullName,
         email: formData.email,
@@ -44,16 +52,13 @@ export const BookingForm = () => {
         service_type: formData.serviceType,
         preferred_date: formData.preferredDate,
         preferred_time: formData.preferredTime,
-        message: formData.message || null,
+        message: formData.message || null
       });
-
       if (error) throw error;
-
       toast({
         title: "Réservation envoyée!",
-        description: "Nous vous contacterons bientôt pour confirmer votre rendez-vous.",
+        description: "Nous vous contacterons bientôt pour confirmer votre rendez-vous."
       });
-
       setFormData({
         fullName: "",
         email: "",
@@ -62,82 +67,49 @@ export const BookingForm = () => {
         serviceType: "",
         preferredDate: "",
         preferredTime: "",
-        message: "",
+        message: ""
       });
     } catch (error) {
       toast({
         title: "Erreur",
         description: "Une erreur est survenue. Veuillez réessayer.",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setLoading(false);
     }
   };
-
-  return (
-    <Card className="p-8 bg-card/95 backdrop-blur-sm shadow-2xl">
+  return <Card className="p-8 bg-card/95 backdrop-blur-sm shadow-2xl py-[32px] px-[32px] border-dashed rounded-md">
       <h3 className="text-2xl font-bold text-center mb-6 text-foreground">
         Réserver un service
       </h3>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="fullName">Votre Nom</Label>
-          <Input 
-            id="fullName" 
-            name="fullName"
-            placeholder="Entrez votre nom" 
-            value={formData.fullName}
-            onChange={handleChange}
-            required 
-          />
+          <Input id="fullName" name="fullName" placeholder="Entrez votre nom" value={formData.fullName} onChange={handleChange} required />
         </div>
         
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
-          <Input 
-            id="email" 
-            name="email"
-            type="email" 
-            placeholder="votre@email.com" 
-            value={formData.email}
-            onChange={handleChange}
-            required 
-          />
+          <Input id="email" name="email" type="email" placeholder="votre@email.com" value={formData.email} onChange={handleChange} required />
         </div>
         
         <div className="space-y-2">
           <Label htmlFor="phone">Numéro de téléphone</Label>
-          <Input 
-            id="phone" 
-            name="phone"
-            type="tel" 
-            placeholder="+237 XXX XXX XXX" 
-            value={formData.phone}
-            onChange={handleChange}
-            required 
-          />
+          <Input id="phone" name="phone" type="tel" placeholder="+237 XXX XXX XXX" value={formData.phone} onChange={handleChange} required />
         </div>
         
         <div className="space-y-2">
           <Label htmlFor="address">Adresse</Label>
-          <Input 
-            id="address" 
-            name="address"
-            placeholder="Votre adresse" 
-            value={formData.address}
-            onChange={handleChange}
-            required 
-          />
+          <Input id="address" name="address" placeholder="Votre adresse" value={formData.address} onChange={handleChange} required />
         </div>
         
         <div className="space-y-2">
           <Label htmlFor="serviceType">Choisir un Service</Label>
-          <Select 
-            value={formData.serviceType} 
-            onValueChange={(value) => setFormData((prev) => ({ ...prev, serviceType: value }))}
-            required
-          >
+          <Select value={formData.serviceType} onValueChange={value => setFormData(prev => ({
+          ...prev,
+          serviceType: value
+        }))} required>
             <SelectTrigger>
               <SelectValue placeholder="Sélectionner un service" />
             </SelectTrigger>
@@ -154,22 +126,14 @@ export const BookingForm = () => {
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="preferredDate">Date souhaitée</Label>
-            <Input 
-              id="preferredDate" 
-              name="preferredDate"
-              type="date" 
-              value={formData.preferredDate}
-              onChange={handleChange}
-              required 
-            />
+            <Input id="preferredDate" name="preferredDate" type="date" value={formData.preferredDate} onChange={handleChange} required />
           </div>
           <div className="space-y-2">
             <Label htmlFor="preferredTime">Heure souhaitée</Label>
-            <Select 
-              value={formData.preferredTime} 
-              onValueChange={(value) => setFormData((prev) => ({ ...prev, preferredTime: value }))}
-              required
-            >
+            <Select value={formData.preferredTime} onValueChange={value => setFormData(prev => ({
+            ...prev,
+            preferredTime: value
+          }))} required>
               <SelectTrigger>
                 <SelectValue placeholder="Heure" />
               </SelectTrigger>
@@ -189,31 +153,15 @@ export const BookingForm = () => {
 
         <div className="space-y-2">
           <Label htmlFor="message">Message (optionnel)</Label>
-          <Textarea 
-            id="message" 
-            name="message"
-            placeholder="Précisions supplémentaires..."
-            value={formData.message}
-            onChange={handleChange}
-            rows={3}
-          />
+          <Textarea id="message" name="message" placeholder="Précisions supplémentaires..." value={formData.message} onChange={handleChange} rows={3} />
         </div>
 
-        <Button 
-          type="submit" 
-          className="w-full bg-accent text-accent-foreground hover:bg-accent/90 font-semibold py-6"
-          disabled={loading}
-        >
-          {loading ? (
-            <>
+        <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 font-semibold py-6" disabled={loading}>
+          {loading ? <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Envoi en cours...
-            </>
-          ) : (
-            "RÉSERVER MAINTENANT"
-          )}
+            </> : "RÉSERVER MAINTENANT"}
         </Button>
       </form>
-    </Card>
-  );
+    </Card>;
 };
