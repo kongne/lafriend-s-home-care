@@ -1,0 +1,32 @@
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { BookingForm } from "./BookingForm";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { ReactNode } from "react";
+
+interface BookingModalProps {
+  children?: ReactNode;
+  className?: string;
+}
+
+export const BookingModal = ({ children, className }: BookingModalProps) => {
+  const { t } = useLanguage();
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        {children || (
+          <Button 
+            size="lg"
+            className={`bg-accent text-accent-foreground hover:bg-accent/90 font-semibold text-lg px-8 py-6 ${className}`}
+          >
+            {t('hero.book')}
+          </Button>
+        )}
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto p-0">
+        <BookingForm />
+      </DialogContent>
+    </Dialog>
+  );
+};

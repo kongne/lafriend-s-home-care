@@ -10,6 +10,7 @@ import { Contact } from "@/components/Contact";
 import { Footer } from "@/components/Footer";
 import { ChatWidget } from "@/components/ChatWidget";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
+import { BackToTop } from "@/components/BackToTop";
 
 const Index = () => {
   return (
@@ -28,6 +29,7 @@ const Index = () => {
       <Footer />
       <ChatWidget />
       <WhatsAppButton />
+      <BackToTop />
     </div>
   );
 };

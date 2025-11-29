@@ -7,11 +7,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Loader2 } from "lucide-react";
 
 export const Contact = () => {
   const { toast } = useToast();
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     fullName: "",
@@ -42,9 +44,27 @@ export const Contact = () => {
 
       if (error) throw error;
 
+      // Send notification email
+      try {
+        await supabase.functions.invoke('send-notification', {
+          body: {
+            type: 'contact',
+            data: {
+              full_name: formData.fullName,
+              email: formData.email,
+              phone: formData.phone,
+              subject: formData.subject,
+              message: formData.message
+            }
+          }
+        });
+      } catch (notifError) {
+        console.log("Notification email skipped:", notifError);
+      }
+
       toast({
-        title: "Message envoyé!",
-        description: "Nous vous répondrons dans les plus brefs délais.",
+        title: t('contact.success'),
+        description: t('contact.successDesc'),
       });
 
       setFormData({
@@ -56,8 +76,8 @@ export const Contact = () => {
       });
     } catch (error) {
       toast({
-        title: "Erreur",
-        description: "Une erreur est survenue. Veuillez réessayer.",
+        title: t('booking.error'),
+        description: t('booking.errorDesc'),
         variant: "destructive",
       });
     } finally {
@@ -69,12 +89,12 @@ export const Contact = () => {
     <section id="contact" className="py-20 bg-secondary">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16 space-y-4">
-          <p className="text-accent font-semibold uppercase tracking-wider">Contact</p>
-          <h2 className="text-4xl md:text-5xl font-bold text-foreground">
-            Contactez-Nous
+          <p className="text-accent font-semibold uppercase tracking-wider">{t('nav.contact')}</p>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground">
+            {t('contact.title')}
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Une question? N'hésitez pas à nous contacter
+          <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
+            {t('contact.subtitle')}
           </p>
         </div>
 
@@ -123,21 +143,21 @@ export const Contact = () => {
           </div>
 
           {/* Contact form */}
-          <form onSubmit={handleSubmit} className="space-y-6 bg-card p-8 rounded-lg shadow-lg">
-            <div className="grid md:grid-cols-2 gap-4">
+          <form onSubmit={handleSubmit} className="space-y-6 bg-card p-6 sm:p-8 rounded-lg shadow-lg">
+            <div className="grid sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="contact-fullName">Nom</Label>
+                <Label htmlFor="contact-fullName">{t('booking.name')}</Label>
                 <Input 
                   id="contact-fullName" 
                   name="fullName"
-                  placeholder="Votre nom" 
+                  placeholder={t('booking.namePlaceholder')} 
                   value={formData.fullName}
                   onChange={handleChange}
                   required 
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="contact-email">Email</Label>
+                <Label htmlFor="contact-email">{t('booking.email')}</Label>
                 <Input 
                   id="contact-email" 
                   name="email"
@@ -151,7 +171,7 @@ export const Contact = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="contact-phone">Téléphone (optionnel)</Label>
+              <Label htmlFor="contact-phone">{t('booking.phone')} (optionnel)</Label>
               <Input 
                 id="contact-phone" 
                 name="phone"
@@ -163,11 +183,11 @@ export const Contact = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="contact-subject">Sujet</Label>
+              <Label htmlFor="contact-subject">{t('contact.subject')}</Label>
               <Input 
                 id="contact-subject" 
                 name="subject"
-                placeholder="Sujet de votre message" 
+                placeholder={t('contact.subjectPlaceholder')} 
                 value={formData.subject}
                 onChange={handleChange}
                 required 
@@ -179,7 +199,7 @@ export const Contact = () => {
               <Textarea 
                 id="contact-message" 
                 name="message"
-                placeholder="Votre message..." 
+                placeholder={t('booking.messagePlaceholder')} 
                 rows={6}
                 value={formData.message}
                 onChange={handleChange}
@@ -195,10 +215,10 @@ export const Contact = () => {
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Envoi en cours...
+                  {t('contact.sending')}
                 </>
               ) : (
-                "ENVOYER LE MESSAGE"
+                t('contact.send')
               )}
             </Button>
           </form>
