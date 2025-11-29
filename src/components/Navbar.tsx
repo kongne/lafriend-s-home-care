@@ -1,41 +1,73 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Phone, Mail, Clock, User, LogOut } from "lucide-react";
+import { Menu, X, Phone, Mail, Clock, User, LogOut, Shield } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { ThemeToggle } from "./ThemeToggle";
+import { LanguageToggle } from "./LanguageToggle";
+import { BookingModal } from "./BookingModal";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const { user, signOut, loading } = useAuth();
   const { toast } = useToast();
+  const { t } = useLanguage();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) {
+      checkAdminRole();
+    } else {
+      setIsAdmin(false);
+    }
+  }, [user]);
+
+  const checkAdminRole = async () => {
+    try {
+      const { data } = await supabase.rpc('has_role', {
+        _user_id: user!.id,
+        _role: 'admin'
+      });
+      setIsAdmin(!!data);
+    } catch (error) {
+      setIsAdmin(false);
+    }
+  };
 
   const handleSignOut = async () => {
     await signOut();
     toast({
-      title: "Déconnexion réussie",
+      title: t('nav.logout'),
       description: "À bientôt !",
     });
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
+    <header id="header" className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
       {/* Top bar with contact info */}
       <div className="bg-primary text-primary-foreground py-2 px-4">
         <div className="container mx-auto flex flex-wrap justify-between items-center text-sm gap-2">
           <div className="flex items-center gap-4 flex-wrap">
             <a href="tel:+237693138292" className="flex items-center gap-2 hover:text-accent transition-colors">
               <Phone className="w-4 h-4" />
-              <span>+237 693 13 82 92</span>
+              <span className="hidden sm:inline">+237 693 13 82 92</span>
             </a>
-            <a href="mailto:lafriendsservices@gmail.com" className="flex items-center gap-2 hover:text-accent transition-colors">
+            <a href="mailto:lafriendsservices@gmail.com" className="hidden sm:flex items-center gap-2 hover:text-accent transition-colors">
               <Mail className="w-4 h-4" />
               <span>lafriendsservices@gmail.com</span>
             </a>
-            <div className="flex items-center gap-2">
+            <div className="hidden md:flex items-center gap-2">
               <Clock className="w-4 h-4" />
               <span>Lun - Dim: 8:00 - 18:00</span>
             </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <LanguageToggle />
           </div>
         </div>
       </div>
@@ -45,35 +77,46 @@ export const Navbar = () => {
         <div className="flex items-center justify-between">
           {/* Logo */}
           <a href="/" className="flex items-center gap-2">
-            <div className="text-2xl font-bold text-primary">
+            <div className="text-xl sm:text-2xl font-bold text-primary">
               LaFriend's <span className="text-accent">Services</span>
             </div>
           </a>
 
           {/* Desktop menu */}
-          <div className="hidden md:flex items-center gap-6">
+          <div className="hidden lg:flex items-center gap-4 xl:gap-6">
             <a href="#services" className="text-foreground hover:text-accent transition-colors font-medium">
-              Services
+              {t('nav.services')}
             </a>
             <a href="#galerie" className="text-foreground hover:text-accent transition-colors font-medium">
-              Galerie
+              {t('nav.gallery')}
             </a>
             <a href="#tarifs" className="text-foreground hover:text-accent transition-colors font-medium">
-              Tarifs
+              {t('nav.pricing')}
             </a>
             <a href="#temoignages" className="text-foreground hover:text-accent transition-colors font-medium">
-              Témoignages
+              {t('nav.testimonials')}
             </a>
             <a href="#faq" className="text-foreground hover:text-accent transition-colors font-medium">
-              FAQ
+              {t('nav.faq')}
             </a>
             <a href="#contact" className="text-foreground hover:text-accent transition-colors font-medium">
-              Contact
+              {t('nav.contact')}
             </a>
             
             {!loading && (
               user ? (
                 <div className="flex items-center gap-3">
+                  {isAdmin && (
+                    <Button
+                      onClick={() => navigate('/admin')}
+                      variant="outline"
+                      size="sm"
+                      className="gap-1"
+                    >
+                      <Shield className="w-4 h-4" />
+                      {t('nav.admin')}
+                    </Button>
+                  )}
                   <span className="text-sm text-muted-foreground flex items-center gap-1">
                     <User className="w-4 h-4" />
                     {user.email?.split('@')[0]}
@@ -85,31 +128,26 @@ export const Navbar = () => {
                     className="gap-1"
                   >
                     <LogOut className="w-4 h-4" />
-                    Déconnexion
+                    {t('nav.logout')}
                   </Button>
                 </div>
               ) : (
                 <Link to="/auth">
                   <Button variant="outline" size="sm" className="gap-1">
                     <User className="w-4 h-4" />
-                    Connexion
+                    {t('nav.login')}
                   </Button>
                 </Link>
               )
             )}
             
-            <Button 
-              onClick={() => document.getElementById('booking')?.scrollIntoView({ behavior: 'smooth' })}
-              className="bg-accent text-accent-foreground hover:bg-accent/90 font-semibold"
-            >
-              RÉSERVER
-            </Button>
+            <BookingModal />
           </div>
 
           {/* Mobile menu button */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="md:hidden text-foreground"
+            className="lg:hidden text-foreground"
           >
             {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
@@ -117,14 +155,14 @@ export const Navbar = () => {
 
         {/* Mobile menu */}
         {isMenuOpen && (
-          <div className="md:hidden mt-4 pb-4 space-y-3 animate-in slide-in-from-top">
+          <div className="lg:hidden mt-4 pb-4 space-y-3 animate-in slide-in-from-top">
             {[
-              { href: "#services", label: "Services" },
-              { href: "#galerie", label: "Galerie" },
-              { href: "#tarifs", label: "Tarifs" },
-              { href: "#temoignages", label: "Témoignages" },
-              { href: "#faq", label: "FAQ" },
-              { href: "#contact", label: "Contact" },
+              { href: "#services", label: t('nav.services') },
+              { href: "#galerie", label: t('nav.gallery') },
+              { href: "#tarifs", label: t('nav.pricing') },
+              { href: "#temoignages", label: t('nav.testimonials') },
+              { href: "#faq", label: t('nav.faq') },
+              { href: "#contact", label: t('nav.contact') },
             ].map((item) => (
               <a
                 key={item.href}
@@ -143,6 +181,20 @@ export const Navbar = () => {
                     <User className="w-4 h-4" />
                     {user.email?.split('@')[0]}
                   </p>
+                  {isAdmin && (
+                    <Button
+                      onClick={() => {
+                        navigate('/admin');
+                        setIsMenuOpen(false);
+                      }}
+                      variant="outline"
+                      size="sm"
+                      className="w-full gap-1"
+                    >
+                      <Shield className="w-4 h-4" />
+                      {t('nav.admin')}
+                    </Button>
+                  )}
                   <Button
                     onClick={() => {
                       handleSignOut();
@@ -153,28 +205,20 @@ export const Navbar = () => {
                     className="w-full gap-1"
                   >
                     <LogOut className="w-4 h-4" />
-                    Déconnexion
+                    {t('nav.logout')}
                   </Button>
                 </div>
               ) : (
                 <Link to="/auth" onClick={() => setIsMenuOpen(false)}>
                   <Button variant="outline" size="sm" className="w-full gap-1">
                     <User className="w-4 h-4" />
-                    Connexion
+                    {t('nav.login')}
                   </Button>
                 </Link>
               )
             )}
             
-            <Button 
-              onClick={() => {
-                setIsMenuOpen(false);
-                document.getElementById('booking')?.scrollIntoView({ behavior: 'smooth' });
-              }}
-              className="w-full bg-accent text-accent-foreground hover:bg-accent/90 font-semibold"
-            >
-              RÉSERVER
-            </Button>
+            <BookingModal className="w-full" />
           </div>
         )}
       </nav>
