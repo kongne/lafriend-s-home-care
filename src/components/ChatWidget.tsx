@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { MessageCircle, X, Send } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Message {
   role: "user" | "assistant";
@@ -11,11 +12,12 @@ interface Message {
 }
 
 export const ChatWidget = () => {
+  const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "Bonjour! Comment puis-je vous aider aujourd'hui?",
+      content: t('chat.welcome'),
     },
   ]);
   const [input, setInput] = useState("");
@@ -30,6 +32,13 @@ export const ChatWidget = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Update welcome message when language changes
+  useEffect(() => {
+    if (messages.length === 1 && messages[0].role === "assistant") {
+      setMessages([{ role: "assistant", content: t('chat.welcome') }]);
+    }
+  }, [t]);
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
@@ -48,7 +57,7 @@ export const ChatWidget = () => {
 
       if (data.error) {
         toast({
-          title: "Erreur",
+          title: t('chat.error'),
           description: data.error,
           variant: "destructive",
         });
@@ -63,8 +72,8 @@ export const ChatWidget = () => {
     } catch (error) {
       console.error("Error sending message:", error);
       toast({
-        title: "Erreur",
-        description: "Impossible d'envoyer le message. Veuillez réessayer.",
+        title: t('chat.error'),
+        description: t('chat.errorDesc'),
         variant: "destructive",
       });
     } finally {
@@ -94,12 +103,12 @@ export const ChatWidget = () => {
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-6 right-6 w-96 h-[500px] bg-background border-2 border-border rounded-lg shadow-2xl flex flex-col z-50 animate-in slide-in-from-bottom-5">
+        <div className="fixed bottom-6 right-6 w-[calc(100vw-3rem)] sm:w-96 h-[70vh] sm:h-[500px] max-h-[500px] bg-background border-2 border-border rounded-lg shadow-2xl flex flex-col z-50 animate-in slide-in-from-bottom-5">
           {/* Header */}
           <div className="bg-primary text-primary-foreground p-4 rounded-t-lg flex justify-between items-center">
             <div className="flex items-center gap-2">
               <MessageCircle className="h-5 w-5" />
-              <span className="font-semibold">Support Client</span>
+              <span className="font-semibold">{t('chat.title')}</span>
             </div>
             <Button
               onClick={() => setIsOpen(false)}
@@ -152,7 +161,7 @@ export const ChatWidget = () => {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Tapez votre message..."
+                placeholder={t('chat.placeholder')}
                 disabled={isLoading}
                 className="flex-1"
               />
