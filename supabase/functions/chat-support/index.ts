@@ -41,6 +41,11 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
+    // Detect language from user messages
+    const userMessages = messages.filter(m => m.role === 'user').map(m => m.content).join(' ');
+    const isFrench = userMessages.match(/\b(bonjour|salut|merci|comment|quel|service|nettoyage|prix)\b/i);
+    const language = isFrench ? 'French' : 'English';
+
     const systemPrompt = `You are a helpful customer support assistant for LaFriend's Services, a professional cleaning services company in Cameroon.
 
 Our services include:
@@ -52,7 +57,9 @@ Our services include:
 Business hours: Monday-Sunday, 8:00 AM - 6:00 PM
 Contact: +237 693 13 82 92 or lafriendsservices@gmail.com
 
-Provide helpful, friendly, and professional responses. If customers want to book a service, guide them to use the booking form on the website. Keep responses concise and in French.`;
+IMPORTANT: Respond in ${language}. Detect the user's language from their messages and respond accordingly. Be flexible and natural in your language choice.
+
+Provide helpful, friendly, and professional responses. If customers want to book a service, guide them to use the booking form on the website. Keep responses concise and conversational.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

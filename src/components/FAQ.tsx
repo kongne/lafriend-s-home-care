@@ -18,6 +18,7 @@ export const FAQ = () => {
     { questionKey: 'faq.q4', answerKey: 'faq.a4' },
     { questionKey: 'faq.q5', answerKey: 'faq.a5' },
     { questionKey: 'faq.q6', answerKey: 'faq.a6' },
+    { questionKey: 'faq.q7', answerKey: 'faq.a7' },
   ];
 
   return (

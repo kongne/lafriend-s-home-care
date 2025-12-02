@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 export const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const { user, signOut, loading } = useAuth();
   const { toast } = useToast();
   const { t } = useLanguage();
@@ -25,6 +26,19 @@ export const Navbar = () => {
       setIsAdmin(false);
     }
   }, [user]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 100) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const checkAdminRole = async () => {
     try {
@@ -47,9 +61,15 @@ export const Navbar = () => {
   };
 
   return (
-    <header id="header" className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
+    <header id="header" className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      isScrolled 
+        ? 'bg-background/60 backdrop-blur-md border-b border-border/50' 
+        : 'bg-background/95 backdrop-blur-sm border-b border-border'
+    }`}>
       {/* Top bar with contact info */}
-      <div className="bg-primary text-primary-foreground py-2 px-4">
+      <div className={`bg-primary text-primary-foreground py-2 px-4 transition-all duration-300 ${
+        isScrolled ? 'opacity-0 h-0 py-0 overflow-hidden' : 'opacity-100'
+      }`}>
         <div className="container mx-auto flex flex-wrap justify-between items-center text-sm gap-2">
           <div className="flex items-center gap-4 flex-wrap">
             <a href="tel:+237693138292" className="flex items-center gap-2 hover:text-accent transition-colors">

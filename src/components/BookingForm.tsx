@@ -8,9 +8,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Loader2 } from "lucide-react";
 
-export const BookingForm = () => {
+export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
+  const { t } = useLanguage();
   const {
     toast
   } = useToast();
@@ -57,8 +59,9 @@ export const BookingForm = () => {
       });
       if (error) throw error;
       toast({
-        title: "Réservation envoyée!",
-        description: "Nous vous contacterons bientôt pour confirmer votre rendez-vous."
+        title: t('booking.success'),
+        description: t('booking.successDesc'),
+        duration: 5000,
       });
       setFormData({
         fullName: "",
@@ -70,10 +73,11 @@ export const BookingForm = () => {
         preferredTime: "",
         message: ""
       });
+      onSuccess?.();
     } catch (error) {
       toast({
-        title: "Erreur",
-        description: "Une erreur est survenue. Veuillez réessayer.",
+        title: t('booking.error'),
+        description: t('booking.errorDesc'),
         variant: "destructive"
       });
     } finally {
