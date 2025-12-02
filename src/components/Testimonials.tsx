@@ -75,11 +75,13 @@ export const Testimonials = () => {
                 ))}
               </div>
               <div className="flex items-center gap-3">
-                <img
-                  src={testimonial.image}
-                  alt={testimonial.name}
-                  className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover"
-                />
+                  <img 
+                    src={testimonial.image} 
+                    alt={testimonial.name}
+                    className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover"
+                    loading="lazy"
+                    decoding="async"
+                  />
                 <div>
                   <p className="font-semibold text-foreground text-sm md:text-base">{testimonial.name}</p>
                   <p className="text-xs md:text-sm text-muted-foreground">{t(testimonial.roleKey)}</p>

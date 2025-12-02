@@ -56,6 +56,8 @@ const BeforeAfterCard = ({ item, index, isVisible, t }: { item: GalleryItem; ind
           className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${
             showAfter ? "opacity-0" : "opacity-100"
           }`}
+          loading="lazy"
+          decoding="async"
         />
         <img
           src={item.after}
@@ -63,6 +65,8 @@ const BeforeAfterCard = ({ item, index, isVisible, t }: { item: GalleryItem; ind
           className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${
             showAfter ? "opacity-100" : "opacity-0"
           }`}
+          loading="lazy"
+          decoding="async"
         />
         
         {/* Overlay labels */}
