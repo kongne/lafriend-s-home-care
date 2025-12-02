@@ -13,14 +13,21 @@
     <link rel="icon" type="image/png" href="/favicon.png" />
     <!--  SEO-->
     <meta name="google-site-verification" content="zLuFJiS0-sCY8TiVctEelyX4cB1kH2x08_Ld3KlkW-k" />
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-5LPJ7HPSNG"></script>
+    <!-- Google Analytics - Deferred -->
     <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-
-      gtag('config', 'G-5LPJ7HPSNG');
+      window.addEventListener('load', function() {
+        var script = document.createElement('script');
+        script.src = 'https://www.googletagmanager.com/gtag/js?id=G-5LPJ7HPSNG';
+        script.async = true;
+        document.head.appendChild(script);
+        
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-5LPJ7HPSNG', {
+          page_path: window.location.pathname,
+        });
+      });
     </script>
     <!-- PWA -->
     <link rel="manifest" href="/manifest.json" />
@@ -45,10 +52,11 @@
     <meta name="twitter:description" content="Services de nettoyage professionnels à Bafoussam. Devis gratuit!" />
     <meta name="twitter:image" content="LaFriends.png" />
 
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <!-- Fonts - Optimized -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet"></noscript>
 
     <!-- Structured Data -->
     <script type="application/ld+json">

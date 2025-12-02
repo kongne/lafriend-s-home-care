@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -60,7 +60,7 @@ interface NewsletterSubscriber {
 }
 
 const Admin = () => {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -242,9 +242,15 @@ const Admin = () => {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Retour
           </Button>
-          <h1 className="text-3xl font-bold text-foreground">Tableau de bord Admin</h1>
+          <h1 className="text-3xl font-bold text-foreground flex-1">Tableau de bord Admin</h1>
           <Button variant="outline" size="icon" onClick={fetchAllData}>
             <RefreshCw className="h-4 w-4" />
+          </Button>
+          <Link to="/admin/settings">
+            <Button variant="outline">Settings</Button>
+          </Link>
+          <Button onClick={signOut} variant="destructive">
+            Sign Out
           </Button>
         </div>
 
