@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { BookingForm } from "./BookingForm";
@@ -11,9 +12,10 @@ interface BookingModalProps {
 
 export const BookingModal = ({ children, className }: BookingModalProps) => {
   const { t } = useLanguage();
+  const [open, setOpen] = useState(false);
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {children || (
           <Button 
@@ -25,7 +27,7 @@ export const BookingModal = ({ children, className }: BookingModalProps) => {
         )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto p-0">
-        <BookingForm />
+        <BookingForm onSuccess={() => setOpen(false)} />
       </DialogContent>
     </Dialog>
   );
