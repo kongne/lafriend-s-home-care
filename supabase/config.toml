@@ -1,5 +1,8 @@
 project_id = "ggsvvtzviwxpbjsnpzdv"
 
+[functions.send-booking-confirmation]
+verify_jwt = false
+
 [functions.chat-support]
 verify_jwt = false
 
