@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { BookingForm } from "./BookingForm";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { ReactNode } from "react";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 interface BookingModalProps {
   children?: ReactNode;
@@ -27,6 +28,10 @@ export const BookingModal = ({ children, className }: BookingModalProps) => {
         )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto p-0">
+        <VisuallyHidden>
+          <DialogTitle>{t('booking.title')}</DialogTitle>
+          <DialogDescription>{t('booking.successDesc')}</DialogDescription>
+        </VisuallyHidden>
         <BookingForm onSuccess={() => setOpen(false)} />
       </DialogContent>
     </Dialog>

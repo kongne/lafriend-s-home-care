@@ -1,8 +1,12 @@
-import { Award, Users, Clock, Shield } from "lucide-react";
+import { Award, Users, Clock, Shield, ArrowRight } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { BookingModal } from "./BookingModal";
+import { Button } from "./ui/button";
+import { useScrollReveal } from "@/hooks/useScrollReveal";
 
 export const About = () => {
   const { t } = useLanguage();
+  const { ref, isVisible } = useScrollReveal();
 
   const stats = [
     { icon: Users, value: "500+", labelKey: "about.stat1" },
@@ -11,10 +15,22 @@ export const About = () => {
     { icon: Shield, value: "100%", labelKey: "about.stat4" }
   ];
 
+  const scrollToServices = () => {
+    const element = document.getElementById('services');
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <section id="apropos" className="py-20 bg-background">
       <div className="container mx-auto px-4">
-        <div className="grid lg:grid-cols-2 gap-8 md:gap-12 items-center">
+        <div 
+          ref={ref}
+          className={`grid lg:grid-cols-2 gap-8 md:gap-12 items-center transition-all duration-700 ${
+            isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+          }`}
+        >
           {/* Left content */}
           <div className="space-y-6">
             <p className="text-accent font-semibold uppercase tracking-wider">{t('about.tagline')}</p>
@@ -25,6 +41,24 @@ export const About = () => {
               <p dangerouslySetInnerHTML={{ __html: t('about.p1') }} />
               <p>{t('about.p2')}</p>
               <p>{t('about.p3')}</p>
+            </div>
+            
+            {/* Dynamic buttons */}
+            <div className="flex flex-wrap gap-4 pt-4">
+              <BookingModal>
+                <Button size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90 font-semibold">
+                  {t('hero.book')}
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </BookingModal>
+              <Button 
+                variant="outline" 
+                size="lg"
+                onClick={scrollToServices}
+                className="border-primary text-foreground hover:bg-primary hover:text-primary-foreground"
+              >
+                {t('hero.learnMore')}
+              </Button>
             </div>
           </div>
 
