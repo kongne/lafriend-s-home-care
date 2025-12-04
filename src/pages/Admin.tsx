@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,6 +9,10 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
+import { AdminAnalytics } from "@/components/admin/AdminAnalytics";
+import { BulkActions, SelectableItem } from "@/components/admin/BulkActions";
+import { exportToCSV, bookingColumns, contactColumns, subscriberColumns } from "@/lib/exportCsv";
+import { staffEmailSchema } from "@/lib/validation";
 import { 
   CalendarDays, 
   Mail, 
@@ -17,7 +21,11 @@ import {
   Loader2,
   Trash2,
   Plus,
-  RefreshCw
+  RefreshCw,
+  Download,
+  BarChart3,
+  Settings,
+  Send
 } from "lucide-react";
 
 interface Booking {
@@ -72,6 +80,14 @@ const Admin = () => {
   const [subscribers, setSubscribers] = useState<NewsletterSubscriber[]>([]);
   const [newStaffEmail, setNewStaffEmail] = useState("");
   const [newStaffName, setNewStaffName] = useState("");
+  const [activeTab, setActiveTab] = useState("analytics");
+  
+  // Bulk selection state
+  const [selectedBookings, setSelectedBookings] = useState<string[]>([]);
+  const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
+  
+  // Sending confirmation state
+  const [sendingConfirmation, setSendingConfirmation] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -182,12 +198,44 @@ const Admin = () => {
     }
   };
 
+  const sendBookingConfirmation = async (booking: Booking) => {
+    setSendingConfirmation(booking.id);
+    try {
+      const { error } = await supabase.functions.invoke('send-booking-confirmation', {
+        body: {
+          booking: {
+            full_name: booking.full_name,
+            email: booking.email,
+            service_type: booking.service_type,
+            preferred_date: booking.preferred_date,
+            preferred_time: booking.preferred_time,
+            address: booking.address
+          }
+        }
+      });
+      
+      if (error) throw error;
+      
+      toast({ title: "Confirmation envoyée", description: `Email envoyé à ${booking.email}` });
+    } catch (error) {
+      console.error("Error sending confirmation:", error);
+      toast({ title: "Erreur", description: "Impossible d'envoyer la confirmation", variant: "destructive" });
+    } finally {
+      setSendingConfirmation(null);
+    }
+  };
+
   const addStaffEmail = async () => {
-    if (!newStaffEmail) return;
+    const validation = staffEmailSchema.safeParse({ email: newStaffEmail, name: newStaffName || undefined });
+    
+    if (!validation.success) {
+      toast({ title: "Erreur", description: validation.error.errors[0].message, variant: "destructive" });
+      return;
+    }
     
     const { error } = await supabase
       .from("staff_emails")
-      .insert({ email: newStaffEmail, name: newStaffName || null });
+      .insert({ email: validation.data.email, name: validation.data.name || null });
     
     if (!error) {
       toast({ title: "Email ajouté" });
@@ -209,6 +257,60 @@ const Admin = () => {
       toast({ title: "Email supprimé" });
       fetchStaffEmails();
     }
+  };
+
+  // Bulk actions handler
+  const handleBulkBookingAction = useCallback(async (action: string, ids: string[]) => {
+    if (action === 'delete') {
+      // Note: Delete not supported by RLS, would need policy update
+      toast({ title: "Action non disponible", description: "La suppression en masse nécessite une mise à jour des permissions", variant: "destructive" });
+      return;
+    }
+    
+    const { error } = await supabase
+      .from("bookings")
+      .update({ status: action })
+      .in("id", ids);
+    
+    if (!error) {
+      toast({ title: "Mise à jour effectuée", description: `${ids.length} réservation(s) mise(s) à jour` });
+      setSelectedBookings([]);
+      fetchBookings();
+    } else {
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    }
+  }, [toast]);
+
+  const handleBulkContactAction = useCallback(async (action: string, ids: string[]) => {
+    if (action === 'delete') {
+      toast({ title: "Action non disponible", description: "La suppression en masse nécessite une mise à jour des permissions", variant: "destructive" });
+      return;
+    }
+    
+    const { error } = await supabase
+      .from("contact_submissions")
+      .update({ status: action })
+      .in("id", ids);
+    
+    if (!error) {
+      toast({ title: "Mise à jour effectuée", description: `${ids.length} message(s) mis à jour` });
+      setSelectedContacts([]);
+      fetchContacts();
+    } else {
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    }
+  }, [toast]);
+
+  const toggleBookingSelection = (id: string, checked: boolean) => {
+    setSelectedBookings(prev => 
+      checked ? [...prev, id] : prev.filter(i => i !== id)
+    );
+  };
+
+  const toggleContactSelection = (id: string, checked: boolean) => {
+    setSelectedContacts(prev => 
+      checked ? [...prev, id] : prev.filter(i => i !== id)
+    );
   };
 
   const getStatusBadge = (status: string) => {
@@ -237,31 +339,37 @@ const Admin = () => {
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
-        <div className="flex items-center gap-4 mb-8">
+        {/* Header */}
+        <div className="flex flex-wrap items-center gap-4 mb-8">
           <Button variant="ghost" onClick={() => navigate("/")}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Retour
           </Button>
-          <h1 className="text-3xl font-bold text-foreground flex-1">Tableau de bord Admin</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground flex-1">
+            Tableau de bord Admin
+          </h1>
           <Button variant="outline" size="icon" onClick={fetchAllData}>
             <RefreshCw className="h-4 w-4" />
           </Button>
           <Link to="/admin/settings">
-            <Button variant="outline">Settings</Button>
+            <Button variant="outline" size="icon">
+              <Settings className="h-4 w-4" />
+            </Button>
           </Link>
-          <Button onClick={signOut} variant="destructive">
-            Sign Out
+          <Button onClick={signOut} variant="destructive" size="sm">
+            Déconnexion
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        {/* Summary Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
                 <CalendarDays className="h-8 w-8 text-accent" />
                 <div>
                   <p className="text-2xl font-bold">{bookings.length}</p>
-                  <p className="text-muted-foreground">Réservations</p>
+                  <p className="text-muted-foreground text-sm">Réservations</p>
                 </div>
               </div>
             </CardContent>
@@ -272,7 +380,7 @@ const Admin = () => {
                 <Mail className="h-8 w-8 text-accent" />
                 <div>
                   <p className="text-2xl font-bold">{contacts.length}</p>
-                  <p className="text-muted-foreground">Messages</p>
+                  <p className="text-muted-foreground text-sm">Messages</p>
                 </div>
               </div>
             </CardContent>
@@ -283,7 +391,7 @@ const Admin = () => {
                 <Users className="h-8 w-8 text-accent" />
                 <div>
                   <p className="text-2xl font-bold">{subscribers.length}</p>
-                  <p className="text-muted-foreground">Abonnés</p>
+                  <p className="text-muted-foreground text-sm">Abonnés</p>
                 </div>
               </div>
             </CardContent>
@@ -291,96 +399,186 @@ const Admin = () => {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
-                <Mail className="h-8 w-8 text-accent" />
+                <BarChart3 className="h-8 w-8 text-accent" />
                 <div>
-                  <p className="text-2xl font-bold">{staffEmails.length}</p>
-                  <p className="text-muted-foreground">Staff Emails</p>
+                  <p className="text-2xl font-bold">{bookings.filter(b => b.status === 'pending').length}</p>
+                  <p className="text-muted-foreground text-sm">En attente</p>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        <Tabs defaultValue="bookings" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-4">
+        {/* Main Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="analytics" className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4 hidden sm:block" />
+              Statistiques
+            </TabsTrigger>
             <TabsTrigger value="bookings">Réservations</TabsTrigger>
             <TabsTrigger value="contacts">Messages</TabsTrigger>
             <TabsTrigger value="subscribers">Abonnés</TabsTrigger>
-            <TabsTrigger value="staff">Emails Staff</TabsTrigger>
+            <TabsTrigger value="staff">Staff</TabsTrigger>
           </TabsList>
 
+          {/* Analytics Tab */}
+          <TabsContent value="analytics">
+            <AdminAnalytics bookings={bookings} contacts={contacts} />
+          </TabsContent>
+
+          {/* Bookings Tab */}
           <TabsContent value="bookings" className="space-y-4">
+            <div className="flex justify-between items-center">
+              <BulkActions
+                selectedIds={selectedBookings}
+                onSelectAll={(checked) => setSelectedBookings(checked ? bookings.map(b => b.id) : [])}
+                allSelected={selectedBookings.length === bookings.length && bookings.length > 0}
+                someSelected={selectedBookings.length > 0 && selectedBookings.length < bookings.length}
+                onBulkAction={handleBulkBookingAction}
+                type="bookings"
+              />
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => exportToCSV(bookings, "reservations", bookingColumns)}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Exporter CSV
+              </Button>
+            </div>
+            
             {bookings.map((booking) => (
-              <Card key={booking.id}>
-                <CardHeader className="pb-2">
-                  <div className="flex justify-between items-start">
-                    <CardTitle className="text-lg">{booking.full_name}</CardTitle>
-                    {getStatusBadge(booking.status)}
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm mb-4">
-                    <div><strong>Email:</strong> {booking.email}</div>
-                    <div><strong>Tél:</strong> {booking.phone}</div>
-                    <div><strong>Service:</strong> {booking.service_type}</div>
-                    <div><strong>Date:</strong> {booking.preferred_date} à {booking.preferred_time}</div>
-                    <div className="col-span-2"><strong>Adresse:</strong> {booking.address}</div>
-                    {booking.message && (
-                      <div className="col-span-2"><strong>Message:</strong> {booking.message}</div>
-                    )}
-                  </div>
-                  <div className="flex gap-2">
-                    <Button size="sm" variant="outline" onClick={() => updateBookingStatus(booking.id, "confirmed")}>
-                      Confirmer
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => updateBookingStatus(booking.id, "completed")}>
-                      Terminé
-                    </Button>
-                    <Button size="sm" variant="destructive" onClick={() => updateBookingStatus(booking.id, "cancelled")}>
-                      Annuler
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+              <SelectableItem 
+                key={booking.id}
+                id={booking.id}
+                selected={selectedBookings.includes(booking.id)}
+                onSelect={toggleBookingSelection}
+              >
+                <Card>
+                  <CardHeader className="pb-2">
+                    <div className="flex justify-between items-start">
+                      <CardTitle className="text-lg">{booking.full_name}</CardTitle>
+                      {getStatusBadge(booking.status)}
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm mb-4">
+                      <div><strong>Email:</strong> {booking.email}</div>
+                      <div><strong>Tél:</strong> {booking.phone}</div>
+                      <div><strong>Service:</strong> {booking.service_type}</div>
+                      <div><strong>Date:</strong> {booking.preferred_date} à {booking.preferred_time}</div>
+                      <div className="col-span-2"><strong>Adresse:</strong> {booking.address}</div>
+                      {booking.message && (
+                        <div className="col-span-2"><strong>Message:</strong> {booking.message}</div>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Button size="sm" variant="outline" onClick={() => updateBookingStatus(booking.id, "confirmed")}>
+                        Confirmer
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => updateBookingStatus(booking.id, "completed")}>
+                        Terminé
+                      </Button>
+                      <Button size="sm" variant="destructive" onClick={() => updateBookingStatus(booking.id, "cancelled")}>
+                        Annuler
+                      </Button>
+                      {booking.status === 'confirmed' && (
+                        <Button 
+                          size="sm" 
+                          variant="secondary"
+                          onClick={() => sendBookingConfirmation(booking)}
+                          disabled={sendingConfirmation === booking.id}
+                        >
+                          {sendingConfirmation === booking.id ? (
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          ) : (
+                            <Send className="h-4 w-4 mr-2" />
+                          )}
+                          Envoyer confirmation
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </SelectableItem>
             ))}
             {bookings.length === 0 && (
               <Card><CardContent className="py-8 text-center text-muted-foreground">Aucune réservation</CardContent></Card>
             )}
           </TabsContent>
 
+          {/* Contacts Tab */}
           <TabsContent value="contacts" className="space-y-4">
+            <div className="flex justify-between items-center">
+              <BulkActions
+                selectedIds={selectedContacts}
+                onSelectAll={(checked) => setSelectedContacts(checked ? contacts.map(c => c.id) : [])}
+                allSelected={selectedContacts.length === contacts.length && contacts.length > 0}
+                someSelected={selectedContacts.length > 0 && selectedContacts.length < contacts.length}
+                onBulkAction={handleBulkContactAction}
+                type="contacts"
+              />
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => exportToCSV(contacts, "messages", contactColumns)}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Exporter CSV
+              </Button>
+            </div>
+            
             {contacts.map((contact) => (
-              <Card key={contact.id}>
-                <CardHeader className="pb-2">
-                  <div className="flex justify-between items-start">
-                    <CardTitle className="text-lg">{contact.subject}</CardTitle>
-                    {getStatusBadge(contact.status)}
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 gap-2 text-sm mb-4">
-                    <div><strong>De:</strong> {contact.full_name}</div>
-                    <div><strong>Email:</strong> {contact.email}</div>
-                    {contact.phone && <div><strong>Tél:</strong> {contact.phone}</div>}
-                    <div className="col-span-2"><strong>Message:</strong> {contact.message}</div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button size="sm" variant="outline" onClick={() => updateContactStatus(contact.id, "read")}>
-                      Marquer lu
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => updateContactStatus(contact.id, "replied")}>
-                      Répondu
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+              <SelectableItem
+                key={contact.id}
+                id={contact.id}
+                selected={selectedContacts.includes(contact.id)}
+                onSelect={toggleContactSelection}
+              >
+                <Card>
+                  <CardHeader className="pb-2">
+                    <div className="flex justify-between items-start">
+                      <CardTitle className="text-lg">{contact.subject}</CardTitle>
+                      {getStatusBadge(contact.status)}
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 gap-2 text-sm mb-4">
+                      <div><strong>De:</strong> {contact.full_name}</div>
+                      <div><strong>Email:</strong> {contact.email}</div>
+                      {contact.phone && <div><strong>Tél:</strong> {contact.phone}</div>}
+                      <div className="col-span-2"><strong>Message:</strong> {contact.message}</div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" onClick={() => updateContactStatus(contact.id, "read")}>
+                        Marquer lu
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => updateContactStatus(contact.id, "replied")}>
+                        Répondu
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </SelectableItem>
             ))}
             {contacts.length === 0 && (
               <Card><CardContent className="py-8 text-center text-muted-foreground">Aucun message</CardContent></Card>
             )}
           </TabsContent>
 
+          {/* Subscribers Tab */}
           <TabsContent value="subscribers" className="space-y-4">
+            <div className="flex justify-end mb-4">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => exportToCSV(subscribers, "abonnes", subscriberColumns)}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Exporter CSV
+              </Button>
+            </div>
             <Card>
               <CardContent className="pt-6">
                 <div className="space-y-2">
@@ -400,13 +598,14 @@ const Admin = () => {
             </Card>
           </TabsContent>
 
+          {/* Staff Tab */}
           <TabsContent value="staff" className="space-y-4">
             <Card>
               <CardHeader>
                 <CardTitle>Ajouter un email staff</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <div className="flex-1">
                     <Label htmlFor="staffName">Nom</Label>
                     <Input

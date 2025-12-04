@@ -10,16 +10,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Loader2 } from "lucide-react";
+import { bookingSchema, rateLimit } from "@/lib/validation";
 
 export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
   const { t } = useLanguage();
-  const {
-    toast
-  } = useToast();
-  const {
-    user
-  } = useAuth();
+  const { toast } = useToast();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -30,39 +28,73 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
     preferredTime: "",
     message: ""
   });
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const {
-      name,
-      value
-    } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: "" }));
+    }
   };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    try {
-      const {
-        error
-      } = await supabase.from("bookings").insert({
-        user_id: user?.id || null,
-        full_name: formData.fullName,
-        email: formData.email,
-        phone: formData.phone,
-        address: formData.address,
-        service_type: formData.serviceType,
-        preferred_date: formData.preferredDate,
-        preferred_time: formData.preferredTime,
-        message: formData.message || null
+    
+    // Rate limiting check
+    const rateLimitKey = user?.id || 'anonymous';
+    if (!rateLimit(`booking:${rateLimitKey}`, 3, 60000)) {
+      toast({
+        title: "Trop de tentatives",
+        description: "Veuillez patienter une minute avant de réessayer.",
+        variant: "destructive"
       });
+      return;
+    }
+    
+    // Validate form data
+    const validation = bookingSchema.safeParse(formData);
+    
+    if (!validation.success) {
+      const fieldErrors: Record<string, string> = {};
+      validation.error.errors.forEach(err => {
+        if (err.path[0]) {
+          fieldErrors[err.path[0] as string] = err.message;
+        }
+      });
+      setErrors(fieldErrors);
+      toast({
+        title: t('booking.error'),
+        description: "Veuillez corriger les erreurs dans le formulaire.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setLoading(true);
+    setErrors({});
+
+    try {
+      const { error } = await supabase.from("bookings").insert({
+        user_id: user?.id || null,
+        full_name: validation.data.fullName,
+        email: validation.data.email,
+        phone: validation.data.phone,
+        address: validation.data.address,
+        service_type: validation.data.serviceType,
+        preferred_date: validation.data.preferredDate,
+        preferred_time: validation.data.preferredTime,
+        message: validation.data.message || null
+      });
+
       if (error) throw error;
+
       toast({
         title: t('booking.success'),
         description: t('booking.successDesc'),
         duration: 5000,
       });
+
       setFormData({
         fullName: "",
         email: "",
@@ -73,8 +105,10 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
         preferredTime: "",
         message: ""
       });
+
       onSuccess?.();
     } catch (error) {
+      console.error("Booking error:", error);
       toast({
         title: t('booking.error'),
         description: t('booking.errorDesc'),
@@ -84,38 +118,86 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
       setLoading(false);
     }
   };
-  return <Card className="p-8 bg-card/95 backdrop-blur-sm shadow-2xl py-[32px] px-[32px] border-dashed rounded-md">
+
+  return (
+    <Card className="p-8 bg-card/95 backdrop-blur-sm shadow-2xl py-[32px] px-[32px] border-dashed rounded-md">
       <h3 className="text-2xl font-bold text-center mb-6 text-foreground">
         Réserver un service
       </h3>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="fullName">Votre Nom</Label>
-          <Input id="fullName" name="fullName" placeholder="Entrez votre nom" value={formData.fullName} onChange={handleChange} required />
+          <Input 
+            id="fullName" 
+            name="fullName" 
+            placeholder="Entrez votre nom" 
+            value={formData.fullName} 
+            onChange={handleChange} 
+            required 
+            maxLength={100}
+            className={errors.fullName ? "border-destructive" : ""}
+          />
+          {errors.fullName && <p className="text-sm text-destructive">{errors.fullName}</p>}
         </div>
         
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
-          <Input id="email" name="email" type="email" placeholder="votre@email.com" value={formData.email} onChange={handleChange} required />
+          <Input 
+            id="email" 
+            name="email" 
+            type="email" 
+            placeholder="votre@email.com" 
+            value={formData.email} 
+            onChange={handleChange} 
+            required 
+            maxLength={255}
+            className={errors.email ? "border-destructive" : ""}
+          />
+          {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
         </div>
         
         <div className="space-y-2">
           <Label htmlFor="phone">Numéro de téléphone</Label>
-          <Input id="phone" name="phone" type="tel" placeholder="+237 XXX XXX XXX" value={formData.phone} onChange={handleChange} required />
+          <Input 
+            id="phone" 
+            name="phone" 
+            type="tel" 
+            placeholder="+237 XXX XXX XXX" 
+            value={formData.phone} 
+            onChange={handleChange} 
+            required 
+            maxLength={20}
+            className={errors.phone ? "border-destructive" : ""}
+          />
+          {errors.phone && <p className="text-sm text-destructive">{errors.phone}</p>}
         </div>
         
         <div className="space-y-2">
           <Label htmlFor="address">Adresse</Label>
-          <Input id="address" name="address" placeholder="Votre adresse" value={formData.address} onChange={handleChange} required />
+          <Input 
+            id="address" 
+            name="address" 
+            placeholder="Votre adresse" 
+            value={formData.address} 
+            onChange={handleChange} 
+            required 
+            maxLength={500}
+            className={errors.address ? "border-destructive" : ""}
+          />
+          {errors.address && <p className="text-sm text-destructive">{errors.address}</p>}
         </div>
         
         <div className="space-y-2">
           <Label htmlFor="serviceType">Choisir un Service</Label>
-          <Select value={formData.serviceType} onValueChange={value => setFormData(prev => ({
-          ...prev,
-          serviceType: value
-        }))} required>
-            <SelectTrigger>
+          <Select 
+            value={formData.serviceType} 
+            onValueChange={value => {
+              setFormData(prev => ({ ...prev, serviceType: value }));
+              if (errors.serviceType) setErrors(prev => ({ ...prev, serviceType: "" }));
+            }} 
+            required
+          >
+            <SelectTrigger className={errors.serviceType ? "border-destructive" : ""}>
               <SelectValue placeholder="Sélectionner un service" />
             </SelectTrigger>
             <SelectContent>
@@ -126,20 +208,35 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
               <SelectItem value="car">Lavage de Voiture</SelectItem>
             </SelectContent>
           </Select>
+          {errors.serviceType && <p className="text-sm text-destructive">{errors.serviceType}</p>}
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="preferredDate">Date souhaitée</Label>
-            <Input id="preferredDate" name="preferredDate" type="date" value={formData.preferredDate} onChange={handleChange} required />
+            <Input 
+              id="preferredDate" 
+              name="preferredDate" 
+              type="date" 
+              value={formData.preferredDate} 
+              onChange={handleChange} 
+              required 
+              min={new Date().toISOString().split('T')[0]}
+              className={errors.preferredDate ? "border-destructive" : ""}
+            />
+            {errors.preferredDate && <p className="text-sm text-destructive">{errors.preferredDate}</p>}
           </div>
           <div className="space-y-2">
             <Label htmlFor="preferredTime">Heure souhaitée</Label>
-            <Select value={formData.preferredTime} onValueChange={value => setFormData(prev => ({
-            ...prev,
-            preferredTime: value
-          }))} required>
-              <SelectTrigger>
+            <Select 
+              value={formData.preferredTime} 
+              onValueChange={value => {
+                setFormData(prev => ({ ...prev, preferredTime: value }));
+                if (errors.preferredTime) setErrors(prev => ({ ...prev, preferredTime: "" }));
+              }} 
+              required
+            >
+              <SelectTrigger className={errors.preferredTime ? "border-destructive" : ""}>
                 <SelectValue placeholder="Heure" />
               </SelectTrigger>
               <SelectContent>
@@ -153,20 +250,39 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
                 <SelectItem value="17:00">17:00</SelectItem>
               </SelectContent>
             </Select>
+            {errors.preferredTime && <p className="text-sm text-destructive">{errors.preferredTime}</p>}
           </div>
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="message">Message (optionnel)</Label>
-          <Textarea id="message" name="message" placeholder="Précisions supplémentaires..." value={formData.message} onChange={handleChange} rows={3} />
+          <Textarea 
+            id="message" 
+            name="message" 
+            placeholder="Précisions supplémentaires..." 
+            value={formData.message} 
+            onChange={handleChange} 
+            rows={3} 
+            maxLength={1000}
+          />
+          {errors.message && <p className="text-sm text-destructive">{errors.message}</p>}
         </div>
 
-        <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 font-semibold py-6" disabled={loading}>
-          {loading ? <>
+        <Button 
+          type="submit" 
+          className="w-full bg-accent text-accent-foreground hover:bg-accent/90 font-semibold py-6" 
+          disabled={loading}
+        >
+          {loading ? (
+            <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Envoi en cours...
-            </> : "RÉSERVER MAINTENANT"}
+            </>
+          ) : (
+            "RÉSERVER MAINTENANT"
+          )}
         </Button>
       </form>
-    </Card>;
+    </Card>
+  );
 };
