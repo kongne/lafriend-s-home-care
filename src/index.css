@@ -44,33 +44,38 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: 240 60% 12%;
-    --foreground: 0 0% 100%;
+    /* Softer dark background - easier on eyes */
+    --background: 222 20% 14%;
+    --foreground: 210 20% 92%;
 
-    --card: 240 50% 15%;
-    --card-foreground: 0 0% 100%;
+    --card: 222 18% 18%;
+    --card-foreground: 210 20% 92%;
 
-    --popover: 240 50% 15%;
-    --popover-foreground: 0 0% 100%;
+    --popover: 222 18% 18%;
+    --popover-foreground: 210 20% 92%;
 
-    --primary: 43 96% 56%;
-    --primary-foreground: 240 60% 12%;
+    /* Golden accent as primary in dark mode */
+    --primary: 43 90% 55%;
+    --primary-foreground: 222 20% 14%;
 
-    --secondary: 240 40% 20%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 222 16% 22%;
+    --secondary-foreground: 210 20% 92%;
 
-    --muted: 240 40% 20%;
-    --muted-foreground: 240 10% 70%;
+    --muted: 222 16% 22%;
+    --muted-foreground: 210 15% 65%;
 
-    --accent: 43 96% 56%;
-    --accent-foreground: 240 60% 12%;
+    --accent: 43 90% 55%;
+    --accent-foreground: 222 20% 14%;
 
-    --destructive: 0 62.8% 50%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 65% 55%;
+    --destructive-foreground: 210 20% 92%;
 
-    --border: 240 40% 25%;
-    --input: 240 40% 25%;
-    --ring: 43 96% 56%;
+    --border: 222 15% 28%;
+    --input: 222 15% 28%;
+    --ring: 43 90% 55%;
+
+    /* Softer hero overlay */
+    --hero-overlay: 222 20% 14%;
   }
 }
 
@@ -81,5 +86,14 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@keyframes progress {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
   }
 }
