@@ -9,12 +9,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Loader2 } from "lucide-react";
+import { contactSchema, rateLimit } from "@/lib/validation";
 
 export const Contact = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -26,20 +28,55 @@ export const Contact = () => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: "" }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Rate limiting check
+    const rateLimitKey = user?.id || 'anonymous';
+    if (!rateLimit(`contact:${rateLimitKey}`, 5, 60000)) {
+      toast({
+        title: "Trop de tentatives",
+        description: "Veuillez patienter une minute avant de réessayer.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Validate form data
+    const validation = contactSchema.safeParse(formData);
+    
+    if (!validation.success) {
+      const fieldErrors: Record<string, string> = {};
+      validation.error.errors.forEach(err => {
+        if (err.path[0]) {
+          fieldErrors[err.path[0] as string] = err.message;
+        }
+      });
+      setErrors(fieldErrors);
+      toast({
+        title: t('booking.error'),
+        description: "Veuillez corriger les erreurs dans le formulaire.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setLoading(true);
+    setErrors({});
 
     try {
       const { error } = await supabase.from("contact_submissions").insert({
         user_id: user?.id || null,
-        full_name: formData.fullName,
-        email: formData.email,
-        phone: formData.phone || null,
-        subject: formData.subject,
-        message: formData.message,
+        full_name: validation.data.fullName,
+        email: validation.data.email,
+        phone: validation.data.phone || null,
+        subject: validation.data.subject,
+        message: validation.data.message,
       });
 
       if (error) throw error;
@@ -50,11 +87,11 @@ export const Contact = () => {
           body: {
             type: 'contact',
             data: {
-              full_name: formData.fullName,
-              email: formData.email,
-              phone: formData.phone,
-              subject: formData.subject,
-              message: formData.message
+              full_name: validation.data.fullName,
+              email: validation.data.email,
+              phone: validation.data.phone,
+              subject: validation.data.subject,
+              message: validation.data.message
             }
           }
         });
@@ -75,6 +112,7 @@ export const Contact = () => {
         message: "",
       });
     } catch (error) {
+      console.error("Contact error:", error);
       toast({
         title: t('booking.error'),
         description: t('booking.errorDesc'),
@@ -154,7 +192,10 @@ export const Contact = () => {
                   value={formData.fullName}
                   onChange={handleChange}
                   required 
+                  maxLength={100}
+                  className={errors.fullName ? "border-destructive" : ""}
                 />
+                {errors.fullName && <p className="text-sm text-destructive">{errors.fullName}</p>}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="contact-email">{t('booking.email')}</Label>
@@ -166,7 +207,10 @@ export const Contact = () => {
                   value={formData.email}
                   onChange={handleChange}
                   required 
+                  maxLength={255}
+                  className={errors.email ? "border-destructive" : ""}
                 />
+                {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
               </div>
             </div>
 
@@ -179,7 +223,10 @@ export const Contact = () => {
                 placeholder="+237 XXX XXX XXX" 
                 value={formData.phone}
                 onChange={handleChange}
+                maxLength={20}
+                className={errors.phone ? "border-destructive" : ""}
               />
+              {errors.phone && <p className="text-sm text-destructive">{errors.phone}</p>}
             </div>
 
             <div className="space-y-2">
@@ -191,7 +238,10 @@ export const Contact = () => {
                 value={formData.subject}
                 onChange={handleChange}
                 required 
+                maxLength={200}
+                className={errors.subject ? "border-destructive" : ""}
               />
+              {errors.subject && <p className="text-sm text-destructive">{errors.subject}</p>}
             </div>
 
             <div className="space-y-2">
@@ -204,7 +254,10 @@ export const Contact = () => {
                 value={formData.message}
                 onChange={handleChange}
                 required 
+                maxLength={2000}
+                className={errors.message ? "border-destructive" : ""}
               />
+              {errors.message && <p className="text-sm text-destructive">{errors.message}</p>}
             </div>
 
             <Button 
