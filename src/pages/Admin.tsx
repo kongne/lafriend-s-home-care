@@ -1,31 +1,39 @@
-import { useState, useEffect, useCallback } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import { AdminAnalytics } from "@/components/admin/AdminAnalytics";
 import { BulkActions, SelectableItem } from "@/components/admin/BulkActions";
+import { AdminSidebar } from "@/components/admin/AdminSidebar";
+import { AdminHeader } from "@/components/admin/AdminHeader";
+import { KPICard } from "@/components/admin/KPICard";
+import { ActivityFeed } from "@/components/admin/ActivityFeed";
+import { TaskList } from "@/components/admin/TaskList";
 import { exportToCSV, bookingColumns, contactColumns, subscriberColumns } from "@/lib/exportCsv";
+import { exportToPDF } from "@/lib/exportPdf";
 import { staffEmailSchema } from "@/lib/validation";
+import { cn } from "@/lib/utils";
 import { 
   CalendarDays, 
   Mail, 
   Users, 
-  ArrowLeft,
   Loader2,
   Trash2,
   Plus,
   RefreshCw,
   Download,
   BarChart3,
-  Settings,
-  Send
+  Send,
+  FileText,
+  TrendingUp,
+  Clock,
+  CheckCircle2,
 } from "lucide-react";
 
 interface Booking {
@@ -70,6 +78,7 @@ interface NewsletterSubscriber {
 const Admin = () => {
   const { user, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
   
   const [isAdmin, setIsAdmin] = useState(false);
@@ -80,24 +89,101 @@ const Admin = () => {
   const [subscribers, setSubscribers] = useState<NewsletterSubscriber[]>([]);
   const [newStaffEmail, setNewStaffEmail] = useState("");
   const [newStaffName, setNewStaffName] = useState("");
-  const [activeTab, setActiveTab] = useState("analytics");
   
-  // Bulk selection state
   const [selectedBookings, setSelectedBookings] = useState<string[]>([]);
   const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
-  
-  // Sending confirmation state
   const [sendingConfirmation, setSendingConfirmation] = useState<string | null>(null);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const activeTab = searchParams.get("tab") || "analytics";
+
+  // Sample tasks for demo
+  const [tasks, setTasks] = useState([
+    { id: "1", title: "Confirmer les réservations en attente", completed: false, priority: "high" as const },
+    { id: "2", title: "Répondre aux messages clients", completed: false, priority: "medium" as const },
+    { id: "3", title: "Vérifier les disponibilités", completed: true, priority: "low" as const },
+  ]);
+
+  // Computed values
+  const pendingBookings = useMemo(() => bookings.filter(b => b.status === "pending").length, [bookings]);
+  const unreadMessages = useMemo(() => contacts.filter(c => c.status === "unread").length, [contacts]);
+  const confirmedBookings = useMemo(() => bookings.filter(b => b.status === "confirmed").length, [bookings]);
+  
+  // Activity feed from recent bookings and contacts
+  const activities = useMemo(() => {
+    const bookingActivities = bookings.slice(0, 5).map(b => ({
+      id: b.id,
+      type: "booking" as const,
+      title: `Nouvelle réservation`,
+      description: `${b.full_name} - ${b.service_type}`,
+      timestamp: b.created_at,
+      status: b.status,
+    }));
+    const contactActivities = contacts.slice(0, 5).map(c => ({
+      id: c.id,
+      type: "contact" as const,
+      title: `Nouveau message`,
+      description: `${c.full_name}: ${c.subject}`,
+      timestamp: c.created_at,
+      status: c.status,
+    }));
+    return [...bookingActivities, ...contactActivities]
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      .slice(0, 10);
+  }, [bookings, contacts]);
+
+  // Notifications
+  const notifications = useMemo(() => {
+    const notifs = [];
+    if (pendingBookings > 0) {
+      notifs.push({
+        id: "pending",
+        title: "Réservations en attente",
+        message: `${pendingBookings} réservation(s) à confirmer`,
+        time: "Maintenant",
+        read: false,
+      });
+    }
+    if (unreadMessages > 0) {
+      notifs.push({
+        id: "unread",
+        title: "Messages non lus",
+        message: `${unreadMessages} message(s) à lire`,
+        time: "Maintenant",
+        read: false,
+      });
+    }
+    return notifs;
+  }, [pendingBookings, unreadMessages]);
+
+  // Filtered data based on search
+  const filteredBookings = useMemo(() => {
+    if (!searchQuery) return bookings;
+    const q = searchQuery.toLowerCase();
+    return bookings.filter(b => 
+      b.full_name.toLowerCase().includes(q) ||
+      b.email.toLowerCase().includes(q) ||
+      b.service_type.toLowerCase().includes(q)
+    );
+  }, [bookings, searchQuery]);
+
+  const filteredContacts = useMemo(() => {
+    if (!searchQuery) return contacts;
+    const q = searchQuery.toLowerCase();
+    return contacts.filter(c =>
+      c.full_name.toLowerCase().includes(q) ||
+      c.email.toLowerCase().includes(q) ||
+      c.subject.toLowerCase().includes(q)
+    );
+  }, [contacts, searchQuery]);
 
   useEffect(() => {
     if (!authLoading && !user) {
       navigate("/auth");
       return;
     }
-    
-    if (user) {
-      checkAdminRole();
-    }
+    if (user) checkAdminRole();
   }, [user, authLoading, navigate]);
 
   const checkAdminRole = async () => {
@@ -106,19 +192,12 @@ const Admin = () => {
         _user_id: user!.id,
         _role: 'admin'
       });
-
       if (error) throw error;
-      
       if (!data) {
-        toast({
-          title: "Accès refusé",
-          description: "Vous n'avez pas les permissions d'administrateur.",
-          variant: "destructive",
-        });
+        toast({ title: "Accès refusé", description: "Vous n'avez pas les permissions d'administrateur.", variant: "destructive" });
         navigate("/");
         return;
       }
-
       setIsAdmin(true);
       fetchAllData();
     } catch (error) {
@@ -130,56 +209,31 @@ const Admin = () => {
   };
 
   const fetchAllData = async () => {
-    await Promise.all([
-      fetchBookings(),
-      fetchContacts(),
-      fetchStaffEmails(),
-      fetchSubscribers(),
-    ]);
+    await Promise.all([fetchBookings(), fetchContacts(), fetchStaffEmails(), fetchSubscribers()]);
   };
 
   const fetchBookings = async () => {
-    const { data, error } = await supabase
-      .from("bookings")
-      .select("*")
-      .order("created_at", { ascending: false });
-    
+    const { data, error } = await supabase.from("bookings").select("*").order("created_at", { ascending: false });
     if (!error && data) setBookings(data);
   };
 
   const fetchContacts = async () => {
-    const { data, error } = await supabase
-      .from("contact_submissions")
-      .select("*")
-      .order("created_at", { ascending: false });
-    
+    const { data, error } = await supabase.from("contact_submissions").select("*").order("created_at", { ascending: false });
     if (!error && data) setContacts(data);
   };
 
   const fetchStaffEmails = async () => {
-    const { data, error } = await supabase
-      .from("staff_emails")
-      .select("*")
-      .order("created_at", { ascending: false });
-    
+    const { data, error } = await supabase.from("staff_emails").select("*").order("created_at", { ascending: false });
     if (!error && data) setStaffEmails(data);
   };
 
   const fetchSubscribers = async () => {
-    const { data, error } = await supabase
-      .from("newsletter_subscribers")
-      .select("*")
-      .order("subscribed_at", { ascending: false });
-    
+    const { data, error } = await supabase.from("newsletter_subscribers").select("*").order("subscribed_at", { ascending: false });
     if (!error && data) setSubscribers(data);
   };
 
   const updateBookingStatus = async (id: string, status: string) => {
-    const { error } = await supabase
-      .from("bookings")
-      .update({ status })
-      .eq("id", id);
-    
+    const { error } = await supabase.from("bookings").update({ status }).eq("id", id);
     if (!error) {
       toast({ title: "Statut mis à jour" });
       fetchBookings();
@@ -187,11 +241,7 @@ const Admin = () => {
   };
 
   const updateContactStatus = async (id: string, status: string) => {
-    const { error } = await supabase
-      .from("contact_submissions")
-      .update({ status })
-      .eq("id", id);
-    
+    const { error } = await supabase.from("contact_submissions").update({ status }).eq("id", id);
     if (!error) {
       toast({ title: "Statut mis à jour" });
       fetchContacts();
@@ -202,20 +252,9 @@ const Admin = () => {
     setSendingConfirmation(booking.id);
     try {
       const { error } = await supabase.functions.invoke('send-booking-confirmation', {
-        body: {
-          booking: {
-            full_name: booking.full_name,
-            email: booking.email,
-            service_type: booking.service_type,
-            preferred_date: booking.preferred_date,
-            preferred_time: booking.preferred_time,
-            address: booking.address
-          }
-        }
+        body: { booking: { full_name: booking.full_name, email: booking.email, service_type: booking.service_type, preferred_date: booking.preferred_date, preferred_time: booking.preferred_time, address: booking.address } }
       });
-      
       if (error) throw error;
-      
       toast({ title: "Confirmation envoyée", description: `Email envoyé à ${booking.email}` });
     } catch (error) {
       console.error("Error sending confirmation:", error);
@@ -227,16 +266,11 @@ const Admin = () => {
 
   const addStaffEmail = async () => {
     const validation = staffEmailSchema.safeParse({ email: newStaffEmail, name: newStaffName || undefined });
-    
     if (!validation.success) {
       toast({ title: "Erreur", description: validation.error.errors[0].message, variant: "destructive" });
       return;
     }
-    
-    const { error } = await supabase
-      .from("staff_emails")
-      .insert({ email: validation.data.email, name: validation.data.name || null });
-    
+    const { error } = await supabase.from("staff_emails").insert({ email: validation.data.email, name: validation.data.name || null });
     if (!error) {
       toast({ title: "Email ajouté" });
       setNewStaffEmail("");
@@ -248,30 +282,19 @@ const Admin = () => {
   };
 
   const removeStaffEmail = async (id: string) => {
-    const { error } = await supabase
-      .from("staff_emails")
-      .delete()
-      .eq("id", id);
-    
+    const { error } = await supabase.from("staff_emails").delete().eq("id", id);
     if (!error) {
       toast({ title: "Email supprimé" });
       fetchStaffEmails();
     }
   };
 
-  // Bulk actions handler
   const handleBulkBookingAction = useCallback(async (action: string, ids: string[]) => {
     if (action === 'delete') {
-      // Note: Delete not supported by RLS, would need policy update
       toast({ title: "Action non disponible", description: "La suppression en masse nécessite une mise à jour des permissions", variant: "destructive" });
       return;
     }
-    
-    const { error } = await supabase
-      .from("bookings")
-      .update({ status: action })
-      .in("id", ids);
-    
+    const { error } = await supabase.from("bookings").update({ status: action }).in("id", ids);
     if (!error) {
       toast({ title: "Mise à jour effectuée", description: `${ids.length} réservation(s) mise(s) à jour` });
       setSelectedBookings([]);
@@ -286,12 +309,7 @@ const Admin = () => {
       toast({ title: "Action non disponible", description: "La suppression en masse nécessite une mise à jour des permissions", variant: "destructive" });
       return;
     }
-    
-    const { error } = await supabase
-      .from("contact_submissions")
-      .update({ status: action })
-      .in("id", ids);
-    
+    const { error } = await supabase.from("contact_submissions").update({ status: action }).in("id", ids);
     if (!error) {
       toast({ title: "Mise à jour effectuée", description: `${ids.length} message(s) mis à jour` });
       setSelectedContacts([]);
@@ -302,15 +320,11 @@ const Admin = () => {
   }, [toast]);
 
   const toggleBookingSelection = (id: string, checked: boolean) => {
-    setSelectedBookings(prev => 
-      checked ? [...prev, id] : prev.filter(i => i !== id)
-    );
+    setSelectedBookings(prev => checked ? [...prev, id] : prev.filter(i => i !== id));
   };
 
   const toggleContactSelection = (id: string, checked: boolean) => {
-    setSelectedContacts(prev => 
-      checked ? [...prev, id] : prev.filter(i => i !== id)
-    );
+    setSelectedContacts(prev => checked ? [...prev, id] : prev.filter(i => i !== id));
   };
 
   const getStatusBadge = (status: string) => {
@@ -326,9 +340,13 @@ const Admin = () => {
     return <Badge className={`${colors[status] || "bg-gray-500"} text-white`}>{status}</Badge>;
   };
 
+  const setActiveTab = (tab: string) => {
+    setSearchParams({ tab });
+  };
+
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-accent" />
       </div>
     );
@@ -336,125 +354,58 @@ const Admin = () => {
 
   if (!isAdmin) return null;
 
-  return (
-    <div className="min-h-screen bg-background p-4 md:p-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex flex-wrap items-center gap-4 mb-8">
-          <Button variant="ghost" onClick={() => navigate("/")}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Retour
-          </Button>
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground flex-1">
-            Tableau de bord Admin
-          </h1>
-          <Button variant="outline" size="icon" onClick={fetchAllData}>
-            <RefreshCw className="h-4 w-4" />
-          </Button>
-          <Link to="/admin/settings">
-            <Button variant="outline" size="icon">
-              <Settings className="h-4 w-4" />
-            </Button>
-          </Link>
-          <Button onClick={signOut} variant="destructive" size="sm">
-            Déconnexion
-          </Button>
-        </div>
+  const renderContent = () => {
+    switch (activeTab) {
+      case "analytics":
+        return (
+          <div className="space-y-6">
+            {/* KPI Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <KPICard title="Réservations" value={bookings.length} change={12} icon={CalendarDays} />
+              <KPICard title="En attente" value={pendingBookings} icon={Clock} iconColor="text-yellow-500" />
+              <KPICard title="Confirmées" value={confirmedBookings} change={8} icon={CheckCircle2} iconColor="text-green-500" />
+              <KPICard title="Messages" value={contacts.length} icon={Mail} iconColor="text-purple-500" />
+            </div>
 
-        {/* Summary Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-4">
-                <CalendarDays className="h-8 w-8 text-accent" />
-                <div>
-                  <p className="text-2xl font-bold">{bookings.length}</p>
-                  <p className="text-muted-foreground text-sm">Réservations</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-4">
-                <Mail className="h-8 w-8 text-accent" />
-                <div>
-                  <p className="text-2xl font-bold">{contacts.length}</p>
-                  <p className="text-muted-foreground text-sm">Messages</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-4">
-                <Users className="h-8 w-8 text-accent" />
-                <div>
-                  <p className="text-2xl font-bold">{subscribers.length}</p>
-                  <p className="text-muted-foreground text-sm">Abonnés</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-4">
-                <BarChart3 className="h-8 w-8 text-accent" />
-                <div>
-                  <p className="text-2xl font-bold">{bookings.filter(b => b.status === 'pending').length}</p>
-                  <p className="text-muted-foreground text-sm">En attente</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Main Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="analytics" className="flex items-center gap-2">
-              <BarChart3 className="h-4 w-4 hidden sm:block" />
-              Statistiques
-            </TabsTrigger>
-            <TabsTrigger value="bookings">Réservations</TabsTrigger>
-            <TabsTrigger value="contacts">Messages</TabsTrigger>
-            <TabsTrigger value="subscribers">Abonnés</TabsTrigger>
-            <TabsTrigger value="staff">Staff</TabsTrigger>
-          </TabsList>
-
-          {/* Analytics Tab */}
-          <TabsContent value="analytics">
+            {/* Charts & Analytics */}
             <AdminAnalytics bookings={bookings} contacts={contacts} />
-          </TabsContent>
 
-          {/* Bookings Tab */}
-          <TabsContent value="bookings" className="space-y-4">
-            <div className="flex justify-between items-center">
+            {/* Activity & Tasks */}
+            <div className="grid lg:grid-cols-2 gap-6">
+              <ActivityFeed activities={activities} />
+              <TaskList
+                tasks={tasks}
+                onToggle={(id, completed) => setTasks(tasks.map(t => t.id === id ? { ...t, completed } : t))}
+                onDelete={(id) => setTasks(tasks.filter(t => t.id !== id))}
+              />
+            </div>
+          </div>
+        );
+
+      case "bookings":
+        return (
+          <div className="space-y-4">
+            <div className="flex flex-wrap justify-between items-center gap-4">
               <BulkActions
                 selectedIds={selectedBookings}
-                onSelectAll={(checked) => setSelectedBookings(checked ? bookings.map(b => b.id) : [])}
-                allSelected={selectedBookings.length === bookings.length && bookings.length > 0}
-                someSelected={selectedBookings.length > 0 && selectedBookings.length < bookings.length}
+                onSelectAll={(checked) => setSelectedBookings(checked ? filteredBookings.map(b => b.id) : [])}
+                allSelected={selectedBookings.length === filteredBookings.length && filteredBookings.length > 0}
+                someSelected={selectedBookings.length > 0 && selectedBookings.length < filteredBookings.length}
                 onBulkAction={handleBulkBookingAction}
                 type="bookings"
               />
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => exportToCSV(bookings, "reservations", bookingColumns)}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Exporter CSV
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => exportToCSV(filteredBookings, "reservations", bookingColumns)}>
+                  <Download className="h-4 w-4 mr-2" />CSV
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => exportToPDF(filteredBookings, "reservations", bookingColumns, "Réservations")}>
+                  <FileText className="h-4 w-4 mr-2" />PDF
+                </Button>
+              </div>
             </div>
             
-            {bookings.map((booking) => (
-              <SelectableItem 
-                key={booking.id}
-                id={booking.id}
-                selected={selectedBookings.includes(booking.id)}
-                onSelect={toggleBookingSelection}
-              >
+            {filteredBookings.map((booking) => (
+              <SelectableItem key={booking.id} id={booking.id} selected={selectedBookings.includes(booking.id)} onSelect={toggleBookingSelection}>
                 <Card>
                   <CardHeader className="pb-2">
                     <div className="flex justify-between items-start">
@@ -469,32 +420,15 @@ const Admin = () => {
                       <div><strong>Service:</strong> {booking.service_type}</div>
                       <div><strong>Date:</strong> {booking.preferred_date} à {booking.preferred_time}</div>
                       <div className="col-span-2"><strong>Adresse:</strong> {booking.address}</div>
-                      {booking.message && (
-                        <div className="col-span-2"><strong>Message:</strong> {booking.message}</div>
-                      )}
+                      {booking.message && <div className="col-span-2"><strong>Message:</strong> {booking.message}</div>}
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      <Button size="sm" variant="outline" onClick={() => updateBookingStatus(booking.id, "confirmed")}>
-                        Confirmer
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => updateBookingStatus(booking.id, "completed")}>
-                        Terminé
-                      </Button>
-                      <Button size="sm" variant="destructive" onClick={() => updateBookingStatus(booking.id, "cancelled")}>
-                        Annuler
-                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => updateBookingStatus(booking.id, "confirmed")}>Confirmer</Button>
+                      <Button size="sm" variant="outline" onClick={() => updateBookingStatus(booking.id, "completed")}>Terminé</Button>
+                      <Button size="sm" variant="destructive" onClick={() => updateBookingStatus(booking.id, "cancelled")}>Annuler</Button>
                       {booking.status === 'confirmed' && (
-                        <Button 
-                          size="sm" 
-                          variant="secondary"
-                          onClick={() => sendBookingConfirmation(booking)}
-                          disabled={sendingConfirmation === booking.id}
-                        >
-                          {sendingConfirmation === booking.id ? (
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          ) : (
-                            <Send className="h-4 w-4 mr-2" />
-                          )}
+                        <Button size="sm" variant="secondary" onClick={() => sendBookingConfirmation(booking)} disabled={sendingConfirmation === booking.id}>
+                          {sendingConfirmation === booking.id ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
                           Envoyer confirmation
                         </Button>
                       )}
@@ -503,39 +437,22 @@ const Admin = () => {
                 </Card>
               </SelectableItem>
             ))}
-            {bookings.length === 0 && (
-              <Card><CardContent className="py-8 text-center text-muted-foreground">Aucune réservation</CardContent></Card>
-            )}
-          </TabsContent>
+            {filteredBookings.length === 0 && <Card><CardContent className="py-8 text-center text-muted-foreground">Aucune réservation</CardContent></Card>}
+          </div>
+        );
 
-          {/* Contacts Tab */}
-          <TabsContent value="contacts" className="space-y-4">
-            <div className="flex justify-between items-center">
-              <BulkActions
-                selectedIds={selectedContacts}
-                onSelectAll={(checked) => setSelectedContacts(checked ? contacts.map(c => c.id) : [])}
-                allSelected={selectedContacts.length === contacts.length && contacts.length > 0}
-                someSelected={selectedContacts.length > 0 && selectedContacts.length < contacts.length}
-                onBulkAction={handleBulkContactAction}
-                type="contacts"
-              />
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => exportToCSV(contacts, "messages", contactColumns)}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Exporter CSV
-              </Button>
+      case "contacts":
+        return (
+          <div className="space-y-4">
+            <div className="flex flex-wrap justify-between items-center gap-4">
+              <BulkActions selectedIds={selectedContacts} onSelectAll={(checked) => setSelectedContacts(checked ? filteredContacts.map(c => c.id) : [])} allSelected={selectedContacts.length === filteredContacts.length && filteredContacts.length > 0} someSelected={selectedContacts.length > 0 && selectedContacts.length < filteredContacts.length} onBulkAction={handleBulkContactAction} type="contacts" />
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => exportToCSV(filteredContacts, "messages", contactColumns)}><Download className="h-4 w-4 mr-2" />CSV</Button>
+                <Button variant="outline" size="sm" onClick={() => exportToPDF(filteredContacts, "messages", contactColumns, "Messages")}><FileText className="h-4 w-4 mr-2" />PDF</Button>
+              </div>
             </div>
-            
-            {contacts.map((contact) => (
-              <SelectableItem
-                key={contact.id}
-                id={contact.id}
-                selected={selectedContacts.includes(contact.id)}
-                onSelect={toggleContactSelection}
-              >
+            {filteredContacts.map((contact) => (
+              <SelectableItem key={contact.id} id={contact.id} selected={selectedContacts.includes(contact.id)} onSelect={toggleContactSelection}>
                 <Card>
                   <CardHeader className="pb-2">
                     <div className="flex justify-between items-start">
@@ -551,114 +468,157 @@ const Admin = () => {
                       <div className="col-span-2"><strong>Message:</strong> {contact.message}</div>
                     </div>
                     <div className="flex gap-2">
-                      <Button size="sm" variant="outline" onClick={() => updateContactStatus(contact.id, "read")}>
-                        Marquer lu
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => updateContactStatus(contact.id, "replied")}>
-                        Répondu
-                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => updateContactStatus(contact.id, "read")}>Marquer lu</Button>
+                      <Button size="sm" variant="outline" onClick={() => updateContactStatus(contact.id, "replied")}>Répondu</Button>
                     </div>
                   </CardContent>
                 </Card>
               </SelectableItem>
             ))}
-            {contacts.length === 0 && (
-              <Card><CardContent className="py-8 text-center text-muted-foreground">Aucun message</CardContent></Card>
-            )}
-          </TabsContent>
+            {filteredContacts.length === 0 && <Card><CardContent className="py-8 text-center text-muted-foreground">Aucun message</CardContent></Card>}
+          </div>
+        );
 
-          {/* Subscribers Tab */}
-          <TabsContent value="subscribers" className="space-y-4">
-            <div className="flex justify-end mb-4">
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => exportToCSV(subscribers, "abonnes", subscriberColumns)}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Exporter CSV
-              </Button>
+      case "subscribers":
+        return (
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold">Abonnés Newsletter ({subscribers.length})</h2>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => exportToCSV(subscribers, "abonnes", subscriberColumns)}><Download className="h-4 w-4 mr-2" />CSV</Button>
+                <Button variant="outline" size="sm" onClick={() => exportToPDF(subscribers, "abonnes", subscriberColumns, "Abonnés Newsletter")}><FileText className="h-4 w-4 mr-2" />PDF</Button>
+              </div>
             </div>
             <Card>
               <CardContent className="pt-6">
                 <div className="space-y-2">
                   {subscribers.map((sub) => (
-                    <div key={sub.id} className="flex justify-between items-center p-2 bg-muted rounded">
-                      <span>{sub.email}</span>
-                      <span className="text-sm text-muted-foreground">
-                        {new Date(sub.subscribed_at).toLocaleDateString('fr-FR')}
-                      </span>
+                    <div key={sub.id} className="flex justify-between items-center p-3 bg-muted rounded-lg">
+                      <span className="font-medium">{sub.email}</span>
+                      <span className="text-sm text-muted-foreground">{new Date(sub.subscribed_at).toLocaleDateString('fr-FR')}</span>
                     </div>
                   ))}
-                  {subscribers.length === 0 && (
-                    <p className="text-center text-muted-foreground py-4">Aucun abonné</p>
-                  )}
+                  {subscribers.length === 0 && <p className="text-center text-muted-foreground py-4">Aucun abonné</p>}
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
+          </div>
+        );
 
-          {/* Staff Tab */}
-          <TabsContent value="staff" className="space-y-4">
+      case "staff":
+        return (
+          <div className="space-y-4">
             <Card>
-              <CardHeader>
-                <CardTitle>Ajouter un email staff</CardTitle>
-              </CardHeader>
+              <CardHeader><CardTitle>Ajouter un email staff</CardTitle></CardHeader>
               <CardContent>
                 <div className="flex flex-col sm:flex-row gap-2">
                   <div className="flex-1">
                     <Label htmlFor="staffName">Nom</Label>
-                    <Input
-                      id="staffName"
-                      placeholder="Nom (optionnel)"
-                      value={newStaffName}
-                      onChange={(e) => setNewStaffName(e.target.value)}
-                    />
+                    <Input id="staffName" placeholder="Nom (optionnel)" value={newStaffName} onChange={(e) => setNewStaffName(e.target.value)} />
                   </div>
                   <div className="flex-1">
                     <Label htmlFor="staffEmail">Email</Label>
-                    <Input
-                      id="staffEmail"
-                      type="email"
-                      placeholder="email@exemple.com"
-                      value={newStaffEmail}
-                      onChange={(e) => setNewStaffEmail(e.target.value)}
-                    />
+                    <Input id="staffEmail" type="email" placeholder="email@exemple.com" value={newStaffEmail} onChange={(e) => setNewStaffEmail(e.target.value)} />
                   </div>
-                  <div className="flex items-end">
-                    <Button onClick={addStaffEmail}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Ajouter
-                    </Button>
-                  </div>
+                  <div className="flex items-end"><Button onClick={addStaffEmail}><Plus className="h-4 w-4 mr-2" />Ajouter</Button></div>
                 </div>
               </CardContent>
             </Card>
-            
             <Card>
               <CardContent className="pt-6">
                 <div className="space-y-2">
                   {staffEmails.map((staff) => (
-                    <div key={staff.id} className="flex justify-between items-center p-2 bg-muted rounded">
-                      <div>
-                        {staff.name && <span className="font-medium mr-2">{staff.name}</span>}
-                        <span>{staff.email}</span>
-                      </div>
-                      <Button size="icon" variant="ghost" onClick={() => removeStaffEmail(staff.id)}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+                    <div key={staff.id} className="flex justify-between items-center p-3 bg-muted rounded-lg">
+                      <div>{staff.name && <span className="font-medium mr-2">{staff.name}</span>}<span>{staff.email}</span></div>
+                      <Button size="icon" variant="ghost" onClick={() => removeStaffEmail(staff.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                     </div>
                   ))}
-                  {staffEmails.length === 0 && (
-                    <p className="text-center text-muted-foreground py-4">
-                      Aucun email staff configuré. Ajoutez des emails pour recevoir les notifications.
-                    </p>
-                  )}
+                  {staffEmails.length === 0 && <p className="text-center text-muted-foreground py-4">Aucun email staff configuré.</p>}
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
-        </Tabs>
+          </div>
+        );
+
+      case "reports":
+        return (
+          <div className="space-y-6">
+            <h2 className="text-xl font-semibold">Rapports et Exports</h2>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => exportToPDF(bookings, "rapport-reservations", bookingColumns, "Rapport des Réservations")}>
+                <CardContent className="pt-6 text-center">
+                  <CalendarDays className="h-12 w-12 mx-auto mb-4 text-accent" />
+                  <h3 className="font-semibold mb-2">Rapport Réservations</h3>
+                  <p className="text-sm text-muted-foreground">Exporter toutes les réservations en PDF</p>
+                </CardContent>
+              </Card>
+              <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => exportToPDF(contacts, "rapport-messages", contactColumns, "Rapport des Messages")}>
+                <CardContent className="pt-6 text-center">
+                  <Mail className="h-12 w-12 mx-auto mb-4 text-purple-500" />
+                  <h3 className="font-semibold mb-2">Rapport Messages</h3>
+                  <p className="text-sm text-muted-foreground">Exporter tous les messages en PDF</p>
+                </CardContent>
+              </Card>
+              <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => exportToPDF(subscribers, "rapport-abonnes", subscriberColumns, "Rapport des Abonnés")}>
+                <CardContent className="pt-6 text-center">
+                  <Users className="h-12 w-12 mx-auto mb-4 text-green-500" />
+                  <h3 className="font-semibold mb-2">Rapport Abonnés</h3>
+                  <p className="text-sm text-muted-foreground">Exporter tous les abonnés en PDF</p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        );
+
+      default:
+        return <div className="text-center py-12 text-muted-foreground">Section en construction</div>;
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Sidebar - Desktop */}
+      <div className="hidden md:block">
+        <AdminSidebar onSignOut={signOut} pendingCount={pendingBookings} unreadMessages={unreadMessages} />
+      </div>
+
+      {/* Mobile Sidebar Overlay */}
+      {mobileSidebarOpen && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setMobileSidebarOpen(false)} />
+          <AdminSidebar onSignOut={signOut} pendingCount={pendingBookings} unreadMessages={unreadMessages} />
+        </div>
+      )}
+
+      {/* Main Content */}
+      <div className="md:ml-64 transition-all duration-300">
+        <AdminHeader
+          userName={user?.email?.split("@")[0]}
+          notifications={notifications}
+          onSearch={setSearchQuery}
+          onToggleMobileSidebar={() => setMobileSidebarOpen(!mobileSidebarOpen)}
+          showMobileMenu={mobileSidebarOpen}
+        />
+
+        <main className="p-4 md:p-6 lg:p-8">
+          {/* Page Title & Refresh */}
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold text-foreground capitalize">
+                {activeTab === "analytics" ? "Tableau de bord" : activeTab}
+              </h1>
+              <p className="text-muted-foreground text-sm">
+                {new Date().toLocaleDateString("fr-FR", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+              </p>
+            </div>
+            <Button variant="outline" size="icon" onClick={fetchAllData} aria-label="Rafraîchir">
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+          </div>
+
+          {/* Tab Content */}
+          {renderContent()}
+        </main>
       </div>
     </div>
   );
