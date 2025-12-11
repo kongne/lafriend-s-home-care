@@ -6,13 +6,36 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Rate limiting store (in-memory, resets on function restart)
+const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
+
+const checkRateLimit = (ip: string, maxRequests: number = 10, windowMs: number = 60000): boolean => {
+  const now = Date.now();
+  const record = rateLimitStore.get(ip);
+
+  if (!record || now > record.resetTime) {
+    rateLimitStore.set(ip, { count: 1, resetTime: now + windowMs });
+    return true;
+  }
+
+  if (record.count >= maxRequests) {
+    return false;
+  }
+
+  record.count++;
+  return true;
+};
+
+// Sanitize input strings
+const sanitizeString = (val: string) => val.replace(/[<>]/g, '').replace(/javascript:/gi, '').replace(/on\w+=/gi, '').trim();
+
 const requestSchema = z.object({
-  clientEmail: z.string().email().max(255),
-  clientName: z.string().min(1).max(100),
-  serviceType: z.string().min(1).max(100),
-  preferredDate: z.string().min(1).max(50),
-  preferredTime: z.string().min(1).max(50),
-  address: z.string().min(1).max(500),
+  clientEmail: z.string().email().max(255).transform(val => val.toLowerCase().trim()),
+  clientName: z.string().min(1).max(100).transform(sanitizeString),
+  serviceType: z.string().min(1).max(100).transform(sanitizeString),
+  preferredDate: z.string().min(1).max(50).transform(sanitizeString),
+  preferredTime: z.string().min(1).max(50).transform(sanitizeString),
+  address: z.string().min(1).max(500).transform(sanitizeString),
   language: z.enum(['fr', 'en']).default('fr'),
 });
 
@@ -24,6 +47,19 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    // Rate limiting based on IP
+    const clientIP = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || 
+                     req.headers.get("x-real-ip") || 
+                     "unknown";
+    
+    if (!checkRateLimit(clientIP, 10, 60000)) {
+      console.warn(`Rate limit exceeded for IP: ${clientIP}`);
+      return new Response(
+        JSON.stringify({ error: "Too many requests. Please try again later." }),
+        { status: 429, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
     if (!resendApiKey) {
       console.error("RESEND_API_KEY not configured");
