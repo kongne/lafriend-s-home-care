@@ -178,6 +178,48 @@ const Admin = () => {
     );
   }, [contacts, searchQuery]);
 
+  // Real-time subscriptions for new bookings and contacts
+  useEffect(() => {
+    if (!isAdmin) return;
+
+    const bookingsChannel = supabase
+      .channel('bookings-realtime')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'bookings' },
+        (payload) => {
+          const newBooking = payload.new as Booking;
+          setBookings((prev) => [newBooking, ...prev]);
+          toast({
+            title: "Nouvelle réservation",
+            description: `${newBooking.full_name} - ${newBooking.service_type}`,
+          });
+        }
+      )
+      .subscribe();
+
+    const contactsChannel = supabase
+      .channel('contacts-realtime')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'contact_submissions' },
+        (payload) => {
+          const newContact = payload.new as ContactSubmission;
+          setContacts((prev) => [newContact, ...prev]);
+          toast({
+            title: "Nouveau message",
+            description: `${newContact.full_name}: ${newContact.subject}`,
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(bookingsChannel);
+      supabase.removeChannel(contactsChannel);
+    };
+  }, [isAdmin, toast]);
+
   useEffect(() => {
     if (!authLoading && !user) {
       navigate("/auth");

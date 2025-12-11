@@ -46,6 +46,12 @@ export const AdminHeader = ({
     onSearch?.(searchQuery);
   };
 
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    onSearch?.(value);
+  };
+
   return (
     <header className="sticky top-0 z-30 bg-card/95 backdrop-blur-sm border-b border-border px-4 md:px-6 py-3">
       <div className="flex items-center gap-4">
@@ -60,7 +66,7 @@ export const AdminHeader = ({
           {showMobileMenu ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </Button>
 
-        {/* Search */}
+        {/* Search - Desktop */}
         <form onSubmit={handleSearch} className="flex-1 max-w-md hidden sm:block">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -68,8 +74,23 @@ export const AdminHeader = ({
               type="search"
               placeholder="Rechercher..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={handleSearchChange}
               className="pl-10 bg-background"
+              aria-label="Search"
+            />
+          </div>
+        </form>
+
+        {/* Search - Mobile */}
+        <form onSubmit={handleSearch} className="flex-1 sm:hidden">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Rechercher..."
+              value={searchQuery}
+              onChange={handleSearchChange}
+              className="pl-10 bg-background h-9"
               aria-label="Search"
             />
           </div>

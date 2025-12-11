@@ -123,7 +123,28 @@ export const Testimonials = () => {
 
         {/* Grid of testimonials */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-          {testimonials.map((testimonial, index) => {})}
+          {testimonials.map((testimonial, index) => (
+            <Card
+              key={index}
+              className={`p-4 cursor-pointer transition-all duration-300 ${
+                index === activeIndex ? 'ring-2 ring-accent bg-card' : 'bg-card/50 hover:bg-card/80'
+              }`}
+              onClick={() => goToSlide(index)}
+            >
+              <div className="flex items-center gap-3">
+                <img
+                  src={testimonial.image}
+                  alt={testimonial.name}
+                  className="w-12 h-12 rounded-full object-cover"
+                  loading="lazy"
+                />
+                <div>
+                  <p className="font-semibold text-foreground text-sm">{testimonial.name}</p>
+                  <p className="text-xs text-muted-foreground">{testimonial.location}</p>
+                </div>
+              </div>
+            </Card>
+          ))}
         </div>
       </div>
     </section>;

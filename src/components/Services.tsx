@@ -1,7 +1,9 @@
 import { Home, Building2, HardHat, Sparkles, Car, CheckCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { BookingModal } from "./BookingModal";
 
 export const Services = () => {
   const { ref, isVisible } = useScrollReveal();
@@ -80,7 +82,7 @@ export const Services = () => {
               </div>
               <h3 className="text-xl md:text-2xl font-bold mb-3 text-foreground group-hover:text-accent transition-colors">{t(service.titleKey)}</h3>
               <p className="text-muted-foreground mb-6 text-sm md:text-base">{t(service.descKey)}</p>
-              <ul className="space-y-2">
+              <ul className="space-y-2 mb-6">
                 {service.features.map((featureKey, idx) => (
                   <li key={idx} className="flex items-center gap-2 text-sm text-foreground">
                     <CheckCircle className="w-4 h-4 text-accent flex-shrink-0" />
@@ -88,6 +90,11 @@ export const Services = () => {
                   </li>
                 ))}
               </ul>
+              <BookingModal>
+                <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
+                  {t('hero.book')}
+                </Button>
+              </BookingModal>
             </Card>
           ))}
         </div>
