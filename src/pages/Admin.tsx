@@ -294,7 +294,15 @@ const Admin = () => {
     setSendingConfirmation(booking.id);
     try {
       const { error } = await supabase.functions.invoke('send-booking-confirmation', {
-        body: { booking: { full_name: booking.full_name, email: booking.email, service_type: booking.service_type, preferred_date: booking.preferred_date, preferred_time: booking.preferred_time, address: booking.address } }
+        body: {
+          clientEmail: booking.email,
+          clientName: booking.full_name,
+          serviceType: booking.service_type,
+          preferredDate: booking.preferred_date,
+          preferredTime: booking.preferred_time,
+          address: booking.address,
+          language: 'fr'
+        }
       });
       if (error) throw error;
       toast({ title: "Confirmation envoyée", description: `Email envoyé à ${booking.email}` });
