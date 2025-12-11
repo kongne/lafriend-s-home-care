@@ -63,7 +63,7 @@ export const About = () => {
           </div>
 
           {/* Right content - Stats */}
-          <div className="grid grid-cols-2 gap-4 md:gap-6">
+          {/*<div className="grid grid-cols-2 gap-4 md:gap-6">
             {stats.map((stat, index) => (
               <div
                 key={index}
@@ -73,8 +73,8 @@ export const About = () => {
                 <div className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2">{stat.value}</div>
                 <div className="text-xs sm:text-sm opacity-90">{t(stat.labelKey)}</div>
               </div>
-            ))}
-          </div>
+            ))
+          </div>*/}
         </div>
       </div>
     </section>
