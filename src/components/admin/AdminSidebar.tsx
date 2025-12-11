@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   BarChart3,
@@ -36,8 +36,14 @@ const menuItems = [
 export const AdminSidebar = ({ onSignOut, pendingCount, unreadMessages }: AdminSidebarProps) => {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const searchParams = new URLSearchParams(location.search);
   const currentTab = searchParams.get("tab") || "analytics";
+
+  const handleSignOut = async () => {
+    await onSignOut();
+    navigate("/");
+  };
 
   return (
     <aside
@@ -131,7 +137,7 @@ export const AdminSidebar = ({ onSignOut, pendingCount, unreadMessages }: AdminS
         </Link>
         <Button
           variant="ghost"
-          onClick={onSignOut}
+          onClick={handleSignOut}
           className={cn(
             "w-full justify-start gap-3 text-destructive hover:text-destructive hover:bg-destructive/10",
             collapsed && "justify-center px-2"

@@ -28,6 +28,16 @@ export const translations: Translations = {
   'hero.description': { fr: 'Notre équipe d\'experts offre des services de qualité supérieure pour votre maison, bureau ou véhicule. Avec notre plateforme en ligne facile d\'utilisation, réservez en quelques clics et profitez d\'un environnement impeccable.', en: 'Our team of experts offers superior quality services for your home, office or vehicle. With our easy-to-use online platform, book in a few clicks and enjoy an impeccable environment.' },
   'hero.book': { fr: 'RÉSERVER UN SERVICE', en: 'BOOK A SERVICE' },
   'hero.learnMore': { fr: 'EN SAVOIR PLUS', en: 'LEARN MORE' },
+  'hero.slide2.title': { fr: 'Nettoyage Commercial Expert', en: 'Expert Commercial Cleaning' },
+  'hero.slide2.subtitle': { fr: 'Solutions professionnelles pour bureaux, commerces et espaces de travail. Maintenez un environnement sain pour vos employés et clients.', en: 'Professional solutions for offices, shops and workspaces. Maintain a healthy environment for your employees and customers.' },
+  'hero.slide3.title': { fr: 'Lavage Auto Premium', en: 'Premium Car Wash' },
+  'hero.slide3.subtitle': { fr: 'Service de lavage automobile complet pour l\'extérieur et l\'intérieur. Redonnez vie à votre véhicule avec notre expertise.', en: 'Complete car wash service for exterior and interior. Bring your vehicle back to life with our expertise.' },
+  
+  // Stats section
+  'stats.clients': { fr: 'Clients Satisfaits', en: 'Satisfied Clients' },
+  'stats.years': { fr: 'Années d\'Expérience', en: 'Years Experience' },
+  'stats.quality': { fr: 'Garantie Qualité', en: 'Quality Guarantee' },
+  'stats.support': { fr: 'Support Disponible', en: 'Support Available' },
   
   // Booking form
   'booking.title': { fr: 'Réserver un service', en: 'Book a service' },
