@@ -51,14 +51,14 @@ export const About = () => {
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </BookingModal>
-              <Button 
+              {/*<Button 
                 variant="outline" 
                 size="lg"
                 onClick={scrollToServices}
                 className="border-primary text-foreground hover:bg-primary hover:text-primary-foreground"
               >
                 {t('hero.learnMore')}
-              </Button>
+              </Button>*/}
             </div>
           </div>
 
