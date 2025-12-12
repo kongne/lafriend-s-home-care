@@ -20,7 +20,7 @@ const Index = () => {
         <Services />
         <Gallery />
         <Pricing />
-        <Testimonials className="pl-0 pt-[10px] pb-[10px]" />
+        <Testimonials className="pl-0 pt-[10px] pb-px" />
         <About />
         <StatsCounter />
         <FAQ />
