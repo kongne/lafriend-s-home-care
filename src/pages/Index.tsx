@@ -12,17 +12,15 @@ import { Footer } from "@/components/Footer";
 import { ChatWidget } from "@/components/ChatWidget";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { BackToTop } from "@/components/BackToTop";
-
 const Index = () => {
-  return (
-    <div className="min-h-screen">
+  return <div className="min-h-screen">
       <Navbar />
       <main>
         <HeroSlideshow />
         <Services />
         <Gallery />
         <Pricing />
-        <Testimonials />
+        <Testimonials className="pl-0 pt-[10px] pb-[10px]" />
         <About />
         <StatsCounter />
         <FAQ />
@@ -32,8 +30,6 @@ const Index = () => {
       <ChatWidget />
       <WhatsAppButton />
       <BackToTop />
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
