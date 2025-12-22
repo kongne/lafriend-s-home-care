@@ -1,0 +1,55 @@
+name: UI Screenshots
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  screenshots:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: |
+          npm ci
+
+      - name: Install Playwright browsers
+        run: |
+          npx playwright install --with-deps
+
+      - name: Build app
+        run: |
+          npm run build
+
+      - name: Start preview server
+        run: |
+          npm run preview -- --port 5173 &
+          # wait for server to respond
+          for i in {1..30}; do
+            if curl -sSf http://localhost:5173 > /dev/null; then
+              echo "Server is up"; break;
+            fi
+            sleep 1
+          done
+
+      - name: Run screenshots
+        env:
+          SCREENSHOT_URL: http://localhost:5173
+          SCREENSHOT_DIR: screenshots
+        run: |
+          npm run screenshots
+
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-screenshots
+          path: screenshots
