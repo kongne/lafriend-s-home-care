@@ -57,30 +57,38 @@ const BeforeAfterCard = ({ item, index, isVisible, t }: { item: GalleryItem; ind
       onMouseLeave={() => setShowAfter(false)}
       onTouchStart={() => setShowAfter(!showAfter)}
     >
-      <div className="relative h-48 sm:h-56 md:h-64 overflow-hidden bg-muted">
+      <div className="relative h-40 sm:h-56 md:h-64 overflow-hidden bg-muted">
         {/* Loading skeleton */}
         {!imageLoaded && (
           <div className="absolute inset-0 bg-muted animate-pulse" />
         )}
-        <img
-          src={item.before}
-          alt={`${t(item.titleKey)} - ${t('gallery.before')}`}
-          className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 ${
-            showAfter ? "opacity-0 scale-110" : "opacity-100 scale-100"
-          }`}
-          loading="lazy"
-          decoding="async"
-          onLoad={() => setImageLoaded(true)}
-        />
-        <img
-          src={item.after}
-          alt={`${t(item.titleKey)} - ${t('gallery.after')}`}
-          className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 ${
-            showAfter ? "opacity-100 scale-100" : "opacity-0 scale-90"
-          }`}
-          loading="lazy"
-          decoding="async"
-        />
+        <picture>
+          <source media="(min-width:1024px)" srcSet={`${item.before}&w=1200 1200w, ${item.before}&w=800 800w`} />
+          <source media="(min-width:640px)" srcSet={`${item.before}&w=800 800w, ${item.before}&w=600 600w`} />
+          <img
+            src={item.before}
+            alt={`${t(item.titleKey)} - ${t('gallery.before')}`}
+            className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 ${
+              showAfter ? "opacity-0 scale-110" : "opacity-100 scale-100"
+            }`}
+            loading="lazy"
+            decoding="async"
+            onLoad={() => setImageLoaded(true)}
+          />
+        </picture>
+        <picture>
+          <source media="(min-width:1024px)" srcSet={`${item.after}&w=1200 1200w, ${item.after}&w=800 800w`} />
+          <source media="(min-width:640px)" srcSet={`${item.after}&w=800 800w, ${item.after}&w=600 600w`} />
+          <img
+            src={item.after}
+            alt={`${t(item.titleKey)} - ${t('gallery.after')}`}
+            className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 ${
+              showAfter ? "opacity-100 scale-100" : "opacity-0 scale-90"
+            }`}
+            loading="lazy"
+            decoding="async"
+          />
+        </picture>
         
         {/* Category badge */}
         <Badge className="absolute top-4 right-4 bg-background/80 text-foreground backdrop-blur-sm">
@@ -147,7 +155,7 @@ export const Gallery = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
           {galleryItems.map((item, index) => (
             <BeforeAfterCard key={index} item={item} index={index} isVisible={isVisible} t={t} />
           ))}

@@ -294,7 +294,8 @@ const Admin = () => {
   const sendBookingConfirmation = async (booking: Booking) => {
     setSendingConfirmation(booking.id);
     try {
-      const { error } = await supabase.functions.invoke('send-booking-confirmation', {
+      const { data, error } = await supabase.functions.invoke('send-booking-confirmation', {
+        method: 'POST',
         body: {
           clientEmail: booking.email,
           clientName: booking.full_name,
@@ -305,11 +306,19 @@ const Admin = () => {
           language: 'fr'
         }
       });
-      if (error) throw error;
+
+      if (error) {
+        logError('Send booking confirmation error:', error);
+        const errMsg = (error as any)?.message || "Erreur lors de l'envoi de la confirmation";
+        toast({ title: "Erreur", description: errMsg, variant: "destructive" });
+        return;
+      }
+
       toast({ title: "Confirmation envoyée", description: `Email envoyé à ${booking.email}` });
     } catch (err) {
       logError("Error sending confirmation:", err);
-      toast({ title: "Erreur", description: "Impossible d'envoyer la confirmation", variant: "destructive" });
+      const msg = err instanceof Error ? err.message : String(err);
+      toast({ title: "Erreur", description: msg || "Impossible d'envoyer la confirmation", variant: "destructive" });
     } finally {
       setSendingConfirmation(null);
     }

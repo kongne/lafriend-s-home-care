@@ -69,8 +69,35 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const body = await req.json();
-    const validatedData = requestSchema.parse(body);
+    // Read raw body for better diagnostics and safer parsing
+    const rawText = await req.text();
+    let parsedBody: unknown;
+    try {
+      parsedBody = rawText ? JSON.parse(rawText) : {};
+    } catch (e) {
+      console.warn("Failed to parse JSON body:", String(e));
+      return new Response(
+        JSON.stringify({ error: "Invalid JSON payload", details: String(e), raw: rawText.slice(0, 1000) }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Log limited headers for debugging
+    try {
+      const hdrs = Object.fromEntries(req.headers.entries());
+      const limited = {
+        host: hdrs.host,
+        origin: hdrs.origin,
+        referer: hdrs.referer,
+        "x-forwarded-for": hdrs["x-forwarded-for"],
+      };
+      console.log("Request headers (limited):", limited);
+    } catch (e) {
+      console.warn("Failed to serialize headers for logging:", String(e));
+    }
+
+    const validatedData = requestSchema.parse(parsedBody);
+    const debugMode = Deno.env.get("FUNCTION_DEBUG") === "true" || new URL(req.url).searchParams.get("debug") === "1";
     
     const { clientEmail, clientName, serviceType, preferredDate, preferredTime, address, language } = validatedData;
     
@@ -192,12 +219,27 @@ const handler = async (req: Request): Promise<Response> => {
         html: htmlContent,
       }),
     });
+    if (!emailResponse.ok) {
+      let errorDetails;
+      try {
+        errorDetails = await emailResponse.json();
+      } catch (e) {
+        errorDetails = { message: `Non-OK response and failed to parse body: ${String(e)}` };
+      }
+      console.error("Resend API error:", errorDetails);
+      return new Response(
+        JSON.stringify({ error: errorDetails, request: debugMode ? { headers: Object.fromEntries(req.headers.entries()), payload: validatedData } : undefined }),
+        { status: emailResponse.status || 502, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
 
     const emailResult = await emailResponse.json();
     console.log("Confirmation email sent successfully:", emailResult);
 
+    const successPayload: Record<string, unknown> = { success: true, emailResult };
+    if (debugMode) successPayload.request = { headers: Object.fromEntries(req.headers.entries()), payload: validatedData };
     return new Response(
-      JSON.stringify({ success: true, emailResult }),
+      JSON.stringify(successPayload),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   } catch (error: any) {
