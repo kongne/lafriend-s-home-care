@@ -3,16 +3,17 @@ import { ThemeProvider } from "next-themes";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import App from "./App.tsx";
 import "./index.css";
+import { info, error as logError } from "@/lib/logger";
 
 // Register service worker for PWA
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
       .then((registration) => {
-        console.log('SW registered:', registration.scope);
+        info('SW registered:', registration.scope);
       })
-      .catch((error) => {
-        console.log('SW registration failed:', error);
+      .catch((err) => {
+        logError('SW registration failed:', err);
       });
   });
 }
