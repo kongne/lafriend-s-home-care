@@ -57,6 +57,7 @@ export const exportToPDF = <T extends Record<string, unknown>>(
           background-size: contain;
           opacity: 0.12;
           pointer-events: none;
+          background-image: url('${location.origin}/pwa-192x192.png');
         }
         h1 {
           color: #1a1a2e;
@@ -120,16 +121,6 @@ export const exportToPDF = <T extends Record<string, unknown>>(
   `;
 
   printWindow.document.write(html);
-  // Set the logo background image using an absolute URL so the new window can load it reliably
-  try {
-    const logoUrl = `${location.origin}/pwa-192x192.png`;
-    const logoDiv = printWindow.document.querySelector('.logo-bg') as HTMLElement | null;
-    if (logoDiv) {
-      logoDiv.style.backgroundImage = `url('${logoUrl}')`;
-    }
-  } catch (e) {
-    // ignore if location isn't available
-  }
   printWindow.document.close();
 
   // Wait for content to load, then print
@@ -180,6 +171,7 @@ export const exportStatsToPDF = (stats: Record<string, number | string>, title: 
           background-size: contain;
           opacity: 0.12;
           pointer-events: none;
+          background-image: url('${location.origin}/pwa-192x192.png');
         }
         h1 {
           color: #1a1a2e;
@@ -211,14 +203,6 @@ export const exportStatsToPDF = (stats: Record<string, number | string>, title: 
   `;
 
   printWindow.document.write(html);
-  // set logo background for stats print
-  try {
-    const logoUrl = `${location.origin}/pwa-192x192.png`;
-    const logoDiv = printWindow.document.querySelector('.logo-bg') as HTMLElement | null;
-    if (logoDiv) logoDiv.style.backgroundImage = `url('${logoUrl}')`;
-  } catch (e) {
-    // ignore
-  }
   printWindow.document.close();
   printWindow.onload = () => printWindow.print();
 };
