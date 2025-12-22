@@ -216,7 +216,7 @@ const handler = async (req: Request): Promise<Response> => {
     );
   }
 };
-
+{/* 
 const emailResponse = await fetch("https://api.resend.com/emails", {
   method: "POST",
   headers: {
@@ -242,5 +242,5 @@ if (!emailResponse.ok) {
 
 const emailResult = await emailResponse.json();
 console.log("Confirmation email sent successfully:", emailResult);
-
+*/}
 serve(handler);
