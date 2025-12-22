@@ -27,7 +27,7 @@ export const BookingModal = ({ children, className }: BookingModalProps) => {
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="w-full max-w-full sm:max-w-[500px] rounded-none sm:rounded-lg max-h-[90vh] overflow-y-auto p-4 sm:p-0">
+      <DialogContent className="w-full max-w-full sm:max-w-[500px] rounded-none sm:rounded-lg max-h-[90vh] overflow-y-auto p-2 sm:p-0">
         <VisuallyHidden>
           <DialogTitle>{t('booking.title')}</DialogTitle>
           <DialogDescription>{t('booking.successDesc')}</DialogDescription>

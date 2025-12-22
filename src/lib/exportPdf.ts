@@ -90,10 +90,26 @@ export const exportToPDF = <T extends Record<string, unknown>>(
           body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
           .logo-bg { opacity: 0.08; }
         }
+        .logo-fallback {
+          position: fixed;
+          top: 40px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 220px;
+          height: 220px;
+          object-fit: contain;
+          opacity: 0.12;
+          pointer-events: none;
+          display: block;
+        }
+        @media print {
+          .logo-fallback { opacity: 0.08; }
+        }
       </style>
     </head>
     <body>
       <div class="logo-bg" aria-hidden="true"></div>
+      <img src="${location.origin}/pwa-192x192.png" class="logo-fallback" aria-hidden="true" alt="" />
       <h1>${title}</h1>
       <div class="meta">
         <p>Généré le: ${new Date().toLocaleDateString("fr-FR", {

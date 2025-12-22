@@ -57,7 +57,7 @@ const BeforeAfterCard = ({ item, index, isVisible, t }: { item: GalleryItem; ind
       onMouseLeave={() => setShowAfter(false)}
       onTouchStart={() => setShowAfter(!showAfter)}
     >
-      <div className="relative h-40 sm:h-56 md:h-64 overflow-hidden bg-muted">
+      <div className="relative h-32 sm:h-48 md:h-56 overflow-hidden bg-muted">
         {/* Loading skeleton */}
         {!imageLoaded && (
           <div className="absolute inset-0 bg-muted animate-pulse" />

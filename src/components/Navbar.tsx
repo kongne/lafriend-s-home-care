@@ -167,7 +167,8 @@ export const Navbar = () => {
           {/* Mobile menu button */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="lg:hidden text-foreground"
+            className="lg:hidden text-foreground p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-accent"
+            aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
           >
             {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
@@ -175,7 +176,7 @@ export const Navbar = () => {
 
         {/* Mobile menu */}
         {isMenuOpen && (
-          <div className="lg:hidden mt-4 pb-4 space-y-3 animate-in slide-in-from-top">
+          <div className="lg:hidden mt-4 pb-4 space-y-3 animate-in slide-in-from-top px-4">
             {[
               { href: "#services", label: t('nav.services') },
               { href: "#galerie", label: t('nav.gallery') },

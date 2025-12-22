@@ -121,7 +121,7 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
   };
 
   return (
-    <Card className="p-6 sm:p-8 bg-card/95 backdrop-blur-sm shadow-2xl border-dashed rounded-md">
+    <Card className="p-4 sm:p-6 bg-card/95 backdrop-blur-sm shadow-2xl border-dashed rounded-md w-full">
       <h3 className="text-2xl font-bold text-center mb-6 text-foreground">
         Réserver un service
       </h3>
@@ -271,7 +271,7 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
 
         <Button 
           type="submit" 
-          className="w-full bg-accent text-accent-foreground hover:bg-accent/90 font-semibold py-4 sm:py-6" 
+          className="w-full bg-accent text-accent-foreground hover:bg-accent/90 font-semibold py-3 sm:py-4" 
           disabled={loading}
         >
           {loading ? (
