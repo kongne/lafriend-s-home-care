@@ -121,7 +121,7 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
   };
 
   return (
-    <Card className="p-8 bg-card/95 backdrop-blur-sm shadow-2xl py-[32px] px-[32px] border-dashed rounded-md">
+    <Card className="p-6 sm:p-8 bg-card/95 backdrop-blur-sm shadow-2xl border-dashed rounded-md">
       <h3 className="text-2xl font-bold text-center mb-6 text-foreground">
         Réserver un service
       </h3>
@@ -212,7 +212,7 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
           {errors.serviceType && <p className="text-sm text-destructive">{errors.serviceType}</p>}
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="preferredDate">Date souhaitée</Label>
             <Input 
@@ -271,7 +271,7 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
 
         <Button 
           type="submit" 
-          className="w-full bg-accent text-accent-foreground hover:bg-accent/90 font-semibold py-6" 
+          className="w-full bg-accent text-accent-foreground hover:bg-accent/90 font-semibold py-4 sm:py-6" 
           disabled={loading}
         >
           {loading ? (

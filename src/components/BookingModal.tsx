@@ -21,13 +21,13 @@ export const BookingModal = ({ children, className }: BookingModalProps) => {
         {children || (
           <Button 
             size="lg"
-            className={`bg-accent text-accent-foreground hover:bg-accent/90 font-semibold text-lg px-8 py-6 ${className}`}
+            className={`bg-accent text-accent-foreground hover:bg-accent/90 font-semibold text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-6 ${className}`}
           >
             {t('hero.book')}
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto p-0">
+      <DialogContent className="w-full max-w-full sm:max-w-[500px] rounded-none sm:rounded-lg max-h-[90vh] overflow-y-auto p-4 sm:p-0">
         <VisuallyHidden>
           <DialogTitle>{t('booking.title')}</DialogTitle>
           <DialogDescription>{t('booking.successDesc')}</DialogDescription>

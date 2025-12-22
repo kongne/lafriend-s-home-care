@@ -48,7 +48,7 @@ export const AdminSidebar = ({ onSignOut, pendingCount, unreadMessages }: AdminS
   return (
     <aside
       className={cn(
-        "fixed left-0 top-0 h-screen bg-card border-r border-border z-40 transition-all duration-300 flex flex-col",
+        "hidden md:flex fixed left-0 top-0 h-screen bg-card border-r border-border z-40 transition-all duration-300 flex-col",
         collapsed ? "w-16" : "w-64"
       )}
     >
