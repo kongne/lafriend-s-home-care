@@ -40,3 +40,17 @@
 .read-the-docs {
   color: #888;
 }
+
+/* Responsive adjustments for small screens */
+@media (max-width: 640px) {
+  #root {
+    padding: 1rem;
+  }
+  .logo {
+    height: 4em;
+    padding: 1rem;
+  }
+  .card {
+    padding: 1rem;
+  }
+}
