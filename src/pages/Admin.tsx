@@ -309,6 +309,18 @@ const Admin = () => {
 
       if (error) {
         logError('Send booking confirmation error:', error);
+        try {
+          const ctx = (error as any)?.context;
+          if (ctx && typeof ctx.text === 'function') {
+            const bodyText = await ctx.text().catch(() => '<unreadable>');
+            logError('Function response status:', ctx.status, 'body:', bodyText);
+            toast({ title: "Erreur", description: `Fonction status ${ctx.status}: ${bodyText}`, variant: "destructive" });
+            return;
+          }
+        } catch (e) {
+          logError('Error reading function error context:', e);
+        }
+
         const errMsg = (error as any)?.message || "Erreur lors de l'envoi de la confirmation";
         toast({ title: "Erreur", description: errMsg, variant: "destructive" });
         return;
@@ -317,6 +329,18 @@ const Admin = () => {
       toast({ title: "Confirmation envoyée", description: `Email envoyé à ${booking.email}` });
     } catch (err) {
       logError("Error sending confirmation:", err);
+      try {
+        const ctx = (err as any)?.context;
+        if (ctx && typeof ctx.text === 'function') {
+          const bodyText = await ctx.text().catch(() => '<unreadable>');
+          logError('Function error context status:', ctx.status, 'body:', bodyText);
+          toast({ title: "Erreur", description: `Fonction status ${ctx.status}: ${bodyText}`, variant: "destructive" });
+          return;
+        }
+      } catch (e) {
+        logError('Error reading thrown error context:', e);
+      }
+
       const msg = err instanceof Error ? err.message : String(err);
       toast({ title: "Erreur", description: msg || "Impossible d'envoyer la confirmation", variant: "destructive" });
     } finally {

@@ -220,13 +220,19 @@ const handler = async (req: Request): Promise<Response> => {
       }),
     });
     if (!emailResponse.ok) {
-      let errorDetails;
+      let errorDetails: unknown;
+      let rawBody = '';
       try {
-        errorDetails = await emailResponse.json();
+        rawBody = await emailResponse.text();
       } catch (e) {
-        errorDetails = { message: `Non-OK response and failed to parse body: ${String(e)}` };
+        rawBody = `<failed to read body: ${String(e)}>`;
       }
-      console.error("Resend API error:", errorDetails);
+      try {
+        errorDetails = rawBody ? JSON.parse(rawBody) : { message: rawBody };
+      } catch (e) {
+        errorDetails = { message: `Non-OK response and failed to parse body as JSON`, raw: rawBody };
+      }
+      console.error("Resend API error status:", emailResponse.status, "body:", rawBody, "parsed:", errorDetails);
       return new Response(
         JSON.stringify({ error: errorDetails, request: debugMode ? { headers: Object.fromEntries(req.headers.entries()), payload: validatedData } : undefined }),
         { status: emailResponse.status || 502, headers: { "Content-Type": "application/json", ...corsHeaders } }

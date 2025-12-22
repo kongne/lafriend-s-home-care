@@ -45,6 +45,19 @@ export const exportToPDF = <T extends Record<string, unknown>>(
           padding: 20px;
           color: #333;
         }
+        .logo-bg {
+          position: fixed;
+          top: 40px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 220px;
+          height: 220px;
+          background-repeat: no-repeat;
+          background-position: center;
+          background-size: contain;
+          opacity: 0.12;
+          pointer-events: none;
+        }
         h1 {
           color: #1a1a2e;
           margin-bottom: 10px;
@@ -74,10 +87,12 @@ export const exportToPDF = <T extends Record<string, unknown>>(
         }
         @media print {
           body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+          .logo-bg { opacity: 0.08; }
         }
       </style>
     </head>
     <body>
+      <div class="logo-bg" aria-hidden="true"></div>
       <h1>${title}</h1>
       <div class="meta">
         <p>Généré le: ${new Date().toLocaleDateString("fr-FR", {
@@ -105,6 +120,16 @@ export const exportToPDF = <T extends Record<string, unknown>>(
   `;
 
   printWindow.document.write(html);
+  // Set the logo background image using an absolute URL so the new window can load it reliably
+  try {
+    const logoUrl = `${location.origin}/pwa-192x192.png`;
+    const logoDiv = printWindow.document.querySelector('.logo-bg') as HTMLElement | null;
+    if (logoDiv) {
+      logoDiv.style.backgroundImage = `url('${logoUrl}')`;
+    }
+  } catch (e) {
+    // ignore if location isn't available
+  }
   printWindow.document.close();
 
   // Wait for content to load, then print
@@ -143,6 +168,19 @@ export const exportStatsToPDF = (stats: Record<string, number | string>, title: 
           max-width: 600px;
           margin: 0 auto;
         }
+        .logo-bg {
+          position: fixed;
+          top: 40px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 180px;
+          height: 180px;
+          background-repeat: no-repeat;
+          background-position: center;
+          background-size: contain;
+          opacity: 0.12;
+          pointer-events: none;
+        }
         h1 {
           color: #1a1a2e;
           border-bottom: 3px solid #f4c430;
@@ -161,6 +199,7 @@ export const exportStatsToPDF = (stats: Record<string, number | string>, title: 
       </style>
     </head>
     <body>
+      <div class="logo-bg" aria-hidden="true"></div>
       <h1>${title}</h1>
       <p style="color: #666;">Généré le ${new Date().toLocaleDateString("fr-FR")}</p>
       <table>${statsRows}</table>
@@ -172,6 +211,14 @@ export const exportStatsToPDF = (stats: Record<string, number | string>, title: 
   `;
 
   printWindow.document.write(html);
+  // set logo background for stats print
+  try {
+    const logoUrl = `${location.origin}/pwa-192x192.png`;
+    const logoDiv = printWindow.document.querySelector('.logo-bg') as HTMLElement | null;
+    if (logoDiv) logoDiv.style.backgroundImage = `url('${logoUrl}')`;
+  } catch (e) {
+    // ignore
+  }
   printWindow.document.close();
   printWindow.onload = () => printWindow.print();
 };
