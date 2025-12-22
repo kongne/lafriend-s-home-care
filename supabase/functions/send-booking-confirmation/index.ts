@@ -206,19 +206,32 @@ const handler = async (req: Request): Promise<Response> => {
       </html>
     `;
 
-    const emailResponse = await fetch("https://api.resend.com/emails", {
+    const resendFrom = Deno.env.get("RESEND_FROM") || "onboarding@resend.dev";
+    if (!Deno.env.get("RESEND_FROM")) {
+      console.warn("RESEND_FROM not set, using default from address (onboarding@resend.dev). Ensure this sender is verified in Resend.");
+    }
+
+    const makeEmailRequest = async () => await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${resendApiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "LaFriend's Services <onboarding@resend.dev>",
+        from: `LaFriend's Services <${resendFrom}>`,
         to: [clientEmail],
         subject,
         html: htmlContent,
       }),
     });
+    // try primary request, retry once for transient errors (429 or 5xx)
+    let emailResponse = await makeEmailRequest();
+    if (!emailResponse.ok && (emailResponse.status === 429 || (emailResponse.status >= 500 && emailResponse.status < 600))) {
+      console.warn(`Transient error from Resend (status ${emailResponse.status}), retrying once...`);
+      await new Promise((res) => setTimeout(res, 600));
+      emailResponse = await makeEmailRequest();
+    }
+
     if (!emailResponse.ok) {
       let errorDetails: unknown;
       let rawBody = '';

@@ -51,23 +51,26 @@ export const ChatWidget = () => {
 
     try {
       const { data, error } = await supabase.functions.invoke("chat-support", {
+        method: 'POST',
         body: { messages: [...messages, userMessage] },
       });
 
-      if (error) throw error;
+      if (error) {
+        logError('Chat function error:', error);
+        const msg = (error as any)?.message || 'Erreur du chat';
+        toast({ title: t('chat.error'), description: msg, variant: 'destructive' });
+        return;
+      }
 
-      if (data.error) {
-        toast({
-          title: t('chat.error'),
-          description: data.error,
-          variant: "destructive",
-        });
+      if (data?.error) {
+        logError('Chat function returned error payload:', data);
+        toast({ title: t('chat.error'), description: String(data.error), variant: 'destructive' });
         return;
       }
 
       const assistantMessage: Message = {
         role: "assistant",
-        content: data.message,
+        content: data?.message || t('chat.errorDesc'),
       };
       setMessages((prev) => [...prev, assistantMessage]);
     } catch (err) {

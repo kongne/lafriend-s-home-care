@@ -84,7 +84,8 @@ export const Contact = () => {
 
       // Send notification email
       try {
-        await supabase.functions.invoke('send-notification', {
+        const { data: notifData, error: notifError } = await supabase.functions.invoke('send-notification', {
+          method: 'POST',
           body: {
             type: 'contact',
             data: {
@@ -96,6 +97,12 @@ export const Contact = () => {
             }
           }
         });
+
+        if (notifError) {
+          warn('Notification function error:', notifError);
+        } else if (notifData?.error) {
+          warn('Notification function returned error payload:', notifData);
+        }
       } catch (notifError) {
         warn("Notification email skipped:", notifError);
       }
