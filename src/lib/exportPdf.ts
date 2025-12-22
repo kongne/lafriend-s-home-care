@@ -6,9 +6,8 @@ interface Column {
   label: string;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const exportToPDF = (
-  data: any[],
+export const exportToPDF = <T extends Record<string, unknown>>(
+  data: T[],
   filename: string,
   columns: Column[],
   title: string = "Rapport"
@@ -23,8 +22,9 @@ export const exportToPDF = (
   // Generate HTML content
   const tableRows = data
     .map((item) => {
+      const rowItem = item as Record<string, unknown>;
       const cells = columns
-        .map((col) => `<td style="padding: 8px; border: 1px solid #ddd;">${item[col.key] ?? ""}</td>`)
+        .map((col) => `<td style="padding: 8px; border: 1px solid #ddd;">${rowItem[col.key] ?? ""}</td>`)
         .join("");
       return `<tr>${cells}</tr>`;
     })

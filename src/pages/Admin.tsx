@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { error as logError } from "@/lib/logger";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -242,8 +243,8 @@ const Admin = () => {
       }
       setIsAdmin(true);
       fetchAllData();
-    } catch (error) {
-      console.error("Error checking admin role:", error);
+    } catch (err) {
+      logError("Error checking admin role:", err);
       navigate("/");
     } finally {
       setLoading(false);
@@ -306,8 +307,8 @@ const Admin = () => {
       });
       if (error) throw error;
       toast({ title: "Confirmation envoyée", description: `Email envoyé à ${booking.email}` });
-    } catch (error) {
-      console.error("Error sending confirmation:", error);
+    } catch (err) {
+      logError("Error sending confirmation:", err);
       toast({ title: "Erreur", description: "Impossible d'envoyer la confirmation", variant: "destructive" });
     } finally {
       setSendingConfirmation(null);

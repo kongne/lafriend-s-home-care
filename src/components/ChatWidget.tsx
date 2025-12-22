@@ -5,6 +5,7 @@ import { MessageCircle, X, Send } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { error as logError } from "@/lib/logger";
 
 interface Message {
   role: "user" | "assistant";
@@ -69,8 +70,8 @@ export const ChatWidget = () => {
         content: data.message,
       };
       setMessages((prev) => [...prev, assistantMessage]);
-    } catch (error) {
-      console.error("Error sending message:", error);
+    } catch (err) {
+      logError("Error sending message:", err);
       toast({
         title: t('chat.error'),
         description: t('chat.errorDesc'),

@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Loader2 } from "lucide-react";
 import { bookingSchema, rateLimit } from "@/lib/validation";
+import { error as logError } from "@/lib/logger";
 
 export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
   const { t } = useLanguage();
@@ -107,8 +108,8 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
       });
 
       onSuccess?.();
-    } catch (error) {
-      console.error("Booking error:", error);
+    } catch (err) {
+      logError("Booking error:", err);
       toast({
         title: t('booking.error'),
         description: t('booking.errorDesc'),

@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Loader2 } from "lucide-react";
 import { contactSchema, rateLimit } from "@/lib/validation";
+import { warn, error as logError } from "@/lib/logger";
 
 export const Contact = () => {
   const { toast } = useToast();
@@ -96,7 +97,7 @@ export const Contact = () => {
           }
         });
       } catch (notifError) {
-        console.log("Notification email skipped:", notifError);
+        warn("Notification email skipped:", notifError);
       }
 
       toast({
@@ -111,8 +112,8 @@ export const Contact = () => {
         subject: "",
         message: "",
       });
-    } catch (error) {
-      console.error("Contact error:", error);
+    } catch (err) {
+      logError("Contact error:", err);
       toast({
         title: t('booking.error'),
         description: t('booking.errorDesc'),

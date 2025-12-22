@@ -1,4 +1,4 @@
-export const isDev = typeof import.meta !== 'undefined' && Boolean((import.meta as any).env?.DEV);
+export const isDev = typeof import.meta !== 'undefined' && Boolean((import.meta as unknown as { env?: { DEV?: boolean } }).env?.DEV ?? false);
 
 export const log = (...args: unknown[]) => {
   if (isDev) console.log(...args);

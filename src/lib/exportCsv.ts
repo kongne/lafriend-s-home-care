@@ -1,11 +1,12 @@
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+import { warn } from "@/lib/logger";
+
 export const exportToCSV = <T extends object>(
   data: T[],
   filename: string,
   columns: { key: keyof T; label: string }[]
 ): void => {
   if (data.length === 0) {
-    console.warn("No data to export");
+    warn("No data to export");
     return;
   }
 

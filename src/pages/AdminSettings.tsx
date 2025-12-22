@@ -58,10 +58,11 @@ const AdminSettings = () => {
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-    } catch (error: any) {
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
       toast({
         title: "Error",
-        description: error.message,
+        description: msg,
         variant: "destructive",
       });
     } finally {
@@ -84,10 +85,11 @@ const AdminSettings = () => {
         title: "Success",
         description: "Email update requested. Please check your new email for confirmation.",
       });
-    } catch (error: any) {
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
       toast({
         title: "Error",
-        description: error.message,
+        description: msg,
         variant: "destructive",
       });
     } finally {
