@@ -13,14 +13,25 @@ import {
   ChevronRight,
   UserCog,
   FileText,
+  Menu,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 interface AdminSidebarProps {
   onSignOut: () => void;
   pendingCount: number;
   unreadMessages: number;
+  mobileOpen?: boolean;
+  onMobileOpenChange?: (open: boolean) => void;
 }
 
 const menuItems = [
@@ -33,8 +44,19 @@ const menuItems = [
   { icon: FileText, label: "Rapports", value: "reports", path: "/admin?tab=reports" },
 ];
 
-export const AdminSidebar = ({ onSignOut, pendingCount, unreadMessages }: AdminSidebarProps) => {
-  const [collapsed, setCollapsed] = useState(false);
+const SidebarContent = ({ 
+  collapsed, 
+  onSignOut, 
+  pendingCount, 
+  unreadMessages,
+  onNavigate,
+}: { 
+  collapsed: boolean; 
+  onSignOut: () => void; 
+  pendingCount: number; 
+  unreadMessages: number;
+  onNavigate?: () => void;
+}) => {
   const location = useLocation();
   const navigate = useNavigate();
   const searchParams = new URLSearchParams(location.search);
@@ -45,32 +67,15 @@ export const AdminSidebar = ({ onSignOut, pendingCount, unreadMessages }: AdminS
     navigate("/");
   };
 
-  return (
-    <aside
-      className={cn(
-        "hidden md:flex fixed left-0 top-0 h-screen bg-card border-r border-border z-40 transition-all duration-300 flex-col",
-        collapsed ? "w-16" : "w-64"
-      )}
-    >
-      {/* Header */}
-      <div className="p-4 border-b border-border flex items-center justify-between">
-        {!collapsed && (
-          <h1 className="text-xl font-bold text-foreground">Admin</h1>
-        )}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setCollapsed(!collapsed)}
-          className="ml-auto"
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-        >
-          {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-        </Button>
-      </div>
+  const handleNavClick = () => {
+    onNavigate?.();
+  };
 
+  return (
+    <>
       {/* Navigation */}
       <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
-        <Link to="/">
+        <Link to="/" onClick={handleNavClick}>
           <Button
             variant="ghost"
             className={cn(
@@ -96,7 +101,7 @@ export const AdminSidebar = ({ onSignOut, pendingCount, unreadMessages }: AdminS
           const badgeCount = item.value === "bookings" ? pendingCount : unreadMessages;
 
           return (
-            <Link key={item.value} to={item.path}>
+            <Link key={item.value} to={item.path} onClick={handleNavClick}>
               <Button
                 variant={isActive ? "secondary" : "ghost"}
                 className={cn(
@@ -123,7 +128,7 @@ export const AdminSidebar = ({ onSignOut, pendingCount, unreadMessages }: AdminS
 
       {/* Footer */}
       <div className="p-2 border-t border-border space-y-1">
-        <Link to="/admin/settings">
+        <Link to="/admin/settings" onClick={handleNavClick}>
           <Button
             variant="ghost"
             className={cn(
@@ -147,8 +152,84 @@ export const AdminSidebar = ({ onSignOut, pendingCount, unreadMessages }: AdminS
           {!collapsed && <span>Déconnexion</span>}
         </Button>
       </div>
-    </aside>
+    </>
   );
 };
+
+export const AdminSidebar = ({ 
+  onSignOut, 
+  pendingCount, 
+  unreadMessages,
+  mobileOpen = false,
+  onMobileOpenChange,
+}: AdminSidebarProps) => {
+  const [collapsed, setCollapsed] = useState(false);
+
+  return (
+    <>
+      {/* Mobile Sidebar using Sheet */}
+      <Sheet open={mobileOpen} onOpenChange={onMobileOpenChange}>
+        <SheetContent side="left" className="w-64 p-0 md:hidden">
+          <SheetHeader className="p-4 border-b border-border">
+            <SheetTitle className="text-xl font-bold">Admin</SheetTitle>
+          </SheetHeader>
+          <div className="flex flex-col h-[calc(100%-65px)]">
+            <SidebarContent
+              collapsed={false}
+              onSignOut={onSignOut}
+              pendingCount={pendingCount}
+              unreadMessages={unreadMessages}
+              onNavigate={() => onMobileOpenChange?.(false)}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Desktop Sidebar */}
+      <aside
+        className={cn(
+          "hidden md:flex fixed left-0 top-0 h-screen bg-card border-r border-border z-40 transition-all duration-300 flex-col",
+          collapsed ? "w-16" : "w-64"
+        )}
+      >
+        {/* Header */}
+        <div className="p-4 border-b border-border flex items-center justify-between">
+          {!collapsed && (
+            <h1 className="text-xl font-bold text-foreground">Admin</h1>
+          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setCollapsed(!collapsed)}
+            className="ml-auto"
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          </Button>
+        </div>
+
+        <SidebarContent
+          collapsed={collapsed}
+          onSignOut={onSignOut}
+          pendingCount={pendingCount}
+          unreadMessages={unreadMessages}
+        />
+      </aside>
+    </>
+  );
+};
+
+// Mobile trigger button component
+export const MobileSidebarTrigger = ({ onClick }: { onClick: () => void }) => (
+  <Button
+    variant="ghost"
+    size="icon"
+    className="md:hidden"
+    onClick={onClick}
+    aria-label="Open menu"
+  >
+    <Menu className="h-5 w-5" />
+  </Button>
+);
 
 export default AdminSidebar;
