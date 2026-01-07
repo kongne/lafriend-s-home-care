@@ -6,7 +6,7 @@ interface Column {
   label: string;
 }
 
-export const exportToPDF = <T extends Record<string, unknown>>(
+export const exportToPDF = <T extends object>(
   data: T[],
   filename: string,
   columns: Column[],
@@ -22,7 +22,7 @@ export const exportToPDF = <T extends Record<string, unknown>>(
   // Generate HTML content
   const tableRows = data
     .map((item) => {
-      const rowItem = item as Record<string, unknown>;
+      const rowItem = item as unknown as Record<string, unknown>;
       const cells = columns
         .map((col) => `<td style="padding: 8px; border: 1px solid #ddd;">${rowItem[col.key] ?? ""}</td>`)
         .join("");

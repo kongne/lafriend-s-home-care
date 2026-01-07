@@ -258,31 +258,4 @@ const handler = async (req: Request): Promise<Response> => {
     );
   }
 };
-{/* 
-const emailResponse = await fetch("https://api.resend.com/emails", {
-  method: "POST",
-  headers: {
-    "Authorization": `Bearer ${resendApiKey}`,
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify({
-    from: "LaFriend's Services <noreply@yourdomain.com>", // must be verified
-    to: clientEmail, // ensure it's a valid string
-    subject: subject || "Booking Confirmation",
-    html: htmlContent || "<p>Thank you for booking!</p>",
-  }),
-});
-
-if (!emailResponse.ok) {
-  const errorDetails = await emailResponse.json();
-  console.error("Resend API error:", errorDetails);
-  return new Response(
-    JSON.stringify({ error: errorDetails }),
-    { status: emailResponse.status, headers: { "Content-Type": "application/json", ...corsHeaders } }
-  );
-}
-
-const emailResult = await emailResponse.json();
-console.log("Confirmation email sent successfully:", emailResult);
-*/}
 serve(handler);
