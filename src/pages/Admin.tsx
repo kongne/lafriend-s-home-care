@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import { AdminAnalytics } from "@/components/admin/AdminAnalytics";
 import { BulkActions, SelectableItem } from "@/components/admin/BulkActions";
-import { AdminSidebar } from "@/components/admin/AdminSidebar";
+import { AdminSidebar, MobileSidebarTrigger } from "@/components/admin/AdminSidebar";
 import { AdminHeader } from "@/components/admin/AdminHeader";
 import { KPICard } from "@/components/admin/KPICard";
 import { ActivityFeed } from "@/components/admin/ActivityFeed";
@@ -637,18 +637,14 @@ const Admin = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Sidebar - Desktop */}
-      <div className="hidden md:block">
-        <AdminSidebar onSignOut={signOut} pendingCount={pendingBookings} unreadMessages={unreadMessages} />
-      </div>
-
-      {/* Mobile Sidebar Overlay */}
-      {mobileSidebarOpen && (
-        <div className="fixed inset-0 z-50 md:hidden">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setMobileSidebarOpen(false)} />
-          <AdminSidebar onSignOut={signOut} pendingCount={pendingBookings} unreadMessages={unreadMessages} />
-        </div>
-      )}
+      {/* Sidebar - handles both mobile (Sheet) and desktop */}
+      <AdminSidebar 
+        onSignOut={signOut} 
+        pendingCount={pendingBookings} 
+        unreadMessages={unreadMessages}
+        mobileOpen={mobileSidebarOpen}
+        onMobileOpenChange={setMobileSidebarOpen}
+      />
 
       {/* Main Content */}
       <div className="md:ml-64 transition-all duration-300">
