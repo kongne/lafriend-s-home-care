@@ -1,23 +1,46 @@
-// Simple PDF export using browser print functionality
+// Simple PDF export using browser print functionality with logo
 // For production, consider using libraries like jsPDF or react-pdf
+
+import LaFriendsLogo from "@/assets/LaFriends.png";
 
 interface Column {
   key: string;
   label: string;
 }
 
-export const exportToPDF = <T extends object>(
+// Convert image to base64 for embedding in print window
+const getLogoBase64 = (): Promise<string> => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext("2d");
+      ctx?.drawImage(img, 0, 0);
+      resolve(canvas.toDataURL("image/png"));
+    };
+    img.onerror = () => resolve("");
+    img.src = LaFriendsLogo;
+  });
+};
+
+export const exportToPDF = async <T extends object>(
   data: T[],
   filename: string,
   columns: Column[],
   title: string = "Rapport"
-): void => {
+): Promise<void> => {
   // Create a new window for printing
   const printWindow = window.open("", "_blank");
   if (!printWindow) {
     alert("Veuillez autoriser les pop-ups pour exporter en PDF");
     return;
   }
+
+  // Get logo as base64
+  const logoBase64 = await getLogoBase64();
 
   // Generate HTML content
   const tableRows = data
@@ -45,9 +68,34 @@ export const exportToPDF = <T extends object>(
           padding: 20px;
           color: #333;
         }
+        .header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 20px;
+          padding-bottom: 15px;
+          border-bottom: 3px solid #f4c430;
+        }
+        .logo {
+          height: 60px;
+          width: auto;
+        }
+        .company-info {
+          text-align: right;
+        }
+        .company-name {
+          font-size: 24px;
+          font-weight: bold;
+          color: #1a1a2e;
+        }
+        .company-tagline {
+          font-size: 12px;
+          color: #666;
+        }
         h1 {
           color: #1a1a2e;
           margin-bottom: 10px;
+          margin-top: 20px;
         }
         .meta {
           color: #666;
@@ -67,17 +115,38 @@ export const exportToPDF = <T extends object>(
         }
         .footer {
           margin-top: 30px;
-          padding-top: 10px;
-          border-top: 1px solid #ddd;
+          padding-top: 15px;
+          border-top: 2px solid #f4c430;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        }
+        .footer-logo {
+          height: 40px;
+          width: auto;
+        }
+        .footer-text {
           font-size: 12px;
           color: #666;
+          text-align: right;
         }
         @media print {
           body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+          .header, .footer { display: flex !important; }
+        }
+        @page {
+          margin: 1cm;
         }
       </style>
     </head>
     <body>
+      <div class="header">
+        ${logoBase64 ? `<img src="${logoBase64}" alt="LaFriend's Logo" class="logo" />` : '<div class="company-name">LaFriend\'s</div>'}
+        <div class="company-info">
+          <div class="company-name">LaFriend's</div>
+          <div class="company-tagline">Services Ménagers Professionnels</div>
+        </div>
+      </div>
       <h1>${title}</h1>
       <div class="meta">
         <p>Généré le: ${new Date().toLocaleDateString("fr-FR", {
@@ -98,7 +167,11 @@ export const exportToPDF = <T extends object>(
         </tbody>
       </table>
       <div class="footer">
-        <p>LaFriend's Services Ménagers - Rapport d'administration</p>
+        ${logoBase64 ? `<img src="${logoBase64}" alt="LaFriend's Logo" class="footer-logo" />` : ''}
+        <div class="footer-text">
+          <p>LaFriend's Services Ménagers</p>
+          <p>Rapport d'administration</p>
+        </div>
       </div>
     </body>
     </html>
@@ -113,13 +186,15 @@ export const exportToPDF = <T extends object>(
   };
 };
 
-// Quick stats export
-export const exportStatsToPDF = (stats: Record<string, number | string>, title: string = "Statistiques"): void => {
+// Quick stats export with logo
+export const exportStatsToPDF = async (stats: Record<string, number | string>, title: string = "Statistiques"): Promise<void> => {
   const printWindow = window.open("", "_blank");
   if (!printWindow) {
     alert("Veuillez autoriser les pop-ups pour exporter en PDF");
     return;
   }
+
+  const logoBase64 = await getLogoBase64();
 
   const statsRows = Object.entries(stats)
     .map(([key, value]) => `
@@ -143,10 +218,26 @@ export const exportStatsToPDF = (stats: Record<string, number | string>, title: 
           max-width: 600px;
           margin: 0 auto;
         }
+        .header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 20px;
+          padding-bottom: 15px;
+          border-bottom: 3px solid #f4c430;
+        }
+        .logo {
+          height: 50px;
+          width: auto;
+        }
+        .company-name {
+          font-size: 20px;
+          font-weight: bold;
+          color: #1a1a2e;
+        }
         h1 {
           color: #1a1a2e;
-          border-bottom: 3px solid #f4c430;
-          padding-bottom: 10px;
+          margin-top: 20px;
         }
         table {
           width: 100%;
@@ -154,18 +245,39 @@ export const exportStatsToPDF = (stats: Record<string, number | string>, title: 
         }
         .footer {
           margin-top: 40px;
-          text-align: center;
+          padding-top: 15px;
+          border-top: 2px solid #f4c430;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        }
+        .footer-logo {
+          height: 30px;
+          width: auto;
+        }
+        .footer-text {
+          text-align: right;
           font-size: 12px;
           color: #666;
+        }
+        @media print {
+          body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
         }
       </style>
     </head>
     <body>
+      <div class="header">
+        ${logoBase64 ? `<img src="${logoBase64}" alt="LaFriend's Logo" class="logo" />` : '<div class="company-name">LaFriend\'s</div>'}
+        <div class="company-name">LaFriend's</div>
+      </div>
       <h1>${title}</h1>
       <p style="color: #666;">Généré le ${new Date().toLocaleDateString("fr-FR")}</p>
       <table>${statsRows}</table>
       <div class="footer">
-        <p>LaFriend's Services Ménagers</p>
+        ${logoBase64 ? `<img src="${logoBase64}" alt="LaFriend's Logo" class="footer-logo" />` : ''}
+        <div class="footer-text">
+          <p>LaFriend's Services Ménagers</p>
+        </div>
       </div>
     </body>
     </html>
