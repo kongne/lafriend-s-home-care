@@ -57,10 +57,21 @@ export const HeroSlideshow = () => {
   }, [prevSlide, nextSlide]);
   return <section className="relative min-h-screen flex items-center pt-32 pb-20 overflow-hidden" onMouseEnter={() => setIsPaused(true)} onMouseLeave={() => setIsPaused(false)} role="region" aria-label="Hero slideshow">
       {/* Background Slides */}
-      {slides.map((slide, index) => <div key={index} className={`absolute inset-0 z-0 transition-opacity duration-700 ${index === currentSlide ? "opacity-100" : "opacity-0"}`} aria-hidden={index !== currentSlide}>
-          <img src={slide.image} alt="" className="w-full h-full object-cover" loading={index === 0 ? "eager" : "lazy"} fetchPriority={index === 0 ? "high" : "low"} />
+      {slides.map((slide, index) => (
+        <div 
+          key={index} 
+          className={`absolute inset-0 z-0 transition-opacity duration-700 ${index === currentSlide ? "opacity-100" : "opacity-0"}`} 
+          aria-hidden={index !== currentSlide}
+        >
+          <img 
+            src={slide.image} 
+            alt="" 
+            className="w-full h-full object-cover" 
+            loading={index === 0 ? "eager" : "lazy"}
+          />
           <div className="absolute inset-0 bg-primary/80"></div>
-        </div>)}
+        </div>
+      ))}
 
       {/* Navigation Arrows */}
       <Button variant="ghost" size="icon" onClick={prevSlide} className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 z-20 bg-card/30 hover:bg-card/50 text-primary-foreground h-12 w-12 rounded-full" aria-label="Previous slide">
