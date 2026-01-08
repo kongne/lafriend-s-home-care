@@ -206,6 +206,9 @@ const handler = async (req: Request): Promise<Response> => {
       </html>
     `;
 
+    // Use custom domain if configured, otherwise use Resend's test domain
+    const fromEmail = Deno.env.get("RESEND_FROM_EMAIL") || "LaFriend's Services <onboarding@resend.dev>";
+    
     const emailResponse = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -213,7 +216,7 @@ const handler = async (req: Request): Promise<Response> => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "LaFriend's Services <onboarding@resend.dev>",
+        from: fromEmail,
         to: [clientEmail],
         subject,
         html: htmlContent,

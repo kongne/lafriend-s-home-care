@@ -16,6 +16,8 @@ import { AdminHeader } from "@/components/admin/AdminHeader";
 import { KPICard } from "@/components/admin/KPICard";
 import { ActivityFeed } from "@/components/admin/ActivityFeed";
 import { TaskList } from "@/components/admin/TaskList";
+import { QuickActions } from "@/components/admin/QuickActions";
+import { RecentBookingsTable } from "@/components/admin/RecentBookingsTable";
 import { exportToCSV, bookingColumns, contactColumns, subscriberColumns } from "@/lib/exportCsv";
 import { exportToPDF } from "@/lib/exportPdf";
 import { staffEmailSchema } from "@/lib/validation";
@@ -426,6 +428,19 @@ const Admin = () => {
               <KPICard title="Confirmées" value={confirmedBookings} change={8} icon={CheckCircle2} iconColor="text-green-500" />
               <KPICard title="Messages" value={contacts.length} icon={Mail} iconColor="text-purple-500" />
             </div>
+
+            {/* Quick Actions */}
+            <QuickActions 
+              onRefresh={fetchAllData}
+              onExportBookings={() => exportToPDF(bookings, "reservations", bookingColumns, "Réservations")}
+              onExportContacts={() => exportToPDF(contacts, "messages", contactColumns, "Messages")}
+            />
+
+            {/* Recent Bookings Table */}
+            <RecentBookingsTable 
+              bookings={bookings}
+              onStatusChange={updateBookingStatus}
+            />
 
             {/* Charts & Analytics */}
             <AdminAnalytics bookings={bookings} contacts={contacts} />

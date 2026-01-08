@@ -217,6 +217,27 @@ export const translations: Translations = {
   // WhatsApp
   'whatsapp.message': { fr: 'Bonjour! Je souhaite avoir plus d\'informations sur vos services de nettoyage.', en: 'Hello! I would like more information about your cleaning services.' },
   'whatsapp.tooltip': { fr: 'Écrivez-nous sur WhatsApp', en: 'Message us on WhatsApp' },
+  
+  // Trust Badges
+  'trust.title': { fr: 'Pourquoi nous choisir?', en: 'Why choose us?' },
+  'trust.subtitle': { fr: 'Des garanties qui font la différence', en: 'Guarantees that make the difference' },
+  'trust.verified': { fr: 'Vérifié', en: 'Verified' },
+  'trust.verifiedDesc': { fr: 'Équipe contrôlée', en: 'Verified team' },
+  'trust.punctual': { fr: 'Ponctuel', en: 'Punctual' },
+  'trust.punctualDesc': { fr: 'Toujours à l\'heure', en: 'Always on time' },
+  'trust.quality': { fr: 'Qualité', en: 'Quality' },
+  'trust.qualityDesc': { fr: 'Travail soigné', en: 'Quality work' },
+  'trust.satisfaction': { fr: 'Satisfaction', en: 'Satisfaction' },
+  'trust.satisfactionDesc': { fr: '100% garantie', en: '100% guaranteed' },
+  'trust.eco': { fr: 'Écologique', en: 'Eco-friendly' },
+  'trust.ecoDesc': { fr: 'Produits verts', en: 'Green products' },
+  'trust.team': { fr: 'Équipe', en: 'Team' },
+  'trust.teamDesc': { fr: 'Professionnels', en: 'Professionals' },
+  
+  // Newsletter
+  'newsletter.title': { fr: 'Restez informé', en: 'Stay informed' },
+  'newsletter.subtitle': { fr: 'Inscrivez-vous à notre newsletter pour recevoir nos offres exclusives et conseils de nettoyage.', en: 'Subscribe to our newsletter for exclusive offers and cleaning tips.' },
+  'newsletter.subscribe': { fr: 'S\'inscrire', en: 'Subscribe' },
 };
 
 interface LanguageContextType {
