@@ -21,10 +21,14 @@ export type Database = {
           email: string
           full_name: string
           id: string
+          is_recurring: boolean
           message: string | null
+          parent_booking_id: string | null
           phone: string
           preferred_date: string
           preferred_time: string
+          recurrence_end_date: string | null
+          recurrence_type: string | null
           service_type: string
           status: string
           updated_at: string
@@ -36,10 +40,14 @@ export type Database = {
           email: string
           full_name: string
           id?: string
+          is_recurring?: boolean
           message?: string | null
+          parent_booking_id?: string | null
           phone: string
           preferred_date: string
           preferred_time: string
+          recurrence_end_date?: string | null
+          recurrence_type?: string | null
           service_type: string
           status?: string
           updated_at?: string
@@ -51,16 +59,28 @@ export type Database = {
           email?: string
           full_name?: string
           id?: string
+          is_recurring?: boolean
           message?: string | null
+          parent_booking_id?: string | null
           phone?: string
           preferred_date?: string
           preferred_time?: string
+          recurrence_end_date?: string | null
+          recurrence_type?: string | null
           service_type?: string
           status?: string
           updated_at?: string
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "bookings_parent_booking_id_fkey"
+            columns: ["parent_booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       contact_submissions: {
         Row: {

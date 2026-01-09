@@ -53,6 +53,8 @@ interface Booking {
   message: string | null;
   status: string;
   created_at: string;
+  is_recurring?: boolean;
+  recurrence_type?: string | null;
 }
 
 interface ContactSubmission {
@@ -280,11 +282,47 @@ const Admin = () => {
   };
 
   const updateBookingStatus = async (id: string, status: string) => {
+    // Find the booking to get email info
+    const booking = bookings.find(b => b.id === id);
+    
     const { error } = await supabase.from("bookings").update({ status }).eq("id", id);
     if (!error) {
       toast({ title: "Statut mis à jour" });
       fetchBookings();
+      
+      // Send status notification email
+      if (booking && (status === 'confirmed' || status === 'completed' || status === 'cancelled')) {
+        try {
+          await supabase.functions.invoke('send-status-notification', {
+            method: 'POST',
+            body: {
+              clientEmail: booking.email,
+              clientName: booking.full_name,
+              serviceType: booking.service_type,
+              preferredDate: booking.preferred_date,
+              preferredTime: booking.preferred_time,
+              address: booking.address,
+              newStatus: status,
+              language: 'fr'
+            }
+          });
+          toast({ 
+            title: "Notification envoyée", 
+            description: `Email de ${status === 'confirmed' ? 'confirmation' : status === 'cancelled' ? 'annulation' : 'completion'} envoyé à ${booking.email}` 
+          });
+        } catch (err) {
+          logError("Error sending status notification:", err);
+        }
+      }
     }
+  };
+
+  const updateBookingDate = async (id: string, newDate: string): Promise<void> => {
+    const { error } = await supabase.from("bookings").update({ preferred_date: newDate }).eq("id", id);
+    if (error) {
+      throw error;
+    }
+    await fetchBookings();
   };
 
   const updateContactStatus = async (id: string, status: string) => {
@@ -523,6 +561,7 @@ const Admin = () => {
           <BookingCalendar 
             bookings={bookings} 
             onStatusChange={updateBookingStatus}
+            onDateChange={updateBookingDate}
           />
         );
 

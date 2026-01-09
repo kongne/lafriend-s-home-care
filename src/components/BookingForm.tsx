@@ -9,9 +9,10 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Loader2 } from "lucide-react";
+import { Loader2, Repeat } from "lucide-react";
 import { bookingSchema, rateLimit } from "@/lib/validation";
 import { error as logError } from "@/lib/logger";
+import { Switch } from "@/components/ui/switch";
 
 export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
   const { t } = useLanguage();
@@ -27,7 +28,10 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
     serviceType: "",
     preferredDate: "",
     preferredTime: "",
-    message: ""
+    message: "",
+    isRecurring: false,
+    recurrenceType: "",
+    recurrenceEndDate: ""
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -85,7 +89,10 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
         service_type: validation.data.serviceType,
         preferred_date: validation.data.preferredDate,
         preferred_time: validation.data.preferredTime,
-        message: validation.data.message || null
+        message: validation.data.message || null,
+        is_recurring: formData.isRecurring,
+        recurrence_type: formData.isRecurring ? formData.recurrenceType : null,
+        recurrence_end_date: formData.isRecurring && formData.recurrenceEndDate ? formData.recurrenceEndDate : null
       });
 
       if (error) throw error;
@@ -104,7 +111,10 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
         serviceType: "",
         preferredDate: "",
         preferredTime: "",
-        message: ""
+        message: "",
+        isRecurring: false,
+        recurrenceType: "",
+        recurrenceEndDate: ""
       });
 
       onSuccess?.();
@@ -253,6 +263,59 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
             </Select>
             {errors.preferredTime && <p className="text-sm text-destructive">{errors.preferredTime}</p>}
           </div>
+        </div>
+
+        {/* Recurring Booking Options */}
+        <div className="space-y-4 p-4 bg-muted/50 rounded-lg border border-dashed">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Repeat className="h-4 w-4 text-accent" />
+              <Label htmlFor="isRecurring" className="font-medium">Réservation récurrente</Label>
+            </div>
+            <Switch
+              id="isRecurring"
+              checked={formData.isRecurring}
+              onCheckedChange={(checked) => setFormData(prev => ({ 
+                ...prev, 
+                isRecurring: checked,
+                recurrenceType: checked ? "weekly" : "",
+                recurrenceEndDate: ""
+              }))}
+            />
+          </div>
+          
+          {formData.isRecurring && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+              <div className="space-y-2">
+                <Label htmlFor="recurrenceType">Fréquence</Label>
+                <Select 
+                  value={formData.recurrenceType} 
+                  onValueChange={value => setFormData(prev => ({ ...prev, recurrenceType: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choisir la fréquence" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="weekly">Hebdomadaire (chaque semaine)</SelectItem>
+                    <SelectItem value="biweekly">Bi-hebdomadaire (toutes les 2 semaines)</SelectItem>
+                    <SelectItem value="monthly">Mensuel (chaque mois)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="recurrenceEndDate">Date de fin (optionnel)</Label>
+                <Input 
+                  id="recurrenceEndDate" 
+                  name="recurrenceEndDate" 
+                  type="date" 
+                  value={formData.recurrenceEndDate} 
+                  onChange={handleChange}
+                  min={formData.preferredDate || new Date().toISOString().split('T')[0]}
+                />
+                <p className="text-xs text-muted-foreground">Laissez vide pour une durée indéterminée</p>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="space-y-2">
