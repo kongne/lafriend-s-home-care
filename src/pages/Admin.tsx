@@ -18,6 +18,7 @@ import { ActivityFeed } from "@/components/admin/ActivityFeed";
 import { TaskList } from "@/components/admin/TaskList";
 import { QuickActions } from "@/components/admin/QuickActions";
 import { RecentBookingsTable } from "@/components/admin/RecentBookingsTable";
+import { BookingCalendar } from "@/components/admin/BookingCalendar";
 import { exportToCSV, bookingColumns, contactColumns, subscriberColumns } from "@/lib/exportCsv";
 import { exportToPDF } from "@/lib/exportPdf";
 import { staffEmailSchema } from "@/lib/validation";
@@ -37,6 +38,7 @@ import {
   TrendingUp,
   Clock,
   CheckCircle2,
+  Calendar,
 } from "lucide-react";
 
 interface Booking {
@@ -432,8 +434,8 @@ const Admin = () => {
             {/* Quick Actions */}
             <QuickActions 
               onRefresh={fetchAllData}
-              onExportBookings={() => exportToPDF(bookings, "reservations", bookingColumns, "Réservations")}
-              onExportContacts={() => exportToPDF(contacts, "messages", contactColumns, "Messages")}
+              onExportBookings={() => void exportToPDF(bookings, "reservations", bookingColumns, "Réservations")}
+              onExportContacts={() => void exportToPDF(contacts, "messages", contactColumns, "Messages")}
             />
 
             {/* Recent Bookings Table */}
@@ -473,7 +475,7 @@ const Admin = () => {
                 <Button variant="outline" size="sm" onClick={() => exportToCSV(filteredBookings, "reservations", bookingColumns)}>
                   <Download className="h-4 w-4 mr-2" />CSV
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => exportToPDF(filteredBookings, "reservations", bookingColumns, "Réservations")}>
+                <Button variant="outline" size="sm" onClick={() => void exportToPDF(filteredBookings, "reservations", bookingColumns, "Réservations")}>
                   <FileText className="h-4 w-4 mr-2" />PDF
                 </Button>
               </div>
@@ -516,6 +518,14 @@ const Admin = () => {
           </div>
         );
 
+      case "calendar":
+        return (
+          <BookingCalendar 
+            bookings={bookings} 
+            onStatusChange={updateBookingStatus}
+          />
+        );
+
       case "contacts":
         return (
           <div className="space-y-4">
@@ -523,7 +533,7 @@ const Admin = () => {
               <BulkActions selectedIds={selectedContacts} onSelectAll={(checked) => setSelectedContacts(checked ? filteredContacts.map(c => c.id) : [])} allSelected={selectedContacts.length === filteredContacts.length && filteredContacts.length > 0} someSelected={selectedContacts.length > 0 && selectedContacts.length < filteredContacts.length} onBulkAction={handleBulkContactAction} type="contacts" />
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={() => exportToCSV(filteredContacts, "messages", contactColumns)}><Download className="h-4 w-4 mr-2" />CSV</Button>
-                <Button variant="outline" size="sm" onClick={() => exportToPDF(filteredContacts, "messages", contactColumns, "Messages")}><FileText className="h-4 w-4 mr-2" />PDF</Button>
+                <Button variant="outline" size="sm" onClick={() => void exportToPDF(filteredContacts, "messages", contactColumns, "Messages")}><FileText className="h-4 w-4 mr-2" />PDF</Button>
               </div>
             </div>
             {filteredContacts.map((contact) => (
@@ -561,7 +571,7 @@ const Admin = () => {
               <h2 className="text-xl font-semibold">Abonnés Newsletter ({subscribers.length})</h2>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={() => exportToCSV(subscribers, "abonnes", subscriberColumns)}><Download className="h-4 w-4 mr-2" />CSV</Button>
-                <Button variant="outline" size="sm" onClick={() => exportToPDF(subscribers, "abonnes", subscriberColumns, "Abonnés Newsletter")}><FileText className="h-4 w-4 mr-2" />PDF</Button>
+                <Button variant="outline" size="sm" onClick={() => void exportToPDF(subscribers, "abonnes", subscriberColumns, "Abonnés Newsletter")}><FileText className="h-4 w-4 mr-2" />PDF</Button>
               </div>
             </div>
             <Card>
@@ -620,21 +630,21 @@ const Admin = () => {
           <div className="space-y-6">
             <h2 className="text-xl font-semibold">Rapports et Exports</h2>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => exportToPDF(bookings, "rapport-reservations", bookingColumns, "Rapport des Réservations")}>
+              <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => void exportToPDF(bookings, "rapport-reservations", bookingColumns, "Rapport des Réservations")}>
                 <CardContent className="pt-6 text-center">
                   <CalendarDays className="h-12 w-12 mx-auto mb-4 text-accent" />
                   <h3 className="font-semibold mb-2">Rapport Réservations</h3>
                   <p className="text-sm text-muted-foreground">Exporter toutes les réservations en PDF</p>
                 </CardContent>
               </Card>
-              <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => exportToPDF(contacts, "rapport-messages", contactColumns, "Rapport des Messages")}>
+              <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => void exportToPDF(contacts, "rapport-messages", contactColumns, "Rapport des Messages")}>
                 <CardContent className="pt-6 text-center">
                   <Mail className="h-12 w-12 mx-auto mb-4 text-purple-500" />
                   <h3 className="font-semibold mb-2">Rapport Messages</h3>
                   <p className="text-sm text-muted-foreground">Exporter tous les messages en PDF</p>
                 </CardContent>
               </Card>
-              <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => exportToPDF(subscribers, "rapport-abonnes", subscriberColumns, "Rapport des Abonnés")}>
+              <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => void exportToPDF(subscribers, "rapport-abonnes", subscriberColumns, "Rapport des Abonnés")}>
                 <CardContent className="pt-6 text-center">
                   <Users className="h-12 w-12 mx-auto mb-4 text-green-500" />
                   <h3 className="font-semibold mb-2">Rapport Abonnés</h3>
