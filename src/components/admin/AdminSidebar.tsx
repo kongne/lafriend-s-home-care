@@ -15,6 +15,7 @@ import {
   FileText,
   Menu,
   X,
+  Calendar,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -37,6 +38,7 @@ interface AdminSidebarProps {
 const menuItems = [
   { icon: BarChart3, label: "Statistiques", value: "analytics", path: "/admin" },
   { icon: CalendarDays, label: "Réservations", value: "bookings", path: "/admin?tab=bookings" },
+  { icon: Calendar, label: "Calendrier", value: "calendar", path: "/admin?tab=calendar" },
   { icon: Mail, label: "Messages", value: "contacts", path: "/admin?tab=contacts" },
   { icon: Users, label: "Abonnés", value: "subscribers", path: "/admin?tab=subscribers" },
   { icon: UserCog, label: "Staff", value: "staff", path: "/admin?tab=staff" },
