@@ -67,6 +67,20 @@ export const exportToPDF = async <T extends object>(
           font-family: Arial, sans-serif;
           padding: 20px;
           color: #333;
+          position: relative;
+        }
+        .watermark {
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          opacity: 0.06;
+          z-index: -1;
+          pointer-events: none;
+        }
+        .watermark img {
+          width: 400px;
+          height: auto;
         }
         .header {
           display: flex;
@@ -106,12 +120,15 @@ export const exportToPDF = async <T extends object>(
           width: 100%;
           border-collapse: collapse;
           margin-top: 20px;
+          position: relative;
+          z-index: 1;
         }
         th, td {
           text-align: left;
+          background: rgba(255, 255, 255, 0.9);
         }
-        tr:nth-child(even) {
-          background-color: #f9f9f9;
+        tr:nth-child(even) td {
+          background-color: rgba(249, 249, 249, 0.95);
         }
         .footer {
           margin-top: 30px;
@@ -133,6 +150,7 @@ export const exportToPDF = async <T extends object>(
         @media print {
           body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
           .header, .footer { display: flex !important; }
+          .watermark { position: fixed; }
         }
         @page {
           margin: 1cm;
@@ -140,6 +158,9 @@ export const exportToPDF = async <T extends object>(
       </style>
     </head>
     <body>
+      <!-- Watermark -->
+      ${logoBase64 ? `<div class="watermark"><img src="${logoBase64}" alt="Watermark" /></div>` : ''}
+      
       <div class="header">
         ${logoBase64 ? `<img src="${logoBase64}" alt="LaFriend's Logo" class="logo" />` : '<div class="company-name">LaFriend\'s</div>'}
         <div class="company-info">
@@ -217,6 +238,20 @@ export const exportStatsToPDF = async (stats: Record<string, number | string>, t
           color: #333;
           max-width: 600px;
           margin: 0 auto;
+          position: relative;
+        }
+        .watermark {
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          opacity: 0.06;
+          z-index: -1;
+          pointer-events: none;
+        }
+        .watermark img {
+          width: 300px;
+          height: auto;
         }
         .header {
           display: flex;
@@ -242,6 +277,11 @@ export const exportStatsToPDF = async (stats: Record<string, number | string>, t
         table {
           width: 100%;
           margin-top: 30px;
+          position: relative;
+          z-index: 1;
+        }
+        table td {
+          background: rgba(255, 255, 255, 0.9);
         }
         .footer {
           margin-top: 40px;
@@ -262,10 +302,14 @@ export const exportStatsToPDF = async (stats: Record<string, number | string>, t
         }
         @media print {
           body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+          .watermark { position: fixed; }
         }
       </style>
     </head>
     <body>
+      <!-- Watermark -->
+      ${logoBase64 ? `<div class="watermark"><img src="${logoBase64}" alt="Watermark" /></div>` : ''}
+      
       <div class="header">
         ${logoBase64 ? `<img src="${logoBase64}" alt="LaFriend's Logo" class="logo" />` : '<div class="company-name">LaFriend\'s</div>'}
         <div class="company-name">LaFriend's</div>

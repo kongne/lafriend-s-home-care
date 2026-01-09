@@ -1,9 +1,10 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, GripVertical, Repeat } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/components/ui/use-toast";
 
 interface Booking {
   id: string;
@@ -17,12 +18,15 @@ interface Booking {
   message: string | null;
   status: string;
   created_at: string;
+  is_recurring?: boolean;
+  recurrence_type?: string | null;
 }
 
 interface BookingCalendarProps {
   bookings: Booking[];
   onBookingClick?: (booking: Booking) => void;
   onStatusChange?: (id: string, status: string) => void;
+  onDateChange?: (id: string, newDate: string) => Promise<void>;
 }
 
 const DAYS_OF_WEEK = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
@@ -38,9 +42,12 @@ const statusColors: Record<string, string> = {
   cancelled: "bg-red-500",
 };
 
-export const BookingCalendar = ({ bookings, onBookingClick, onStatusChange }: BookingCalendarProps) => {
+export const BookingCalendar = ({ bookings, onBookingClick, onStatusChange, onDateChange }: BookingCalendarProps) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [draggedBooking, setDraggedBooking] = useState<Booking | null>(null);
+  const [dragOverDate, setDragOverDate] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -92,6 +99,60 @@ export const BookingCalendar = ({ bookings, onBookingClick, onStatusChange }: Bo
     );
   };
 
+  // Drag and drop handlers
+  const handleDragStart = useCallback((e: React.DragEvent, booking: Booking) => {
+    if (booking.status === "completed" || booking.status === "cancelled") {
+      e.preventDefault();
+      return;
+    }
+    setDraggedBooking(booking);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", booking.id);
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent, dateKey: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setDragOverDate(dateKey);
+  }, []);
+
+  const handleDragLeave = useCallback(() => {
+    setDragOverDate(null);
+  }, []);
+
+  const handleDrop = useCallback(async (e: React.DragEvent, dateKey: string) => {
+    e.preventDefault();
+    setDragOverDate(null);
+    
+    if (!draggedBooking || !onDateChange) return;
+    
+    if (draggedBooking.preferred_date === dateKey) {
+      setDraggedBooking(null);
+      return;
+    }
+
+    try {
+      await onDateChange(draggedBooking.id, dateKey);
+      toast({
+        title: "Réservation déplacée",
+        description: `${draggedBooking.full_name} déplacé au ${new Date(dateKey).toLocaleDateString("fr-FR")}`,
+      });
+    } catch {
+      toast({
+        title: "Erreur",
+        description: "Impossible de déplacer la réservation",
+        variant: "destructive",
+      });
+    }
+    
+    setDraggedBooking(null);
+  }, [draggedBooking, onDateChange, toast]);
+
+  const handleDragEnd = useCallback(() => {
+    setDraggedBooking(null);
+    setDragOverDate(null);
+  }, []);
+
   const selectedBookings = selectedDate ? bookingsByDate[selectedDate] || [] : [];
 
   // Generate calendar days
@@ -99,7 +160,7 @@ export const BookingCalendar = ({ bookings, onBookingClick, onStatusChange }: Bo
   
   // Empty cells for days before the first day of month
   for (let i = 0; i < startingDay; i++) {
-    calendarDays.push(<div key={`empty-${i}`} className="h-24 bg-muted/30 rounded-lg" />);
+    calendarDays.push(<div key={`empty-${i}`} className="h-28 bg-muted/30 rounded-lg" />);
   }
   
   // Actual days of the month
@@ -109,16 +170,21 @@ export const BookingCalendar = ({ bookings, onBookingClick, onStatusChange }: Bo
     const hasBookings = dayBookings.length > 0;
     const isSelected = selectedDate === dateKey;
     const todayClass = isToday(day);
+    const isDragOver = dragOverDate === dateKey;
 
     calendarDays.push(
       <div
         key={day}
         onClick={() => setSelectedDate(dateKey)}
+        onDragOver={(e) => handleDragOver(e, dateKey)}
+        onDragLeave={handleDragLeave}
+        onDrop={(e) => handleDrop(e, dateKey)}
         className={cn(
-          "h-24 p-2 rounded-lg border cursor-pointer transition-all hover:shadow-md",
+          "h-28 p-2 rounded-lg border cursor-pointer transition-all hover:shadow-md",
           isSelected ? "border-accent ring-2 ring-accent/20 bg-accent/5" : "border-border",
           todayClass && "bg-primary/5 border-primary",
-          !hasBookings && "hover:bg-muted/50"
+          !hasBookings && "hover:bg-muted/50",
+          isDragOver && "border-accent border-2 bg-accent/10 scale-[1.02]"
         )}
       >
         <div className="flex justify-between items-start">
@@ -138,13 +204,21 @@ export const BookingCalendar = ({ bookings, onBookingClick, onStatusChange }: Bo
           {dayBookings.slice(0, 2).map((booking) => (
             <div
               key={booking.id}
+              draggable={booking.status !== "completed" && booking.status !== "cancelled"}
+              onDragStart={(e) => handleDragStart(e, booking)}
+              onDragEnd={handleDragEnd}
               className={cn(
-                "text-xs truncate px-1 py-0.5 rounded text-white",
-                statusColors[booking.status] || "bg-gray-500"
+                "text-xs truncate px-1 py-0.5 rounded text-white flex items-center gap-1",
+                statusColors[booking.status] || "bg-gray-500",
+                booking.status !== "completed" && booking.status !== "cancelled" && "cursor-grab active:cursor-grabbing"
               )}
-              title={`${booking.full_name} - ${booking.service_type}`}
+              title={`${booking.full_name} - ${booking.service_type}${booking.is_recurring ? ' (Récurrent)' : ''}`}
             >
-              {booking.preferred_time} - {booking.full_name.split(" ")[0]}
+              {booking.status !== "completed" && booking.status !== "cancelled" && (
+                <GripVertical className="h-3 w-3 flex-shrink-0 opacity-70" />
+              )}
+              {booking.is_recurring && <Repeat className="h-3 w-3 flex-shrink-0" />}
+              <span className="truncate">{booking.preferred_time} - {booking.full_name.split(" ")[0]}</span>
             </div>
           ))}
           {dayBookings.length > 2 && (
@@ -165,6 +239,9 @@ export const BookingCalendar = ({ bookings, onBookingClick, onStatusChange }: Bo
             <CardTitle className="flex items-center gap-2">
               <CalendarIcon className="h-5 w-5" />
               Calendrier des Réservations
+              <Badge variant="outline" className="ml-2 text-xs font-normal">
+                Glisser-déposer activé
+              </Badge>
             </CardTitle>
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={goToToday}>
@@ -200,6 +277,10 @@ export const BookingCalendar = ({ bookings, onBookingClick, onStatusChange }: Bo
             <div className="flex items-center gap-1">
               <div className="w-3 h-3 rounded bg-red-500" />
               <span>Annulée</span>
+            </div>
+            <div className="flex items-center gap-1 ml-2 pl-2 border-l">
+              <Repeat className="h-3 w-3" />
+              <span>Récurrent</span>
             </div>
           </div>
 
@@ -240,7 +321,16 @@ export const BookingCalendar = ({ bookings, onBookingClick, onStatusChange }: Bo
                   >
                     <div className="flex justify-between items-start mb-2">
                       <div>
-                        <h4 className="font-semibold">{booking.full_name}</h4>
+                        <h4 className="font-semibold flex items-center gap-2">
+                          {booking.full_name}
+                          {booking.is_recurring && (
+                            <Badge variant="outline" className="text-xs">
+                              <Repeat className="h-3 w-3 mr-1" />
+                              {booking.recurrence_type === 'weekly' ? 'Hebdo' : 
+                               booking.recurrence_type === 'biweekly' ? 'Bi-hebdo' : 'Mensuel'}
+                            </Badge>
+                          )}
+                        </h4>
                         <p className="text-sm text-muted-foreground">{booking.service_type}</p>
                       </div>
                       <Badge className={cn("text-white", statusColors[booking.status] || "bg-gray-500")}>
