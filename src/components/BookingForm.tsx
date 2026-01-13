@@ -97,6 +97,27 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
 
       if (error) throw error;
 
+      // Send SMS notification to admin
+      try {
+        await supabase.functions.invoke('send-sms-notification', {
+          method: 'POST',
+          body: {
+            booking: {
+              full_name: validation.data.fullName,
+              email: validation.data.email,
+              phone: validation.data.phone,
+              address: validation.data.address,
+              service_type: validation.data.serviceType,
+              preferred_date: validation.data.preferredDate,
+              preferred_time: validation.data.preferredTime,
+            }
+          }
+        });
+      } catch (smsErr) {
+        // Don't fail the booking if SMS fails
+        logError("SMS notification error:", smsErr);
+      }
+
       toast({
         title: t('booking.success'),
         description: t('booking.successDesc'),
