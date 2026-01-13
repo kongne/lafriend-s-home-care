@@ -1,30 +1,12 @@
 import { useState } from "react";
-import { Bell, Search, Moon, Sun, Menu, X } from "lucide-react";
+import { Search, Moon, Sun, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { useTheme } from "next-themes";
-import { cn } from "@/lib/utils";
-
-interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  time: string;
-  read: boolean;
-}
+import { NotificationCenter } from "./NotificationCenter";
 
 interface AdminHeaderProps {
   userName?: string;
-  notifications?: Notification[];
   onSearch?: (query: string) => void;
   onToggleMobileSidebar?: () => void;
   showMobileMenu?: boolean;
@@ -32,14 +14,12 @@ interface AdminHeaderProps {
 
 export const AdminHeader = ({
   userName = "Admin",
-  notifications = [],
   onSearch,
   onToggleMobileSidebar,
   showMobileMenu = false,
 }: AdminHeaderProps) => {
   const { theme, setTheme } = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
-  const unreadCount = notifications.filter(n => !n.read).length;
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,63 +92,7 @@ export const AdminHeader = ({
           </Button>
 
           {/* Notifications */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative" aria-label="Notifications">
-                <Bell className="h-5 w-5" />
-                {unreadCount > 0 && (
-                  <Badge className="absolute -top-1 -right-1 h-5 min-w-[20px] p-0 flex items-center justify-center bg-destructive text-destructive-foreground text-xs">
-                    {unreadCount}
-                  </Badge>
-                )}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80">
-              <DropdownMenuLabel className="flex justify-between items-center">
-                Notifications
-                {unreadCount > 0 && (
-                  <Badge variant="secondary">{unreadCount} non lu(s)</Badge>
-                )}
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {notifications.length === 0 ? (
-                <div className="p-4 text-center text-muted-foreground text-sm">
-                  Aucune notification
-                </div>
-              ) : (
-                notifications.slice(0, 5).map((notification) => (
-                  <DropdownMenuItem
-                    key={notification.id}
-                    className={cn(
-                      "flex flex-col items-start gap-1 p-3 cursor-pointer",
-                      !notification.read && "bg-accent/5"
-                    )}
-                  >
-                    <div className="flex items-center justify-between w-full">
-                      <span className="font-medium text-sm">{notification.title}</span>
-                      {!notification.read && (
-                        <span className="h-2 w-2 rounded-full bg-accent" />
-                      )}
-                    </div>
-                    <span className="text-xs text-muted-foreground line-clamp-2">
-                      {notification.message}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {notification.time}
-                    </span>
-                  </DropdownMenuItem>
-                ))
-              )}
-              {notifications.length > 5 && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem className="text-center text-accent">
-                    Voir toutes les notifications
-                  </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <NotificationCenter />
 
           {/* User Info */}
           <div className="hidden md:flex items-center gap-2 pl-2 border-l border-border">

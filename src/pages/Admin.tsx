@@ -714,7 +714,6 @@ const Admin = () => {
       <div className="md:ml-64 transition-all duration-300">
         <AdminHeader
           userName={user?.email?.split("@")[0]}
-          notifications={notifications}
           onSearch={setSearchQuery}
           onToggleMobileSidebar={() => setMobileSidebarOpen(!mobileSidebarOpen)}
           showMobileMenu={mobileSidebarOpen}
