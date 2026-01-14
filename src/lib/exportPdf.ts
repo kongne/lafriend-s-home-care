@@ -63,23 +63,37 @@ export const exportToPDF = async <T extends object>(
     <head>
       <title>${filename}</title>
       <style>
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+        html, body {
+          height: 100%;
+        }
         body {
           font-family: Arial, sans-serif;
           padding: 20px;
           color: #333;
           position: relative;
+          line-height: 1.4;
         }
         .watermark {
           position: fixed;
           top: 50%;
           left: 50%;
-          transform: translate(-50%, -50%);
-          opacity: 0.06;
-          z-index: -1;
+          transform: translate(-50%, -50%) rotate(-45deg);
+          opacity: 0.08;
+          z-index: 0;
           pointer-events: none;
+          width: 100%;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
         .watermark img {
-          width: 400px;
+          width: 500px;
           height: auto;
         }
         .header {
@@ -89,6 +103,9 @@ export const exportToPDF = async <T extends object>(
           margin-bottom: 20px;
           padding-bottom: 15px;
           border-bottom: 3px solid #f4c430;
+          position: relative;
+          z-index: 1;
+          page-break-after: avoid;
         }
         .logo {
           height: 60px;
@@ -110,11 +127,16 @@ export const exportToPDF = async <T extends object>(
           color: #1a1a2e;
           margin-bottom: 10px;
           margin-top: 20px;
+          position: relative;
+          z-index: 1;
+          page-break-after: avoid;
         }
         .meta {
           color: #666;
           margin-bottom: 20px;
           font-size: 14px;
+          position: relative;
+          z-index: 1;
         }
         table {
           width: 100%;
@@ -125,10 +147,19 @@ export const exportToPDF = async <T extends object>(
         }
         th, td {
           text-align: left;
-          background: rgba(255, 255, 255, 0.9);
+          background: rgba(255, 255, 255, 0.95);
+          padding: 8px;
+          border: 1px solid #ddd;
+        }
+        th {
+          background: #f5f5f5 !important;
+          font-weight: bold;
         }
         tr:nth-child(even) td {
           background-color: rgba(249, 249, 249, 0.95);
+        }
+        tr {
+          page-break-inside: avoid;
         }
         .footer {
           margin-top: 30px;
@@ -137,6 +168,9 @@ export const exportToPDF = async <T extends object>(
           display: flex;
           align-items: center;
           justify-content: space-between;
+          position: relative;
+          z-index: 1;
+          page-break-before: avoid;
         }
         .footer-logo {
           height: 40px;
@@ -148,12 +182,41 @@ export const exportToPDF = async <T extends object>(
           text-align: right;
         }
         @media print {
-          body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
-          .header, .footer { display: flex !important; }
-          .watermark { position: fixed; }
+          html, body {
+            height: auto;
+            margin: 0;
+            padding: 0;
+          }
+          body { 
+            print-color-adjust: exact; 
+            -webkit-print-color-adjust: exact;
+            padding: 10mm;
+          }
+          .header, .footer { 
+            display: flex !important;
+            print-color-adjust: exact;
+            -webkit-print-color-adjust: exact;
+          }
+          .watermark { 
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+          }
+          table {
+            margin-bottom: 10px;
+          }
+          thead {
+            display: table-header-group;
+          }
+          tfoot {
+            display: table-footer-group;
+          }
         }
         @page {
-          margin: 1cm;
+          size: A4;
+          margin: 10mm;
         }
       </style>
     </head>
@@ -232,6 +295,14 @@ export const exportStatsToPDF = async (stats: Record<string, number | string>, t
     <head>
       <title>${title}</title>
       <style>
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+        html, body {
+          height: 100%;
+        }
         body {
           font-family: Arial, sans-serif;
           padding: 40px;
@@ -239,18 +310,24 @@ export const exportStatsToPDF = async (stats: Record<string, number | string>, t
           max-width: 600px;
           margin: 0 auto;
           position: relative;
+          line-height: 1.4;
         }
         .watermark {
           position: fixed;
           top: 50%;
           left: 50%;
-          transform: translate(-50%, -50%);
-          opacity: 0.06;
-          z-index: -1;
+          transform: translate(-50%, -50%) rotate(-45deg);
+          opacity: 0.08;
+          z-index: 0;
           pointer-events: none;
+          width: 100%;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
         .watermark img {
-          width: 300px;
+          width: 400px;
           height: auto;
         }
         .header {
@@ -260,6 +337,9 @@ export const exportStatsToPDF = async (stats: Record<string, number | string>, t
           margin-bottom: 20px;
           padding-bottom: 15px;
           border-bottom: 3px solid #f4c430;
+          position: relative;
+          z-index: 1;
+          page-break-after: avoid;
         }
         .logo {
           height: 50px;
@@ -273,15 +353,24 @@ export const exportStatsToPDF = async (stats: Record<string, number | string>, t
         h1 {
           color: #1a1a2e;
           margin-top: 20px;
+          position: relative;
+          z-index: 1;
+          page-break-after: avoid;
         }
         table {
           width: 100%;
           margin-top: 30px;
           position: relative;
           z-index: 1;
+          border-collapse: collapse;
         }
         table td {
-          background: rgba(255, 255, 255, 0.9);
+          background: rgba(255, 255, 255, 0.95);
+          padding: 12px;
+          border-bottom: 1px solid #eee;
+        }
+        table tr {
+          page-break-inside: avoid;
         }
         .footer {
           margin-top: 40px;
@@ -290,6 +379,9 @@ export const exportStatsToPDF = async (stats: Record<string, number | string>, t
           display: flex;
           align-items: center;
           justify-content: space-between;
+          position: relative;
+          z-index: 1;
+          page-break-before: avoid;
         }
         .footer-logo {
           height: 30px;
@@ -301,8 +393,33 @@ export const exportStatsToPDF = async (stats: Record<string, number | string>, t
           color: #666;
         }
         @media print {
-          body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
-          .watermark { position: fixed; }
+          html, body {
+            height: auto;
+            margin: 0;
+            padding: 0;
+            max-width: none;
+          }
+          body { 
+            print-color-adjust: exact; 
+            -webkit-print-color-adjust: exact;
+            padding: 10mm;
+          }
+          .header, .footer { 
+            display: flex !important;
+            print-color-adjust: exact;
+            -webkit-print-color-adjust: exact;
+          }
+          .watermark { 
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+          }
+        }
+        @page {
+          size: A4;
+          margin: 10mm;
         }
       </style>
     </head>

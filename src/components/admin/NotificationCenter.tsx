@@ -1,5 +1,17 @@
 import { useState, useEffect } from "react";
-import { Bell, Check, CheckCheck, Trash2, ExternalLink } from "lucide-react";
+import {
+  Bell,
+  Check,
+  CheckCheck,
+  Trash2,
+  ExternalLink,
+  X,
+  Filter,
+  Search,
+  Eye,
+  EyeOff,
+  Clock,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -9,6 +21,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -23,25 +36,32 @@ interface Notification {
   message: string;
   link: string | null;
   is_read: boolean;
+  is_archived: boolean;
+  priority?: "low" | "medium" | "high";
   created_at: string;
 }
 
 export const NotificationCenter = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
+  const [showArchived, setShowArchived] = useState(false);
+  const [snoozedIds, setSnoozedIds] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
-  const unreadCount = notifications.filter(n => !n.is_read).length;
+  const unreadCount = notifications.filter(n => !n.is_read && !n.is_archived).length;
+  const notificationType = ["booking", "contact", "warning", "error", "system"];
 
   const fetchNotifications = async () => {
     const { data, error } = await supabase
       .from("notifications")
       .select("*")
       .order("created_at", { ascending: false })
-      .limit(20);
+      .limit(100);
 
     if (!error && data) {
-      setNotifications(data);
+      setNotifications(data as Notification[]);
     }
     setLoading(false);
   };
@@ -102,8 +122,78 @@ export const NotificationCenter = () => {
     }
   };
 
+  const markAsUnread = async (id: string) => {
+    const { error } = await supabase
+      .from("notifications")
+      .update({ is_read: false })
+      .eq("id", id);
+
+    if (!error) {
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, is_read: false } : n))
+      );
+    }
+  };
+
+  const archiveNotification = async (id: string) => {
+    const { error } = await supabase
+      .from("notifications")
+      .update({ is_archived: true })
+      .eq("id", id);
+
+    if (!error) {
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, is_archived: true } : n))
+      );
+      toast({ title: "Notification archivée" });
+    }
+  };
+
+  const unarchiveNotification = async (id: string) => {
+    const { error } = await supabase
+      .from("notifications")
+      .update({ is_archived: false })
+      .eq("id", id);
+
+    if (!error) {
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, is_archived: false } : n))
+      );
+      toast({ title: "Notification restaurée" });
+    }
+  };
+
+  const snoozeNotification = async (id: string, minutes: number = 30) => {
+    setSnoozedIds((prev) => new Set([...prev, id]));
+    toast({
+      title: `Notification mise en attente pour ${minutes} minutes`,
+      description: "Elle réapparaîtra bientôt",
+    });
+
+    setTimeout(() => {
+      setSnoozedIds((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(id);
+        return newSet;
+      });
+    }, minutes * 60 * 1000);
+  };
+
+  const deleteNotification = async (id: string) => {
+    const { error } = await supabase
+      .from("notifications")
+      .delete()
+      .eq("id", id);
+
+    if (!error) {
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+    }
+  };
+
   const markAllAsRead = async () => {
-    const unreadIds = notifications.filter((n) => !n.is_read).map((n) => n.id);
+    const unreadIds = notifications
+      .filter((n) => !n.is_read && !n.is_archived && !snoozedIds.has(n.id))
+      .map((n) => n.id);
     if (unreadIds.length === 0) return;
 
     const { error } = await supabase
@@ -119,19 +209,10 @@ export const NotificationCenter = () => {
     }
   };
 
-  const deleteNotification = async (id: string) => {
-    const { error } = await supabase
-      .from("notifications")
-      .delete()
-      .eq("id", id);
-
-    if (!error) {
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
-    }
-  };
-
-  const clearAll = async () => {
-    const ids = notifications.map((n) => n.id);
+  const clearAllArchived = async () => {
+    const ids = notifications
+      .filter((n) => n.is_archived)
+      .map((n) => n.id);
     if (ids.length === 0) return;
 
     const { error } = await supabase
@@ -140,10 +221,30 @@ export const NotificationCenter = () => {
       .in("id", ids);
 
     if (!error) {
-      setNotifications([]);
-      toast({ title: "Toutes les notifications supprimées" });
+      setNotifications((prev) => prev.filter((n) => !n.is_archived));
+      toast({ title: "Notifications archivées supprimées" });
     }
   };
+
+  // Filter notifications based on search and type
+  const filteredNotifications = notifications
+    .filter((n) => {
+      const matchesSearch = n.title
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+        n.message
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase());
+
+      const matchesType =
+        selectedFilters.length === 0 || selectedFilters.includes(n.type);
+
+      const matchesArchive = showArchived ? n.is_archived : !n.is_archived;
+
+      const notSnoozed = !snoozedIds.has(n.id);
+
+      return matchesSearch && matchesType && matchesArchive && notSnoozed;
+    });
 
   const getTypeColor = (type: string) => {
     switch (type) {
@@ -155,8 +256,23 @@ export const NotificationCenter = () => {
         return "bg-yellow-500";
       case "error":
         return "bg-red-500";
+      case "system":
+        return "bg-purple-500";
       default:
         return "bg-accent";
+    }
+  };
+
+  const getPriorityColor = (priority?: string) => {
+    switch (priority) {
+      case "high":
+        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200";
+      case "medium":
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
+      case "low":
+        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
+      default:
+        return "";
     }
   };
 
