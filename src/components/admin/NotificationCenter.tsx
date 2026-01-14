@@ -300,109 +300,252 @@ export const NotificationCenter = () => {
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-96 bg-popover z-50">
-        <DropdownMenuLabel className="flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            Notifications
-            {unreadCount > 0 && (
-              <Badge variant="secondary" className="text-xs">
-                {unreadCount} non lu(s)
-              </Badge>
-            )}
+      <DropdownMenuContent align="end" className="w-[450px] bg-popover z-50 p-0">
+        {/* Header with title and action buttons */}
+        <div className="p-4 border-b space-y-3">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold text-sm">Notifications</h3>
+              {unreadCount > 0 && (
+                <Badge variant="secondary" className="text-xs">
+                  {unreadCount} non lu(s)
+                </Badge>
+              )}
+            </div>
+            <div className="flex gap-1">
+              {unreadCount > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={markAllAsRead}
+                  className="h-7 text-xs"
+                  title="Tout marquer comme lu"
+                >
+                  <CheckCheck className="h-4 w-4" />
+                </Button>
+              )}
+              {showArchived && notifications.filter(n => n.is_archived).length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearAllArchived}
+                  className="h-7 text-xs text-destructive hover:text-destructive"
+                  title="Supprimer les archives"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
           </div>
-          <div className="flex gap-1">
-            {unreadCount > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={markAllAsRead}
-                className="h-7 text-xs"
-                title="Tout marquer comme lu"
-              >
-                <CheckCheck className="h-4 w-4" />
-              </Button>
-            )}
-            {notifications.length > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearAll}
-                className="h-7 text-xs text-destructive hover:text-destructive"
-                title="Tout supprimer"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            )}
+
+          {/* Search and Filter */}
+          <div className="flex gap-2">
+            <div className="flex-1 relative">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Rechercher..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-8 pr-3 py-1.5 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-accent"
+              />
+            </div>
+            
+            {/* Type Filter Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9 gap-1"
+                  title="Filtrer par type"
+                >
+                  <Filter className="h-4 w-4" />
+                  <span className="text-xs">
+                    {selectedFilters.length > 0 ? `${selectedFilters.length}` : "Type"}
+                  </span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuLabel>Filtrer par type</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {notificationType.map((type) => (
+                  <DropdownMenuCheckboxItem
+                    key={type}
+                    checked={selectedFilters.includes(type)}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setSelectedFilters([...selectedFilters, type]);
+                      } else {
+                        setSelectedFilters(selectedFilters.filter((t) => t !== type));
+                      }
+                    }}
+                  >
+                    {type.charAt(0).toUpperCase() + type.slice(1)}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Archive/Active toggle */}
+            <Button
+              variant={showArchived ? "default" : "outline"}
+              size="sm"
+              onClick={() => setShowArchived(!showArchived)}
+              className="h-9"
+              title={showArchived ? "Voir actifs" : "Voir archives"}
+            >
+              {showArchived ? "Archive" : "Actifs"}
+            </Button>
           </div>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <ScrollArea className="h-[400px]">
+        </div>
+
+        {/* Notifications List */}
+        <ScrollArea className="h-[450px]">
           {loading ? (
             <div className="p-4 text-center text-muted-foreground text-sm">
               Chargement...
             </div>
-          ) : notifications.length === 0 ? (
+          ) : filteredNotifications.length === 0 ? (
             <div className="p-8 text-center text-muted-foreground text-sm">
               <Bell className="h-12 w-12 mx-auto mb-3 opacity-20" />
-              Aucune notification
+              <p>{showArchived ? "Aucune notification archivée" : "Aucune notification"}</p>
             </div>
           ) : (
-            <div className="p-1">
-              {notifications.map((notification) => (
+            <div className="divide-y">
+              {filteredNotifications.map((notification) => (
                 <div
                   key={notification.id}
                   className={cn(
-                    "flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-colors hover:bg-muted/50 group",
-                    !notification.is_read && "bg-accent/5"
+                    "flex items-start gap-3 p-3 cursor-pointer transition-colors hover:bg-muted/50 group border-l-4",
+                    !notification.is_read && !showArchived
+                      ? "bg-accent/5 border-l-accent"
+                      : "border-l-transparent"
                   )}
                   onClick={() => handleNotificationClick(notification)}
                 >
+                  {/* Type indicator dot */}
                   <div
                     className={cn(
-                      "h-2 w-2 rounded-full mt-2 shrink-0",
+                      "h-3 w-3 rounded-full mt-1 shrink-0",
                       getTypeColor(notification.type)
                     )}
                   />
+
+                  {/* Content */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center justify-between gap-2 mb-1">
                       <span
                         className={cn(
                           "font-medium text-sm truncate",
-                          !notification.is_read && "text-foreground",
-                          notification.is_read && "text-muted-foreground"
+                          !notification.is_read && !showArchived
+                            ? "text-foreground font-semibold"
+                            : "text-muted-foreground"
                         )}
                       >
                         {notification.title}
                       </span>
-                      {notification.link && (
-                        <ExternalLink className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 shrink-0" />
+                      {notification.priority && (
+                        <Badge
+                          variant="secondary"
+                          className={cn("text-xs shrink-0", getPriorityColor(notification.priority))}
+                        >
+                          {notification.priority}
+                        </Badge>
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
+
+                    <p className="text-xs text-muted-foreground line-clamp-2">
                       {notification.message}
                     </p>
-                    <span className="text-xs text-muted-foreground/70 mt-1 block">
-                      {formatDistanceToNow(new Date(notification.created_at), {
-                        addSuffix: true,
-                        locale: fr,
-                      })}
-                    </span>
+
+                    <div className="flex items-center justify-between mt-1.5">
+                      <span className="text-xs text-muted-foreground/70">
+                        {formatDistanceToNow(new Date(notification.created_at), {
+                          addSuffix: true,
+                          locale: fr,
+                        })}
+                      </span>
+                      {notification.link && (
+                        <ExternalLink className="h-3 w-3 text-muted-foreground opacity-60" />
+                      )}
+                    </div>
                   </div>
-                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 shrink-0">
-                    {!notification.is_read && (
+
+                  {/* Actions */}
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 shrink-0 transition-opacity">
+                    {!notification.is_read && !showArchived && (
                       <Button
                         variant="ghost"
                         size="icon"
                         className="h-6 w-6"
                         onClick={(e) => {
                           e.stopPropagation();
-                          markAsRead(notification.id);
+                          markAsUnread(notification.id);
                         }}
-                        title="Marquer comme lu"
+                        title="Marquer comme non lu"
+                      >
+                        <EyeOff className="h-3 w-3" />
+                      </Button>
+                    )}
+                    {notification.is_read && !showArchived && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          markAsUnread(notification.id);
+                        }}
+                        title="Marquer comme non lu"
+                      >
+                        <Eye className="h-3 w-3" />
+                      </Button>
+                    )}
+
+                    {!showArchived && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          snoozeNotification(notification.id, 30);
+                        }}
+                        title="Reporter 30 min"
+                      >
+                        <Clock className="h-3 w-3" />
+                      </Button>
+                    )}
+
+                    {!showArchived ? (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-yellow-600 hover:text-yellow-600"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          archiveNotification(notification.id);
+                        }}
+                        title="Archiver"
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          unarchiveNotification(notification.id);
+                        }}
+                        title="Restaurer"
                       >
                         <Check className="h-3 w-3" />
                       </Button>
                     )}
+
                     <Button
                       variant="ghost"
                       size="icon"
