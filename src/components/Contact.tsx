@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Phone, Mail, MapPin, Clock } from "lucide-react";
+import { Phone, Mail, MapPin, Clock, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +11,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Loader2 } from "lucide-react";
 import { contactSchema, rateLimit } from "@/lib/validation";
 import { warn, error as logError } from "@/lib/logger";
+import { getRecaptchaToken } from "@/lib/recaptcha";
 
 export const Contact = () => {
   const { toast } = useToast();
@@ -71,6 +72,9 @@ export const Contact = () => {
     setErrors({});
 
     try {
+      // Get reCAPTCHA token for spam protection
+      const recaptchaToken = await getRecaptchaToken('contact');
+      
       const { error } = await supabase.from("contact_submissions").insert({
         user_id: user?.id || null,
         full_name: validation.data.fullName,
@@ -78,6 +82,7 @@ export const Contact = () => {
         phone: validation.data.phone || null,
         subject: validation.data.subject,
         message: validation.data.message,
+        recaptcha_token: recaptchaToken || null
       });
 
       if (error) throw error;
@@ -275,6 +280,12 @@ export const Contact = () => {
                 t('contact.send')
               )}
             </Button>
+            
+            {/* CAPTCHA Badge Notice */}
+            <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground mt-4">
+              <Shield className="w-3 h-3" />
+              <p>Protected by reCAPTCHA</p>
+            </div>
           </form>
         </div>
       </div>

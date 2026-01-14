@@ -9,10 +9,11 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Loader2, Repeat } from "lucide-react";
+import { Loader2, Repeat, Shield } from "lucide-react";
 import { bookingSchema, rateLimit } from "@/lib/validation";
 import { error as logError } from "@/lib/logger";
 import { Switch } from "@/components/ui/switch";
+import { getRecaptchaToken } from "@/lib/recaptcha";
 
 export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
   const { t } = useLanguage();
@@ -80,6 +81,9 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
     setErrors({});
 
     try {
+      // Get reCAPTCHA token for spam protection
+      const recaptchaToken = await getRecaptchaToken('booking');
+      
       const { error } = await supabase.from("bookings").insert({
         user_id: user?.id || null,
         full_name: validation.data.fullName,
@@ -92,7 +96,8 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
         message: validation.data.message || null,
         is_recurring: formData.isRecurring,
         recurrence_type: formData.isRecurring ? formData.recurrenceType : null,
-        recurrence_end_date: formData.isRecurring && formData.recurrenceEndDate ? formData.recurrenceEndDate : null
+        recurrence_end_date: formData.isRecurring && formData.recurrenceEndDate ? formData.recurrenceEndDate : null,
+        recaptcha_token: recaptchaToken || null
       });
 
       if (error) throw error;
@@ -367,6 +372,12 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
             "RÉSERVER MAINTENANT"
           )}
         </Button>
+        
+        {/* CAPTCHA Badge Notice */}
+        <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground mt-4">
+          <Shield className="w-3 h-3" />
+          <p>Protected by reCAPTCHA</p>
+        </div>
       </form>
     </Card>
   );
