@@ -1,0 +1,12 @@
+{
+  "imports": {
+    "std/": "https://deno.land/std@0.208.0/",
+    "std/http/server.ts": "https://deno.land/std@0.208.0/http/server.ts",
+    "supabase": "https://deno.land/x/supabase@2.8.0/src/main.ts",
+    "date-fns": "https://esm.sh/date-fns@2.30.0",
+    "date-fns/locale": "https://esm.sh/date-fns@2.30.0/locale/index.js"
+  },
+  "tasks": {
+    "test": "deno test --allow-all"
+  }
+}

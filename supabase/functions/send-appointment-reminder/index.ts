@@ -1,12 +1,14 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.84.0";
-import { addHours, subHours, format } from "https://esm.sh/date-fns@2.30.0";
-import { fr } from "https://esm.sh/date-fns@2.30.0/locale/index.js";
+import { createClient } from "@supabase/supabase-js";
+import { addHours, subHours, format } from "date-fns";
+
+// Restrict CORS to specific origin (update in production)
+const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || "https://www.lafriendsservices.com";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  "Access-Control-Max-Age": "86400",
 };
 
 // Type definitions
@@ -18,7 +20,7 @@ interface EmailReminder {
   scheduled_send_time: string;
   status: string;
   retry_count: number;
-  bookings?: BookingData;
+  bookings?: BookingData | BookingData[];
 }
 
 interface BookingData {
@@ -31,14 +33,20 @@ interface BookingData {
 }
 
 // Validate environment variables
-const supabaseUrl = Deno.env.get("SUPABASE_URL");
-const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
   throw new Error("Missing required environment variables: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
 }
 
-const supabase = createClient(supabaseUrl, supabaseKey);
+// Initialize Supabase client with auth option
+const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: { persistSession: false },
+});
+
+// Email validation regex
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // Email service configuration
 const sendEmail = async (
@@ -47,13 +55,18 @@ const sendEmail = async (
   html: string
 ): Promise<{ success: boolean; error?: string }> => {
   try {
-    // Validate email format
-    if (!to || !to.includes("@")) {
+    // Validate email format with strict regex
+    if (!to || !EMAIL_REGEX.test(to) || to.length > 254) {
       return { success: false, error: "Invalid email address" };
     }
+    
+    // Validate subject length
+    if (!subject || subject.length > 255) {
+      return { success: false, error: "Invalid subject" };
+    }
 
-    const emailServiceUrl = Deno.env.get("EMAIL_SERVICE_URL");
-    const emailServiceKey = Deno.env.get("EMAIL_SERVICE_KEY");
+    const emailServiceUrl = process.env.EMAIL_SERVICE_URL;
+    const emailServiceKey = process.env.EMAIL_SERVICE_KEY;
 
     if (!emailServiceUrl) {
       console.warn("⚠️ EMAIL_SERVICE_URL not configured - reminder marked as pending");
@@ -71,6 +84,7 @@ const sendEmail = async (
         subject,
         html,
       }),
+      signal: AbortSignal.timeout(30000), // 30 second timeout
     });
 
     if (!response.ok) {
@@ -98,7 +112,9 @@ const generateReminderEmail = (
   address: string,
   language: string = "fr"
 ): string => {
-  const isEnglish = language === "en";
+  // Validate language parameter to prevent injection
+  const validLanguages = ["en", "fr"];
+  const isEnglish = validLanguages.includes(language) ? language === "en" : true;
 
   const content = {
     fr: {
@@ -131,9 +147,11 @@ const generateReminderEmail = (
 
   const text = isEnglish ? content.en : content.fr;
 
+  // Sanitize language attribute for HTML safety
+  const safeLang = escapeHtml(language).substring(0, 5);
   return `
     <!DOCTYPE html>
-    <html lang="${language}">
+    <html lang="${safeLang}">
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -241,36 +259,36 @@ const generateReminderEmail = (
           </div>
           
           <div class="content">
-            <p class="greeting">${text.greeting}</p>
-            <p class="message">${text.message}</p>
+            <p class="greeting">${escapeHtml(text.greeting)}</p>
+            <p class="message">${escapeHtml(text.message)}</p>
             
             <div class="detail-row">
-              <div class="label">${text.serviceLabel}</div>
+              <div class="label">${escapeHtml(text.serviceLabel)}</div>
               <div class="value">${escapeHtml(serviceType)}</div>
             </div>
             
             <div class="detail-row">
-              <div class="label">${text.dateLabel}</div>
+              <div class="label">${escapeHtml(text.dateLabel)}</div>
               <div class="value">${escapeHtml(appointmentDate)} à ${escapeHtml(appointmentTime)}</div>
             </div>
             
             <div class="detail-row">
-              <div class="label">${text.locationLabel}</div>
+              <div class="label">${escapeHtml(text.locationLabel)}</div>
               <div class="value">${escapeHtml(address)}</div>
             </div>
             
-            <p style="margin-top: 20px; color: #555;">${text.rescheduleMessage}</p>
+            <p style="margin-top: 20px; color: #555;">${escapeHtml(text.rescheduleMessage)}</p>
             
             <center>
-              <a href="https://www.lafriendsservices.com" class="button">${text.buttonText}</a>
+              <a href="https://www.lafriendsservices.com" class="button">${escapeHtml(text.buttonText)}</a>
             </center>
             
-            <p class="closing">${text.closing}</p>
-            <p><span class="company">${text.company}</span></p>
+            <p class="closing">${escapeHtml(text.closing)}</p>
+            <p><span class="company">${escapeHtml(text.company)}</span></p>
           </div>
           
           <div class="footer">
-            <p>${text.footer}</p>
+            <p>${escapeHtml(text.footer)}</p>
           </div>
         </div>
       </body>
@@ -279,7 +297,10 @@ const generateReminderEmail = (
 };
 
 // HTML escape function to prevent XSS
-const escapeHtml = (text: string): string => {
+const escapeHtml = (text: string | object): string => {
+  if (typeof text !== "string") {
+    return "";
+  }
   const map: { [key: string]: string } = {
     "&": "&amp;",
     "<": "&lt;",
@@ -293,6 +314,14 @@ const escapeHtml = (text: string): string => {
 // Main handler for sending reminders
 const handler = async (req: Request): Promise<Response> => {
   console.log("📧 Send appointment reminder function called");
+
+  // Validate HTTP method
+  if (req.method !== "POST" && req.method !== "OPTIONS") {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
+      status: 405,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -316,6 +345,7 @@ const handler = async (req: Request): Promise<Response> => {
         email,
         reminder_type,
         scheduled_send_time,
+        status,
         retry_count,
         bookings(
           id,
@@ -531,4 +561,5 @@ export const createReminder = async (bookingId: string): Promise<void> => {
   }
 };
 
-serve(handler);
+// Export handler for serverless function
+export default handler;
