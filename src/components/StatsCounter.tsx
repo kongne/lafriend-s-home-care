@@ -69,10 +69,10 @@ export const StatsCounter = () => {
   return (
     <section className="w-full py-8 sm:py-12 md:py-16 lg:py-20 bg-accent">
       <div className="container mx-auto px-3 xs:px-4 sm:px-6 md:px-8 lg:px-10">
-        <div className="flex flex-col items-center justify-center w-full">
-          {/* Stats grid - centered and fully responsive */}
+        <div className="flex flex-col items-end justify-end w-full">
+          {/* Stats grid - right-aligned and fully responsive */}
           <div className="w-full max-w-5xl">
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 xs:gap-4 sm:gap-6 md:gap-8 lg:gap-10 w-full">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 xs:gap-4 sm:gap-6 md:gap-8 lg:gap-10 w-full justify-items-end">
               {stats.map((stat, index) => (
                 <div
                   key={index}
