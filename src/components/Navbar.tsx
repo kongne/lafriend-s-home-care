@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Phone, Mail, Clock, User, LogOut, Shield } from "lucide-react";
+import { Menu, X, Phone, Mail, Clock, User, LogOut, Shield, LayoutDashboard } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -126,6 +126,15 @@ export const Navbar = () => {
             {!loading && (
               user ? (
                 <div className="flex items-center gap-3">
+                  <Button
+                    onClick={() => navigate('/customer-portal')}
+                    variant="outline"
+                    size="sm"
+                    className="gap-1"
+                  >
+                    <LayoutDashboard className="w-4 h-4" />
+                    Mon Espace
+                  </Button>
                   {isAdmin && (
                     <Button
                       onClick={() => navigate('/admin')}
@@ -201,6 +210,18 @@ export const Navbar = () => {
                     <User className="w-4 h-4" />
                     {user.email?.split('@')[0]}
                   </p>
+                  <Button
+                    onClick={() => {
+                      navigate('/customer-portal');
+                      setIsMenuOpen(false);
+                    }}
+                    variant="outline"
+                    size="sm"
+                    className="w-full gap-1"
+                  >
+                    <LayoutDashboard className="w-4 h-4" />
+                    Mon Espace
+                  </Button>
                   {isAdmin && (
                     <Button
                       onClick={() => {

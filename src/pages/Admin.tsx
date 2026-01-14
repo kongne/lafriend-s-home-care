@@ -19,6 +19,9 @@ import { TaskList } from "@/components/admin/TaskList";
 import { QuickActions } from "@/components/admin/QuickActions";
 import { RecentBookingsTable } from "@/components/admin/RecentBookingsTable";
 import { BookingCalendar } from "@/components/admin/BookingCalendar";
+import { StaffManagement } from "@/components/admin/StaffManagement";
+import { StaffAssignmentDialog } from "@/components/admin/StaffAssignmentDialog";
+import { NotificationCenter } from "@/components/admin/NotificationCenter";
 import { exportToCSV, bookingColumns, contactColumns, subscriberColumns } from "@/lib/exportCsv";
 import { exportToPDF } from "@/lib/exportPdf";
 import { staffEmailSchema } from "@/lib/validation";
@@ -661,6 +664,17 @@ const Admin = () => {
                 </div>
               </CardContent>
             </Card>
+          </div>
+        );
+
+      case "staff-management":
+        return <StaffManagement />;
+
+      case "notifications":
+        return (
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold">Centre de Notifications</h2>
+            <NotificationCenter />
           </div>
         );
 
