@@ -102,6 +102,7 @@ export type Database = {
           phone: string | null
           status: string
           subject: string
+          submission_ip: string | null
           user_id: string | null
         }
         Insert: {
@@ -113,6 +114,7 @@ export type Database = {
           phone?: string | null
           status?: string
           subject: string
+          submission_ip?: string | null
           user_id?: string | null
         }
         Update: {
@@ -124,6 +126,7 @@ export type Database = {
           phone?: string | null
           status?: string
           subject?: string
+          submission_ip?: string | null
           user_id?: string | null
         }
         Relationships: []
@@ -188,7 +191,10 @@ export type Database = {
           created_at: string
           full_name: string | null
           id: string
+          loyalty_points: number | null
+          loyalty_tier: string | null
           phone: string | null
+          total_spent: number | null
           updated_at: string
           user_id: string
         }
@@ -197,7 +203,10 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id?: string
+          loyalty_points?: number | null
+          loyalty_tier?: string | null
           phone?: string | null
+          total_spent?: number | null
           updated_at?: string
           user_id: string
         }
@@ -206,7 +215,10 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id?: string
+          loyalty_points?: number | null
+          loyalty_tier?: string | null
           phone?: string | null
+          total_spent?: number | null
           updated_at?: string
           user_id?: string
         }
@@ -377,6 +389,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_loyalty_tier: { Args: { points: number }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

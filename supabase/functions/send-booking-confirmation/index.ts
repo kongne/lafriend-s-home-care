@@ -37,6 +37,8 @@ const requestSchema = z.object({
   preferredTime: z.string().min(1).max(50).transform(sanitizeString),
   address: z.string().min(1).max(500).transform(sanitizeString),
   language: z.enum(['fr', 'en']).default('fr'),
+  staffName: z.string().max(100).optional().transform(val => val ? sanitizeString(val) : undefined),
+  staffPhone: z.string().max(50).optional().transform(val => val ? sanitizeString(val) : undefined),
 });
 
 const handler = async (req: Request): Promise<Response> => {
@@ -99,11 +101,45 @@ const handler = async (req: Request): Promise<Response> => {
     const validatedData = requestSchema.parse(parsedBody);
     const debugMode = Deno.env.get("FUNCTION_DEBUG") === "true" || new URL(req.url).searchParams.get("debug") === "1";
     
-    const { clientEmail, clientName, serviceType, preferredDate, preferredTime, address, language } = validatedData;
+    const { clientEmail, clientName, serviceType, preferredDate, preferredTime, address, language, staffName, staffPhone } = validatedData;
     
-    console.log(`Sending confirmation to ${clientEmail} for ${serviceType}`);
+    console.log(`Sending confirmation to ${clientEmail} for ${serviceType}${staffName ? ` (Staff: ${staffName})` : ''}`);
 
     const isFrench = language === 'fr';
+    
+    // Staff assignment section HTML
+    const staffSection = staffName ? `
+      <div style="background: #e8f5e9; border-radius: 12px; padding: 20px; margin: 20px 0;">
+        <h3 style="color: #2e7d32; margin-top: 0; font-size: 16px;">
+          ${isFrench ? '👤 Votre technicien assigné' : '👤 Your Assigned Technician'}
+        </h3>
+        <table style="width: 100%;">
+          <tr>
+            <td style="padding: 8px 0; color: #666; font-weight: 500;">
+              ${isFrench ? 'Nom' : 'Name'}
+            </td>
+            <td style="padding: 8px 0; color: #1a1a2e; font-weight: 600;">
+              ${staffName}
+            </td>
+          </tr>
+          ${staffPhone ? `
+          <tr>
+            <td style="padding: 8px 0; color: #666; font-weight: 500;">
+              ${isFrench ? 'Téléphone' : 'Phone'}
+            </td>
+            <td style="padding: 8px 0; color: #1a1a2e; font-weight: 600;">
+              ${staffPhone}
+            </td>
+          </tr>
+          ` : ''}
+        </table>
+        <p style="margin: 10px 0 0; font-size: 14px; color: #666;">
+          ${isFrench 
+            ? 'Ce technicien sera présent à votre rendez-vous. N\'hésitez pas à le contacter pour toute question.'
+            : 'This technician will be present at your appointment. Feel free to contact them with any questions.'}
+        </p>
+      </div>
+    ` : '';
     
     const subject = isFrench 
       ? `✅ Réservation Confirmée - ${serviceType}`
@@ -175,6 +211,8 @@ const handler = async (req: Request): Promise<Response> => {
                 </tr>
               </table>
             </div>
+            
+            ${staffSection}
             
             <p style="color: #555; line-height: 1.6; font-size: 16px;">
               ${isFrench 

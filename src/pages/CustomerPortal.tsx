@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { CustomerAnalytics } from "@/components/customer/CustomerAnalytics";
 import { 
   Calendar, 
   Clock, 
@@ -21,7 +22,9 @@ import {
   AlertCircle,
   User,
   Phone,
-  Mail
+  Mail,
+  BarChart3,
+  Award,
 } from "lucide-react";
 import { format, parseISO, isPast, isFuture } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -60,6 +63,9 @@ interface Profile {
   full_name: string | null;
   phone: string | null;
   address: string | null;
+  total_spent?: number | null;
+  loyalty_points?: number | null;
+  loyalty_tier?: string | null;
 }
 
 const CustomerPortal = () => {
@@ -334,18 +340,22 @@ const CustomerPortal = () => {
 
         {/* Bookings Tabs */}
         <Tabs defaultValue="upcoming" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-flex">
+          <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-flex">
             <TabsTrigger value="upcoming" className="gap-2">
               <Calendar className="h-4 w-4" />
-              À venir ({upcomingBookings.length})
+              <span className="hidden sm:inline">À venir</span> ({upcomingBookings.length})
             </TabsTrigger>
             <TabsTrigger value="recurring" className="gap-2">
               <Repeat className="h-4 w-4" />
-              Récurrents ({recurringBookings.length})
+              <span className="hidden sm:inline">Récurrents</span> ({recurringBookings.length})
             </TabsTrigger>
             <TabsTrigger value="history" className="gap-2">
               <Clock className="h-4 w-4" />
-              Historique ({pastBookings.length})
+              <span className="hidden sm:inline">Historique</span> ({pastBookings.length})
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="gap-2">
+              <BarChart3 className="h-4 w-4" />
+              <span className="hidden sm:inline">Fidélité</span>
             </TabsTrigger>
           </TabsList>
 
@@ -407,6 +417,10 @@ const CustomerPortal = () => {
                 ))}
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="analytics">
+            <CustomerAnalytics bookings={bookings} profile={profile} />
           </TabsContent>
         </Tabs>
       </main>

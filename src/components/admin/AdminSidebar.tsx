@@ -39,6 +39,7 @@ const menuItems = [
   { icon: BarChart3, label: "Statistiques", value: "analytics", path: "/admin" },
   { icon: CalendarDays, label: "Réservations", value: "bookings", path: "/admin?tab=bookings" },
   { icon: Calendar, label: "Calendrier", value: "calendar", path: "/admin?tab=calendar" },
+  { icon: Calendar, label: "Planning Staff", value: "staff-calendar", path: "/admin?tab=staff-calendar" },
   { icon: Mail, label: "Messages", value: "contacts", path: "/admin?tab=contacts" },
   { icon: Users, label: "Abonnés", value: "subscribers", path: "/admin?tab=subscribers" },
   { icon: UserCog, label: "Emails Staff", value: "staff", path: "/admin?tab=staff" },
