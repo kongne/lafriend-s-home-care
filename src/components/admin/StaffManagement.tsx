@@ -89,6 +89,7 @@ export const StaffManagement = () => {
     hourly_rate: "",
     is_active: true
   });
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     fetchStaff();
@@ -119,13 +120,15 @@ export const StaffManagement = () => {
   };
 
   const handleAddStaff = async () => {
+    if (!validateForm()) return;
+    
     setSaving(true);
     const { data, error } = await supabase
       .from("staff_members")
       .insert({
-        full_name: formData.full_name,
-        email: formData.email,
-        phone: formData.phone || null,
+        full_name: formData.full_name.trim(),
+        email: formData.email.trim().toLowerCase(),
+        phone: formData.phone.trim() || null,
         specializations: formData.specializations.split(",").map(s => s.trim()).filter(Boolean),
         hourly_rate: formData.hourly_rate ? parseFloat(formData.hourly_rate) : null,
         is_active: formData.is_active
@@ -151,16 +154,64 @@ export const StaffManagement = () => {
     setSaving(false);
   };
 
+  const validateForm = (): boolean => {
+    const errors: Record<string, string> = {};
+    
+    // Validate full name
+    if (!formData.full_name.trim()) {
+      errors.full_name = "Le nom complet est requis";
+    } else if (formData.full_name.length < 2) {
+      errors.full_name = "Le nom doit contenir au moins 2 caractères";
+    } else if (formData.full_name.length > 100) {
+      errors.full_name = "Le nom ne doit pas dépasser 100 caractères";
+    }
+    
+    // Validate email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!formData.email.trim()) {
+      errors.email = "L'email est requis";
+    } else if (!emailRegex.test(formData.email)) {
+      errors.email = "Email invalide";
+    } else if (formData.email.length > 254) {
+      errors.email = "L'email est trop long";
+    }
+    
+    // Validate phone if provided
+    if (formData.phone.trim()) {
+      const phoneRegex = /^[\d+\-()\\s]+$/;
+      if (!phoneRegex.test(formData.phone)) {
+        errors.phone = "Numéro de téléphone invalide";
+      } else if (formData.phone.replace(/\D/g, "").length < 7) {
+        errors.phone = "Le numéro doit contenir au moins 7 chiffres";
+      }
+    }
+    
+    // Validate hourly rate if provided
+    if (formData.hourly_rate) {
+      const rate = parseFloat(formData.hourly_rate);
+      if (isNaN(rate) || rate <= 0) {
+        errors.hourly_rate = "Le taux horaire doit être un nombre positif";
+      } else if (rate > 1000000) {
+        errors.hourly_rate = "Le taux horaire semble trop élevé";
+      }
+    }
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleUpdateStaff = async () => {
     if (!selectedStaff) return;
+    if (!validateForm()) return;
+    
     setSaving(true);
 
     const { error } = await supabase
       .from("staff_members")
       .update({
-        full_name: formData.full_name,
-        email: formData.email,
-        phone: formData.phone || null,
+        full_name: formData.full_name.trim(),
+        email: formData.email.trim().toLowerCase(),
+        phone: formData.phone.trim() || null,
         specializations: formData.specializations.split(",").map(s => s.trim()).filter(Boolean),
         hourly_rate: formData.hourly_rate ? parseFloat(formData.hourly_rate) : null,
         is_active: formData.is_active
@@ -290,6 +341,7 @@ export const StaffManagement = () => {
       hourly_rate: "",
       is_active: true
     });
+    setFormErrors({});
     setSelectedStaff(null);
   };
 
@@ -302,7 +354,10 @@ export const StaffManagement = () => {
             value={formData.full_name}
             onChange={(e) => setFormData(prev => ({ ...prev, full_name: e.target.value }))}
             placeholder="Jean Dupont"
+            maxLength={100}
+            className={formErrors.full_name ? "border-red-500" : ""}
           />
+          {formErrors.full_name && <p className="text-red-500 text-sm">{formErrors.full_name}</p>}
         </div>
         <div className="space-y-2">
           <Label>Email *</Label>
@@ -311,7 +366,10 @@ export const StaffManagement = () => {
             value={formData.email}
             onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
             placeholder="jean@example.com"
+            maxLength={254}
+            className={formErrors.email ? "border-red-500" : ""}
           />
+          {formErrors.email && <p className="text-red-500 text-sm">{formErrors.email}</p>}
         </div>
       </div>
       <div className="grid grid-cols-2 gap-4">
@@ -321,7 +379,10 @@ export const StaffManagement = () => {
             value={formData.phone}
             onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
             placeholder="+237 6XX XXX XXX"
+            maxLength={20}
+            className={formErrors.phone ? "border-red-500" : ""}
           />
+          {formErrors.phone && <p className="text-red-500 text-sm">{formErrors.phone}</p>}
         </div>
         <div className="space-y-2">
           <Label>Taux horaire (XAF)</Label>
@@ -330,7 +391,12 @@ export const StaffManagement = () => {
             value={formData.hourly_rate}
             onChange={(e) => setFormData(prev => ({ ...prev, hourly_rate: e.target.value }))}
             placeholder="2500"
+            min="0"
+            step="100"
+            max="1000000"
+            className={formErrors.hourly_rate ? "border-red-500" : ""}
           />
+          {formErrors.hourly_rate && <p className="text-red-500 text-sm">{formErrors.hourly_rate}</p>}
         </div>
       </div>
       <div className="space-y-2">
@@ -339,6 +405,7 @@ export const StaffManagement = () => {
           value={formData.specializations}
           onChange={(e) => setFormData(prev => ({ ...prev, specializations: e.target.value }))}
           placeholder="Nettoyage résidentiel, Vitres, Commercial"
+          maxLength={500}
         />
       </div>
       <div className="flex items-center gap-2">
@@ -387,7 +454,7 @@ export const StaffManagement = () => {
               </Button>
               <Button 
                 onClick={handleAddStaff} 
-                disabled={saving || !formData.full_name || !formData.email}
+                disabled={saving || !formData.full_name.trim() || !formData.email.trim()}
                 className="bg-accent text-accent-foreground"
               >
                 {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}

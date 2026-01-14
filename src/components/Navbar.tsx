@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Phone, Mail, Clock, User, LogOut, Shield, LayoutDashboard } from "lucide-react";
+import { Menu, X, Phone, Mail, Clock, User, LogOut, Shield, LayoutDashboard, ChevronDown } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const { user, signOut, loading } = useAuth();
@@ -36,8 +37,19 @@ export const Navbar = () => {
       }
     };
 
+    const handleClickOutside = (event: MouseEvent) => {
+      const userMenu = document.querySelector('[data-user-menu]');
+      if (userMenu && !userMenu.contains(event.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
+    };
+
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    document.addEventListener('click', handleClickOutside);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      document.removeEventListener('click', handleClickOutside);
+    };
   }, []);
 
   const checkAdminRole = async () => {
@@ -126,51 +138,65 @@ export const Navbar = () => {
             {!loading && (
               user ? (
                 <div className="flex items-center gap-3">
-                  <Button
-                    onClick={() => navigate('/customer-portal')}
-                    variant="outline"
-                    size="sm"
-                    className="gap-1"
-                  >
-                    <LayoutDashboard className="w-4 h-4" />
-                    Mon Espace
-                  </Button>
-                  {isAdmin && (
+                  <div className="relative" data-user-menu>
                     <Button
-                      onClick={() => navigate('/admin')}
+                      onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                       variant="outline"
                       size="sm"
-                      className="gap-1"
+                      className="gap-2"
                     >
-                      <Shield className="w-4 h-4" />
-                      {t('nav.admin')}
+                      <User className="w-4 h-4" />
+                      <span className="hidden sm:inline text-sm">{user.email?.split('@')[0]}</span>
+                      <ChevronDown className="w-4 h-4" />
                     </Button>
-                  )}
-                  <span className="text-sm text-muted-foreground flex items-center gap-1">
-                    <User className="w-4 h-4" />
-                    {user.email?.split('@')[0]}
-                  </span>
-                  <Button
-                    onClick={handleSignOut}
-                    variant="outline"
-                    size="sm"
-                    className="gap-1"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    {t('nav.logout')}
-                  </Button>
+                    
+                    {isUserMenuOpen && (
+                      <div className="absolute right-0 mt-2 w-48 bg-background border border-border rounded-lg shadow-lg z-50">
+                        <Link
+                          to="/customer-portal"
+                          className="flex items-center gap-2 px-4 py-2 hover:bg-accent/10 transition-colors text-sm border-b border-border"
+                          onClick={() => setIsUserMenuOpen(false)}
+                        >
+                          <LayoutDashboard className="w-4 h-4" />
+                          Mon Espace
+                        </Link>
+                        {isAdmin && (
+                          <Link
+                            to="/admin"
+                            className="flex items-center gap-2 px-4 py-2 hover:bg-accent/10 transition-colors text-sm border-b border-border"
+                            onClick={() => setIsUserMenuOpen(false)}
+                          >
+                            <Shield className="w-4 h-4" />
+                            {t('nav.admin')}
+                          </Link>
+                        )}
+                        <button
+                          onClick={() => {
+                            handleSignOut();
+                            setIsUserMenuOpen(false);
+                          }}
+                          className="flex items-center gap-2 px-4 py-2 hover:bg-accent/10 transition-colors text-sm w-full text-left"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          {t('nav.logout')}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <BookingModal />
                 </div>
               ) : (
-                <Link to="/auth">
-                  <Button variant="outline" size="sm" className="gap-1">
-                    <User className="w-4 h-4" />
-                    {t('nav.login')}
-                  </Button>
-                </Link>
+                <div className="flex items-center gap-2">
+                  <Link to="/auth">
+                    <Button variant="outline" size="sm" className="gap-1">
+                      <User className="w-4 h-4" />
+                      {t('nav.login')}
+                    </Button>
+                  </Link>
+                  <BookingModal />
+                </div>
               )
             )}
-            
-            <BookingModal />
           </div>
 
           {/* Mobile menu button */}
@@ -205,10 +231,9 @@ export const Navbar = () => {
             
             {!loading && (
               user ? (
-                <div className="py-2 space-y-2">
-                  <p className="text-sm text-muted-foreground flex items-center gap-1">
-                    <User className="w-4 h-4" />
-                    {user.email?.split('@')[0]}
+                <div className="py-2 space-y-2 border-t border-border pt-3 mt-3">
+                  <p className="text-sm text-muted-foreground px-2">
+                    {user.email}
                   </p>
                   <Button
                     onClick={() => {
@@ -217,7 +242,7 @@ export const Navbar = () => {
                     }}
                     variant="outline"
                     size="sm"
-                    className="w-full gap-1"
+                    className="w-full gap-2 justify-start"
                   >
                     <LayoutDashboard className="w-4 h-4" />
                     Mon Espace
@@ -230,7 +255,7 @@ export const Navbar = () => {
                       }}
                       variant="outline"
                       size="sm"
-                      className="w-full gap-1"
+                      className="w-full gap-2 justify-start"
                     >
                       <Shield className="w-4 h-4" />
                       {t('nav.admin')}
@@ -243,23 +268,25 @@ export const Navbar = () => {
                     }}
                     variant="outline"
                     size="sm"
-                    className="w-full gap-1"
+                    className="w-full gap-2 justify-start"
                   >
                     <LogOut className="w-4 h-4" />
                     {t('nav.logout')}
                   </Button>
+                  <BookingModal className="w-full" />
                 </div>
               ) : (
-                <Link to="/auth" onClick={() => setIsMenuOpen(false)}>
-                  <Button variant="outline" size="sm" className="w-full gap-1">
-                    <User className="w-4 h-4" />
-                    {t('nav.login')}
-                  </Button>
-                </Link>
+                <div className="py-2 space-y-2 border-t border-border pt-3 mt-3">
+                  <Link to="/auth" onClick={() => setIsMenuOpen(false)} className="block">
+                    <Button variant="outline" size="sm" className="w-full gap-2 justify-start">
+                      <User className="w-4 h-4" />
+                      {t('nav.login')}
+                    </Button>
+                  </Link>
+                  <BookingModal className="w-full" />
+                </div>
               )
             )}
-            
-            <BookingModal className="w-full" />
           </div>
         )}
       </nav>
