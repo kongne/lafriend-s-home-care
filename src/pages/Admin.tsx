@@ -21,6 +21,7 @@ import { RecentBookingsTable } from "@/components/admin/RecentBookingsTable";
 import { BookingCalendar } from "@/components/admin/BookingCalendar";
 import { StaffManagement } from "@/components/admin/StaffManagement";
 import { StaffAssignmentDialog } from "@/components/admin/StaffAssignmentDialog";
+import { StaffCalendar } from "@/components/admin/StaffCalendar";
 import { NotificationCenter } from "@/components/admin/NotificationCenter";
 import { exportToCSV, bookingColumns, contactColumns, subscriberColumns } from "@/lib/exportCsv";
 import { exportToPDF } from "@/lib/exportPdf";
@@ -669,6 +670,9 @@ const Admin = () => {
 
       case "staff-management":
         return <StaffManagement />;
+
+      case "staff-calendar":
+        return <StaffCalendar />;
 
       case "notifications":
         return (
