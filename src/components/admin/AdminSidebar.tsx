@@ -41,7 +41,8 @@ const menuItems = [
   { icon: Calendar, label: "Calendrier", value: "calendar", path: "/admin?tab=calendar" },
   { icon: Mail, label: "Messages", value: "contacts", path: "/admin?tab=contacts" },
   { icon: Users, label: "Abonnés", value: "subscribers", path: "/admin?tab=subscribers" },
-  { icon: UserCog, label: "Staff", value: "staff", path: "/admin?tab=staff" },
+  { icon: UserCog, label: "Emails Staff", value: "staff", path: "/admin?tab=staff" },
+  { icon: Users, label: "Personnel", value: "staff-management", path: "/admin?tab=staff-management" },
   { icon: Bell, label: "Notifications", value: "notifications", path: "/admin?tab=notifications" },
   { icon: FileText, label: "Rapports", value: "reports", path: "/admin?tab=reports" },
 ];

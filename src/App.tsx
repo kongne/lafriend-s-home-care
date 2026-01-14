@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
 import AdminSettings from "./pages/AdminSettings";
+import CustomerPortal from "./pages/CustomerPortal";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/admin/settings" element={<AdminSettings />} />
+              <Route path="/customer-portal" element={<CustomerPortal />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
