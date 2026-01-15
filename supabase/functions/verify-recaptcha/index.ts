@@ -1,8 +1,4 @@
-/// <reference lib="deno.window" />
-
 import { serve } from "https://deno.land/std@0.208.0/http/server.ts";
-
-const Deno = globalThis.Deno; // Ensure Deno is available globally
 
 const RECAPTCHA_SECRET_KEY = Deno.env.get("RECAPTCHA_SECRET_KEY");
 

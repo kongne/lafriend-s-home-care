@@ -33,15 +33,15 @@ const checkRateLimit = (ip: string, maxRequests: number = 10, windowMs: number =
 const sanitizeString = (val: string) => val.replace(/[<>]/g, '').replace(/javascript:/gi, '').replace(/on\w+=/gi, '').trim();
 
 const requestSchema = z.object({
-  clientEmail: z.string().email().max(255).transform(val => val.toLowerCase().trim()),
+  clientEmail: z.string().email().max(255).transform((val: string) => val.toLowerCase().trim()),
   clientName: z.string().min(1).max(100).transform(sanitizeString),
   serviceType: z.string().min(1).max(100).transform(sanitizeString),
   preferredDate: z.string().min(1).max(50).transform(sanitizeString),
   preferredTime: z.string().min(1).max(50).transform(sanitizeString),
   address: z.string().min(1).max(500).transform(sanitizeString),
   language: z.enum(['fr', 'en']).default('fr'),
-  staffName: z.string().max(100).optional().transform(val => val ? sanitizeString(val) : undefined),
-  staffPhone: z.string().max(50).optional().transform(val => val ? sanitizeString(val) : undefined),
+  staffName: z.string().max(100).optional().transform((val?: string) => val ? sanitizeString(val) : undefined),
+  staffPhone: z.string().max(50).optional().transform((val?: string) => val ? sanitizeString(val) : undefined),
 });
 
 const handler = async (req: Request): Promise<Response> => {
@@ -324,18 +324,25 @@ const handler = async (req: Request): Promise<Response> => {
       JSON.stringify(successPayload),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error in send-booking-confirmation function:", error);
     
-    if (error.name === 'ZodError') {
+    if (error instanceof z.ZodError) {
       return new Response(
         JSON.stringify({ error: "Invalid input data", details: error.errors }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
+
+    if (error instanceof Error) {
+      return new Response(
+        JSON.stringify({ error: error.message }),
+        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
     
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: "An unknown error occurred" }),
       { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   }
