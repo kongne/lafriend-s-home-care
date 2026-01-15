@@ -9,16 +9,33 @@ import { useAuth } from "@/hooks/useAuth";
 import { Loader2, Mail, Lock, User } from "lucide-react";
 
 const loginSchema = z.object({
-  email: z.string().email("Email invalide"),
-  password: z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères"),
+  email: z.string()
+    .email("Email invalide")
+    .max(254, "Email trop long"),
+  password: z.string()
+    .min(8, "Le mot de passe doit contenir au moins 8 caractères")
+    .max(128, "Le mot de passe ne peut pas dépasser 128 caractères"),
 });
 
 const signupSchema = loginSchema.extend({
-  fullName: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
+  fullName: z.string()
+    .min(2, "Le nom doit contenir au moins 2 caractères")
+    .max(100, "Le nom ne peut pas dépasser 100 caractères"),
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Les mots de passe ne correspondent pas",
   path: ["confirmPassword"],
+}).refine((data) => {
+  // Password must have uppercase, lowercase, number, and special character
+  const hasUppercase = /[A-Z]/.test(data.password);
+  const hasLowercase = /[a-z]/.test(data.password);
+  const hasNumber = /\d/.test(data.password);
+  const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(data.password);
+  
+  return hasUppercase && hasLowercase && hasNumber && hasSpecialChar;
+}, {
+  message: "Le mot de passe doit contenir: majuscule, minuscule, chiffre et caractère spécial",
+  path: ["password"],
 });
 
 const Auth = () => {

@@ -1,8 +1,10 @@
-import { createClient } from "@supabase/supabase-js";
-import { addHours, subHours, format } from "date-fns";
+/// <reference lib="deno.window" />
 
-// Restrict CORS to specific origin (update in production)
-const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || "https://www.lafriendsservices.com";
+import { serve } from "https://deno.land/std@0.208.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
+
+// Restrict CORS to specific origin
+const ALLOWED_ORIGIN = Deno.env.get("ALLOWED_ORIGIN") || "https://www.lafriendsservices.com";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
@@ -33,17 +35,15 @@ interface BookingData {
 }
 
 // Validate environment variables
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabaseUrl = Deno.env.get("SUPABASE_URL");
+const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
 if (!supabaseUrl || !supabaseKey) {
   throw new Error("Missing required environment variables: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
 }
 
-// Initialize Supabase client with auth option
-const supabase = createClient(supabaseUrl, supabaseKey, {
-  auth: { persistSession: false },
-});
+// Initialize Supabase client
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Email validation regex
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -65,13 +65,16 @@ const sendEmail = async (
       return { success: false, error: "Invalid subject" };
     }
 
-    const emailServiceUrl = process.env.EMAIL_SERVICE_URL;
-    const emailServiceKey = process.env.EMAIL_SERVICE_KEY;
+    const emailServiceUrl = Deno.env.get("EMAIL_SERVICE_URL");
+    const emailServiceKey = Deno.env.get("EMAIL_SERVICE_KEY");
 
     if (!emailServiceUrl) {
       console.warn("⚠️ EMAIL_SERVICE_URL not configured - reminder marked as pending");
       return { success: false, error: "Email service not configured" };
     }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
     const response = await fetch(emailServiceUrl, {
       method: "POST",
@@ -84,8 +87,10 @@ const sendEmail = async (
         subject,
         html,
       }),
-      signal: AbortSignal.timeout(30000), // 30 second timeout
+      signal: controller.signal,
     });
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => "Unknown error");
@@ -297,7 +302,7 @@ const generateReminderEmail = (
 };
 
 // HTML escape function to prevent XSS
-const escapeHtml = (text: string | object): string => {
+const escapeHtml = (text: string | unknown): string => {
   if (typeof text !== "string") {
     return "";
   }
@@ -329,7 +334,8 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     const now = new Date();
-    const checkWindow = addHours(now, 1);
+    // Add 1 hour to check window
+    const checkWindow = new Date(now.getTime() + 60 * 60 * 1000);
 
     console.log(
       `⏰ Checking for reminders between ${now.toISOString()} and ${checkWindow.toISOString()}`
@@ -528,7 +534,8 @@ export const createReminder = async (bookingId: string): Promise<void> => {
     const appointmentDateTime = new Date(
       `${booking.preferred_date}T${booking.preferred_time}`
     );
-    const reminderTime = subHours(appointmentDateTime, 24);
+    // Subtract 24 hours
+    const reminderTime = new Date(appointmentDateTime.getTime() - 24 * 60 * 60 * 1000);
 
     // Only create reminder if it's in the future
     if (reminderTime > new Date()) {
@@ -561,5 +568,5 @@ export const createReminder = async (bookingId: string): Promise<void> => {
   }
 };
 
-// Export handler for serverless function
-export default handler;
+// Main entrypoint
+serve(handler);

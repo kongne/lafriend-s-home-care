@@ -20,16 +20,27 @@ export const rateLimit = (key: string, maxAttempts: number = 5, windowMs: number
   return true;
 };
 
-// Sanitize input to prevent XSS
+// Sanitize input to prevent XSS attacks using HTML entity encoding
 export const sanitizeInput = (input: string): string => {
-  return input
-    .replace(/[<>]/g, '')
+  if (!input || typeof input !== 'string') {
+    return '';
+  }
+  
+  // Create a temporary element to safely encode HTML
+  const div = document.createElement('div');
+  div.textContent = input;
+  const encoded = div.innerHTML;
+  
+  // Additional protection against specific XSS vectors
+  return encoded
     .replace(/javascript:/gi, '')
     .replace(/on\w+=/gi, '')
+    .replace(/vbscript:/gi, '')
+    .replace(/data:text\/html/gi, '')
     .trim();
 };
 
-// Booking form validation schema
+// Booking form validation schema with enhanced security
 export const bookingSchema = z.object({
   fullName: z.string()
     .min(2, "Le nom doit contenir au moins 2 caractères")
@@ -37,7 +48,7 @@ export const bookingSchema = z.object({
     .transform(sanitizeInput),
   email: z.string()
     .email("Adresse email invalide")
-    .max(255, "L'email ne peut pas dépasser 255 caractères")
+    .max(254, "L'email ne peut pas dépasser 254 caractères")
     .transform(val => val.toLowerCase().trim()),
   phone: z.string()
     .min(8, "Numéro de téléphone invalide")
@@ -66,7 +77,7 @@ export const bookingSchema = z.object({
     .transform(val => val ? sanitizeInput(val) : val),
 });
 
-// Contact form validation schema
+// Contact form validation schema with enhanced security
 export const contactSchema = z.object({
   fullName: z.string()
     .min(2, "Le nom doit contenir au moins 2 caractères")
@@ -74,7 +85,7 @@ export const contactSchema = z.object({
     .transform(sanitizeInput),
   email: z.string()
     .email("Adresse email invalide")
-    .max(255, "L'email ne peut pas dépasser 255 caractères")
+    .max(254, "L'email ne peut pas dépasser 254 caractères")
     .transform(val => val.toLowerCase().trim()),
   phone: z.string()
     .max(20, "Numéro de téléphone trop long")
@@ -91,11 +102,11 @@ export const contactSchema = z.object({
     .transform(sanitizeInput),
 });
 
-// Newsletter validation
+// Newsletter validation with enhanced email security
 export const newsletterSchema = z.object({
   email: z.string()
     .email("Adresse email invalide")
-    .max(255, "L'email ne peut pas dépasser 255 caractères")
+    .max(254, "L'email ne peut pas dépasser 254 caractères")
     .transform(val => val.toLowerCase().trim()),
 });
 
