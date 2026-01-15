@@ -32,7 +32,7 @@ export const reminderService = {
       const scheduledTime = new Date(appointmentDateTime.getTime());
       scheduledTime.setHours(scheduledTime.getHours() - hoursToSubtract);
 
-      const { data, error } = await supabase.from("email_reminders").insert({
+      const { data, error } = await supabase.from("email_reminders" as any).insert({
         booking_id: bookingId,
         email,
         reminder_type: reminderType,
@@ -54,7 +54,7 @@ export const reminderService = {
   async getRemindersByBooking(bookingId: string) {
     try {
       const { data, error } = await supabase
-        .from("email_reminders")
+        .from("email_reminders" as any)
         .select("*")
         .eq("booking_id", bookingId)
         .order("scheduled_send_time", { ascending: true });
@@ -73,7 +73,7 @@ export const reminderService = {
   async getPendingReminders(limit = 10) {
     try {
       const { data, error } = await supabase
-        .from("email_reminders")
+        .from("email_reminders" as any)
         .select("*")
         .eq("status", "pending")
         .order("scheduled_send_time", { ascending: true })
@@ -113,7 +113,7 @@ export const reminderService = {
   async cancelReminder(reminderId: string) {
     try {
       const { error } = await supabase
-        .from("email_reminders")
+        .from("email_reminders" as any)
         .update({ status: "cancelled" })
         .eq("id", reminderId);
 

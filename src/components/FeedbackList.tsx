@@ -37,7 +37,7 @@ export const FeedbackList = ({ bookingId, limit = 10 }: FeedbackListProps) => {
   const fetchFeedbacks = async () => {
     try {
       let query = supabase
-        .from("feedback_ratings")
+        .from("feedback_ratings" as any)
         .select("*")
         .order("created_at", { ascending: false })
         .limit(limit);
@@ -50,15 +50,16 @@ export const FeedbackList = ({ bookingId, limit = 10 }: FeedbackListProps) => {
 
       if (error) throw error;
 
-      setFeedbacks(data || []);
+      const feedbackData = (data as unknown as FeedbackRating[]) || [];
+      setFeedbacks(feedbackData);
 
       // Calculate stats
-      if (data && data.length > 0) {
+      if (feedbackData && feedbackData.length > 0) {
         const avgRating =
-          data.reduce((sum, f) => sum + f.rating, 0) / data.length;
+          feedbackData.reduce((sum, f) => sum + f.rating, 0) / feedbackData.length;
         setStats({
           averageRating: Math.round(avgRating * 10) / 10,
-          totalReviews: data.length,
+          totalReviews: feedbackData.length,
         });
       }
     } catch (err) {
