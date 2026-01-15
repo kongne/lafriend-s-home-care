@@ -36,7 +36,7 @@ interface Notification {
   message: string;
   link: string | null;
   is_read: boolean;
-  is_archived: boolean;
+  is_archived: boolean | null;
   priority?: "low" | "medium" | "high";
   created_at: string;
 }
@@ -61,7 +61,7 @@ export const NotificationCenter = () => {
       .limit(100);
 
     if (!error && data) {
-      setNotifications(data as Notification[]);
+      setNotifications(data.map(n => ({ ...n, is_archived: n.is_archived ?? false })) as Notification[]);
     }
     setLoading(false);
   };

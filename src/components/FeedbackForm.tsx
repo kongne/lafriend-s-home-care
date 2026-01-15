@@ -64,7 +64,7 @@ export const FeedbackForm = ({ bookingId, onSuccess, onCancel }: FeedbackFormPro
     setLoading(true);
 
     try {
-      const { error } = await supabase.from("feedback_ratings").insert({
+      const { error } = await supabase.from("feedback_ratings" as any).insert({
         booking_id: bookingId,
         user_id: user?.id || null,
         rating: formData.rating,

@@ -131,6 +131,100 @@ export type Database = {
         }
         Relationships: []
       }
+      email_reminders: {
+        Row: {
+          booking_id: string | null
+          created_at: string
+          email: string
+          id: string
+          last_error: string | null
+          reminder_type: string
+          retry_count: number | null
+          scheduled_send_time: string
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          booking_id?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          last_error?: string | null
+          reminder_type?: string
+          retry_count?: number | null
+          scheduled_send_time: string
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          booking_id?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          last_error?: string | null
+          reminder_type?: string
+          retry_count?: number | null
+          scheduled_send_time?: string
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_reminders_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      feedback_ratings: {
+        Row: {
+          booking_id: string | null
+          cleanliness_rating: number
+          comment: string | null
+          created_at: string
+          id: string
+          is_verified_booking: boolean | null
+          professionalism_rating: number
+          punctuality_rating: number
+          rating: number
+          user_id: string | null
+        }
+        Insert: {
+          booking_id?: string | null
+          cleanliness_rating?: number
+          comment?: string | null
+          created_at?: string
+          id?: string
+          is_verified_booking?: boolean | null
+          professionalism_rating?: number
+          punctuality_rating?: number
+          rating: number
+          user_id?: string | null
+        }
+        Update: {
+          booking_id?: string | null
+          cleanliness_rating?: number
+          comment?: string | null
+          created_at?: string
+          id?: string
+          is_verified_booking?: boolean | null
+          professionalism_rating?: number
+          punctuality_rating?: number
+          rating?: number
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedback_ratings_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       newsletter_subscribers: {
         Row: {
           email: string
@@ -156,6 +250,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          is_archived: boolean | null
           is_read: boolean
           link: string | null
           message: string
@@ -166,6 +261,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          is_archived?: boolean | null
           is_read?: boolean
           link?: string | null
           message: string
@@ -176,6 +272,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          is_archived?: boolean | null
           is_read?: boolean
           link?: string | null
           message?: string

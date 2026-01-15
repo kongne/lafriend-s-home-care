@@ -22,7 +22,7 @@ export const useFeedback = () => {
 
     try {
       const { error: submitError } = await supabase
-        .from("feedback_ratings")
+        .from("feedback_ratings" as any)
         .insert({
           booking_id: feedbackData.bookingId,
           rating: feedbackData.rating,
