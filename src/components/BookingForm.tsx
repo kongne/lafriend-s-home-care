@@ -109,8 +109,7 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
         message: validation.data.message || null,
         is_recurring: formData.isRecurring,
         recurrence_type: formData.isRecurring ? formData.recurrenceType : null,
-        recurrence_end_date: formData.isRecurring && formData.recurrenceEndDate ? formData.recurrenceEndDate : null,
-        recaptcha_token: recaptchaToken || null
+        recurrence_end_date: formData.isRecurring && formData.recurrenceEndDate ? formData.recurrenceEndDate : null
       });
 
       if (error) throw error;
