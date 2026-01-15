@@ -13,7 +13,7 @@ import { Loader2, Repeat, Shield } from "lucide-react";
 import { bookingSchema, rateLimit } from "@/lib/validation";
 import { error as logError } from "@/lib/logger";
 import { Switch } from "@/components/ui/switch";
-import { getRecaptchaToken } from "@/lib/recaptcha";
+import { getRecaptchaToken, verifyRecaptchaToken } from "@/lib/recaptcha";
 
 export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
   const { t } = useLanguage();
@@ -84,6 +84,19 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
       // Get reCAPTCHA token for spam protection
       const recaptchaToken = await getRecaptchaToken('booking');
       
+      // Verify reCAPTCHA token on backend
+      const recaptchaResponse = await verifyRecaptchaToken(recaptchaToken, 'booking');
+
+      if (!recaptchaResponse.success) {
+        toast({
+          title: "reCAPTCHA failed",
+          description: "Please try again.",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
       const { error } = await supabase.from("bookings").insert({
         user_id: user?.id || null,
         full_name: validation.data.fullName,
@@ -214,11 +227,11 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
           <Input 
             id="address" 
             name="address" 
-            placeholder="Votre adresse" 
+            placeholder="Entrez votre adresse" 
             value={formData.address} 
             onChange={handleChange} 
             required 
-            maxLength={500}
+            maxLength={200}
             className={errors.address ? "border-destructive" : ""}
           />
           {errors.address && <p className="text-sm text-destructive">{errors.address}</p>}

@@ -1,5 +1,8 @@
 import fs from 'fs/promises';
 import { chromium } from 'playwright';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const url = process.argv[2] || process.env.SCREENSHOT_URL || 'http://localhost:5173';
 const outDir = process.env.SCREENSHOT_DIR || 'screenshots';

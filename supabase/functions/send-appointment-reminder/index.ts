@@ -3,6 +3,8 @@
 import { serve } from "https://deno.land/std@0.208.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 
+const Deno = globalThis.Deno; // Ensure Deno is available globally
+
 // Restrict CORS to specific origin
 const ALLOWED_ORIGIN = Deno.env.get("ALLOWED_ORIGIN") || "https://www.lafriendsservices.com";
 

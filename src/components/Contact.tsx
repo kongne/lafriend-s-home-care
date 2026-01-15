@@ -11,7 +11,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Loader2 } from "lucide-react";
 import { contactSchema, rateLimit } from "@/lib/validation";
 import { warn, error as logError } from "@/lib/logger";
-import { getRecaptchaToken } from "@/lib/recaptcha";
+import { getRecaptchaToken, verifyRecaptchaToken } from "@/lib/recaptcha";
 
 export const Contact = () => {
   const { toast } = useToast();
@@ -75,6 +75,19 @@ export const Contact = () => {
       // Get reCAPTCHA token for spam protection
       const recaptchaToken = await getRecaptchaToken('contact');
       
+      // Verify reCAPTCHA token on backend
+      const recaptchaResponse = await verifyRecaptchaToken(recaptchaToken, 'contact');
+
+      if (!recaptchaResponse.success) {
+        toast({
+          title: "reCAPTCHA failed",
+          description: "Please try again.",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
       const { error } = await supabase.from("contact_submissions").insert({
         user_id: user?.id || null,
         full_name: validation.data.fullName,
@@ -251,16 +264,15 @@ export const Contact = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="contact-message">Message</Label>
+              <Label htmlFor="contact-message">{t('contact.message')}</Label>
               <Textarea 
                 id="contact-message" 
                 name="message"
-                placeholder={t('booking.messagePlaceholder')} 
-                rows={6}
+                placeholder={t('contact.messagePlaceholder')} 
                 value={formData.message}
                 onChange={handleChange}
                 required 
-                maxLength={2000}
+                maxLength={1000}
                 className={errors.message ? "border-destructive" : ""}
               />
               {errors.message && <p className="text-sm text-destructive">{errors.message}</p>}

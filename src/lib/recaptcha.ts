@@ -38,49 +38,26 @@ export const getRecaptchaToken = async (action: string): Promise<string> => {
  */
 export const verifyRecaptchaToken = async (
   token: string,
-  secretKey: string,
-  expectedAction: string,
+  action: string,
   minScore: number = 0.5
 ): Promise<RecaptchaVerifyResponse> => {
   try {
-    const response = await fetch('https://www.google.com/recaptcha/api/siteverify', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: `secret=${secretKey}&response=${token}`,
-    });
+    const response = await fetch(
+      `${import.meta.env.VITE_SUPABASE_FUNCTIONS_URL}/verify-recaptcha`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token, action, minScore }),
+      }
+    );
 
-    const data = await response.json() as RecaptchaVerifyResponse;
-
-    // Verify the response
-    if (!data.success) {
-      return {
-        success: false,
-        score: 0,
-        action: '',
-        challenge_ts: '',
-        hostname: '',
-        error_codes: data.error_codes,
-      };
+    if (!response.ok) {
+      throw new Error('Failed to verify reCAPTCHA token');
     }
 
-    // Check if action matches
-    if (data.action !== expectedAction) {
-      return {
-        ...data,
-        success: false,
-      };
-    }
-
-    // Check score (higher is better, 1.0 is very likely legitimate, 0.0 is very likely bot)
-    if (data.score < minScore) {
-      return {
-        ...data,
-        success: false,
-      };
-    }
-
+    const data = (await response.json()) as RecaptchaVerifyResponse;
     return data;
   } catch (error) {
     console.error('Error verifying reCAPTCHA token:', error);
