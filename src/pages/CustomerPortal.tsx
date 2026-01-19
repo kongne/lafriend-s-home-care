@@ -10,6 +10,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { CustomerAnalytics } from "@/components/customer/CustomerAnalytics";
+import { LoyaltyRewards } from "@/components/customer/LoyaltyRewards";
 import { 
   Calendar, 
   Clock, 
@@ -420,7 +421,7 @@ const CustomerPortal = () => {
           </TabsContent>
 
           <TabsContent value="analytics">
-            <CustomerAnalytics bookings={bookings} profile={profile} />
+            <LoyaltyRewards profile={profile} onPointsUpdate={fetchProfile} />
           </TabsContent>
         </Tabs>
       </main>
