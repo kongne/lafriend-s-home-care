@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import { AdminAnalytics } from "@/components/admin/AdminAnalytics";
+import { EnhancedAnalytics } from "@/components/admin/EnhancedAnalytics";
 import { BulkActions, SelectableItem } from "@/components/admin/BulkActions";
 import { AdminSidebar, MobileSidebarTrigger } from "@/components/admin/AdminSidebar";
 import { AdminHeader } from "@/components/admin/AdminHeader";
@@ -465,14 +466,6 @@ const Admin = () => {
       case "analytics":
         return (
           <div className="space-y-6">
-            {/* KPI Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <KPICard title="Réservations" value={bookings.length} change={12} icon={CalendarDays} />
-              <KPICard title="En attente" value={pendingBookings} icon={Clock} iconColor="text-yellow-500" />
-              <KPICard title="Confirmées" value={confirmedBookings} change={8} icon={CheckCircle2} iconColor="text-green-500" />
-              <KPICard title="Messages" value={contacts.length} icon={Mail} iconColor="text-purple-500" />
-            </div>
-
             {/* Quick Actions */}
             <QuickActions 
               onRefresh={fetchAllData}
@@ -480,14 +473,8 @@ const Admin = () => {
               onExportContacts={() => void exportToPDF(contacts, "messages", contactColumns, "Messages")}
             />
 
-            {/* Recent Bookings Table */}
-            <RecentBookingsTable 
-              bookings={bookings}
-              onStatusChange={updateBookingStatus}
-            />
-
-            {/* Charts & Analytics */}
-            <AdminAnalytics bookings={bookings} contacts={contacts} />
+            {/* Enhanced Analytics with Revenue Tracking */}
+            <EnhancedAnalytics bookings={bookings} contacts={contacts} />
 
             {/* Activity & Tasks */}
             <div className="grid lg:grid-cols-2 gap-6">
