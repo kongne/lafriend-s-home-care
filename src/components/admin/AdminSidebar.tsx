@@ -16,6 +16,7 @@ import {
   Menu,
   X,
   Calendar,
+  Gift,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -44,6 +45,7 @@ const menuItems = [
   { icon: Users, label: "Abonnés", value: "subscribers", path: "/admin?tab=subscribers" },
   { icon: UserCog, label: "Emails Staff", value: "staff", path: "/admin?tab=staff" },
   { icon: Users, label: "Personnel", value: "staff-management", path: "/admin?tab=staff-management" },
+  { icon: Gift, label: "Récompenses", value: "loyalty", path: "/admin?tab=loyalty" },
   { icon: Bell, label: "Notifications", value: "notifications", path: "/admin?tab=notifications" },
   { icon: FileText, label: "Rapports", value: "reports", path: "/admin?tab=reports" },
 ];

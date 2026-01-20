@@ -11,6 +11,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { CustomerAnalytics } from "@/components/customer/CustomerAnalytics";
 import { LoyaltyRewards } from "@/components/customer/LoyaltyRewards";
+import { ReferralProgram } from "@/components/customer/ReferralProgram";
 import { 
   Calendar, 
   Clock, 
@@ -26,6 +27,7 @@ import {
   Mail,
   BarChart3,
   Award,
+  Users,
 } from "lucide-react";
 import { format, parseISO, isPast, isFuture } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -341,7 +343,7 @@ const CustomerPortal = () => {
 
         {/* Bookings Tabs */}
         <Tabs defaultValue="upcoming" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-flex">
+          <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-flex">
             <TabsTrigger value="upcoming" className="gap-2">
               <Calendar className="h-4 w-4" />
               <span className="hidden sm:inline">À venir</span> ({upcomingBookings.length})
@@ -357,6 +359,10 @@ const CustomerPortal = () => {
             <TabsTrigger value="analytics" className="gap-2">
               <BarChart3 className="h-4 w-4" />
               <span className="hidden sm:inline">Fidélité</span>
+            </TabsTrigger>
+            <TabsTrigger value="referral" className="gap-2">
+              <Users className="h-4 w-4" />
+              <span className="hidden sm:inline">Parrainage</span>
             </TabsTrigger>
           </TabsList>
 
@@ -422,6 +428,10 @@ const CustomerPortal = () => {
 
           <TabsContent value="analytics">
             <LoyaltyRewards profile={profile} onPointsUpdate={fetchProfile} />
+          </TabsContent>
+
+          <TabsContent value="referral">
+            <ReferralProgram />
           </TabsContent>
         </Tabs>
       </main>
