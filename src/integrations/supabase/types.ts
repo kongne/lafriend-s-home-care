@@ -471,6 +471,42 @@ export type Database = {
         }
         Relationships: []
       }
+      referrals: {
+        Row: {
+          bonus_points: number
+          completed_at: string | null
+          created_at: string
+          id: string
+          referral_code: string
+          referred_email: string
+          referred_user_id: string | null
+          referrer_id: string
+          status: string
+        }
+        Insert: {
+          bonus_points?: number
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          referral_code: string
+          referred_email: string
+          referred_user_id?: string | null
+          referrer_id: string
+          status?: string
+        }
+        Update: {
+          bonus_points?: number
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          referral_code?: string
+          referred_email?: string
+          referred_user_id?: string | null
+          referrer_id?: string
+          status?: string
+        }
+        Relationships: []
+      }
       staff_availability: {
         Row: {
           created_at: string
@@ -647,11 +683,16 @@ export type Database = {
         Returns: number
       }
       calculate_loyalty_tier: { Args: { points: number }; Returns: string }
+      generate_referral_code: { Args: { p_user_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      process_referral: {
+        Args: { p_new_user_id: string; p_referral_code: string }
         Returns: boolean
       }
       redeem_loyalty_reward: {
