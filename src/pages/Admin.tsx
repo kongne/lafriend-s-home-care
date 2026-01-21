@@ -25,6 +25,7 @@ import { StaffAssignmentDialog } from "@/components/admin/StaffAssignmentDialog"
 import { StaffCalendar } from "@/components/admin/StaffCalendar";
 import { NotificationCenter } from "@/components/admin/NotificationCenter";
 import { LoyaltyRewardsManagement } from "@/components/admin/LoyaltyRewardsManagement";
+import { ReferralManagement } from "@/components/admin/ReferralManagement";
 import { exportToCSV, bookingColumns, contactColumns, subscriberColumns } from "@/lib/exportCsv";
 import { exportToPDF } from "@/lib/exportPdf";
 import { staffEmailSchema } from "@/lib/validation";
@@ -704,6 +705,9 @@ const Admin = () => {
 
       case "loyalty":
         return <LoyaltyRewardsManagement />;
+
+      case "referrals":
+        return <ReferralManagement />;
 
       default:
         return <div className="text-center py-12 text-muted-foreground">Section en construction</div>;

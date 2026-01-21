@@ -268,7 +268,7 @@ const handler = async (req: Request): Promise<Response> => {
     const emailResult = await emailResponse.json();
     console.log("Status notification email sent:", emailResult);
 
-    let smsResult = { success: false, error: "SMS not requested" };
+    let smsResult: { success: boolean; error?: string } = { success: false, error: "SMS not requested" };
 
     // Send SMS if phone is provided and SMS is enabled
     if (shouldSendSms && clientPhone) {

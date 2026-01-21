@@ -30,7 +30,54 @@ interface BookingData {
   preferred_date: string;
   preferred_time: string;
   address: string;
+  phone?: string;
 }
+
+// Send SMS via Twilio
+const sendSms = async (phone: string, message: string): Promise<{ success: boolean; error?: string }> => {
+  const twilioAccountSid = Deno.env.get("TWILIO_ACCOUNT_SID");
+  const twilioAuthToken = Deno.env.get("TWILIO_AUTH_TOKEN");
+  const twilioPhoneNumber = Deno.env.get("TWILIO_PHONE_NUMBER");
+
+  if (!twilioAccountSid || !twilioAuthToken || !twilioPhoneNumber) {
+    console.log("⚠️ Twilio not configured - skipping SMS");
+    return { success: false, error: "Twilio not configured" };
+  }
+
+  try {
+    // Format phone number for Cameroon (+237)
+    const formattedPhone = phone.startsWith("+") ? phone : `+237${phone.replace(/^0/, '')}`;
+
+    const response = await fetch(
+      `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/Messages.json`,
+      {
+        method: "POST",
+        headers: {
+          "Authorization": `Basic ${btoa(`${twilioAccountSid}:${twilioAuthToken}`)}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          From: twilioPhoneNumber,
+          To: formattedPhone,
+          Body: message,
+        }),
+      }
+    );
+
+    const result = await response.json();
+
+    if (response.ok) {
+      console.log("✅ SMS sent successfully:", result.sid);
+      return { success: true };
+    } else {
+      console.error("❌ Twilio error:", result);
+      return { success: false, error: result.message || "Failed to send SMS" };
+    }
+  } catch (err) {
+    console.error("❌ Error sending SMS:", err);
+    return { success: false, error: err instanceof Error ? err.message : "Unknown error" };
+  }
+};
 
 // Validate environment variables
 const supabaseUrl = Deno.env.get("SUPABASE_URL");
@@ -357,7 +404,8 @@ const handler = async (req: Request): Promise<Response> => {
           service_type,
           preferred_date,
           preferred_time,
-          address
+          address,
+          phone
         )
       `
       )
@@ -418,16 +466,23 @@ const handler = async (req: Request): Promise<Response> => {
           emailHtml
         );
 
-        // Update reminder status
+        // Send SMS reminder if phone is available
+        let smsResult: { success: boolean; error?: string } = { success: false, error: "No phone number" };
+        if (booking.phone) {
+          const smsMessage = `⏰ LaFriend's Rappel: Votre RDV est demain ${booking.preferred_date} à ${booking.preferred_time}. Service: ${booking.service_type}. À demain!`;
+          smsResult = await sendSms(booking.phone, smsMessage);
+        }
+
+        // Update reminder status (success if either email or SMS sent)
+        const reminderSuccess = emailResult.success || smsResult.success;
         const newRetryCount = (reminder.retry_count || 0) + 1;
         const { error: updateError } = await supabase
           .from("email_reminders")
           .update({
-            status: emailResult.success ? "sent" : "failed",
-            sent_at: emailResult.success ? now.toISOString() : null,
-            last_error: emailResult.success ? null : emailResult.error,
+            status: reminderSuccess ? "sent" : "failed",
+            sent_at: reminderSuccess ? now.toISOString() : null,
+            last_error: reminderSuccess ? null : `Email: ${emailResult.error || 'N/A'}, SMS: ${smsResult.error || 'N/A'}`,
             retry_count: newRetryCount,
-            updated_at: now.toISOString(),
           })
           .eq("id", reminder.id);
 
@@ -435,12 +490,12 @@ const handler = async (req: Request): Promise<Response> => {
           console.error(`Error updating reminder ${reminder.id}:`, updateError);
           failed++;
         } else {
-          if (emailResult.success) {
-            console.log(`✅ Reminder sent to ${reminder.email}`);
+          if (reminderSuccess) {
+            console.log(`✅ Reminder sent to ${reminder.email} (Email: ${emailResult.success}, SMS: ${smsResult.success})`);
             sent++;
           } else {
             console.warn(
-              `⚠️ Failed to send reminder to ${reminder.email}: ${emailResult.error}`
+              `⚠️ Failed to send reminder to ${reminder.email}: Email: ${emailResult.error}, SMS: ${smsResult.error}`
             );
             failed++;
           }
