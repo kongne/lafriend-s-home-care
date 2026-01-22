@@ -10,7 +10,7 @@ const corsHeaders = {
 };
 
 // Rate limiting store (in-memory, resets on function restart)
-const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
+const rateLimitStore = new Map<string, { count: number; resetTime: number; }>();
 
 const checkRateLimit = (ip: string, maxRequests: number = 10, windowMs: number = 60000): boolean => {
   const now = Date.now();
@@ -30,7 +30,7 @@ const checkRateLimit = (ip: string, maxRequests: number = 10, windowMs: number =
 };
 
 // Sanitize input strings
-const sanitizeString = (val: string) => val.replace(/[<>]/g, '').replace(/javascript:/gi, '').replace(/on\w+=/gi, '').trim();
+const sanitizeString = (val: string) => val.replace(/[<>]/g, "").replace(/javascript:/gi, "").replace(/on\w+=/gi, "").trim();
 
 const requestSchema = z.object({
   clientEmail: z.string().email().max(255).transform((val: string) => val.toLowerCase().trim()),
@@ -39,8 +39,8 @@ const requestSchema = z.object({
   preferredDate: z.string().min(1).max(50).transform(sanitizeString),
   preferredTime: z.string().min(1).max(50).transform(sanitizeString),
   address: z.string().min(1).max(500).transform(sanitizeString),
-  language: z.enum(['fr', 'en']).default('fr'),
-  staffName: z.string().max(100).optional().transform((val?: string) => val ? sanitizeString(val) : undefined),
+  language: z.enum(["fr", "en"]).default("fr"),
+  staffName: z.string().max(100).optional().transform((val?: string) => (val ? sanitizeString(val) : undefined)),
   staffPhone: z.string().max(50).optional().transform((val?: string) => val ? sanitizeString(val) : undefined),
 });
 
@@ -54,7 +54,7 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     // Verify authentication and admin role
     const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return new Response(
         JSON.stringify({ error: 'Unauthorized: Missing Authorization header' }),
         { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
@@ -69,7 +69,7 @@ const handler = async (req: Request): Promise<Response> => {
     if (userError || !user) {
       return new Response(
         JSON.stringify({ error: 'Unauthorized: Invalid token' }),
-        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } },
       );
     }
 
@@ -77,16 +77,16 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
     
-    const { data: hasRole, error: roleError } = await supabaseAdmin.rpc('has_role', { 
-      _user_id: user.id, 
-      _role: 'admin' 
+    const { data: hasRole, error: roleError } = await supabaseAdmin.rpc('has_role', {
+      _user_id: user.id,
+      _role: 'admin',
     });
     
     if (roleError || !hasRole) {
       console.warn(`Unauthorized attempt by user ${user.id} to send booking confirmation`);
       return new Response(
         JSON.stringify({ error: 'Forbidden: Admin access required' }),
-        { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } },
       );
     }
 
@@ -98,7 +98,7 @@ const handler = async (req: Request): Promise<Response> => {
     if (!checkRateLimit(clientIP, 10, 60000)) {
       console.warn(`Rate limit exceeded for IP: ${clientIP}`);
       return new Response(
-        JSON.stringify({ error: "Too many requests. Please try again later." }),
+        JSON.stringify({ error: "Too many requests. Please try again later." }), // Status 429
         { status: 429, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
@@ -107,7 +107,7 @@ const handler = async (req: Request): Promise<Response> => {
     if (!resendApiKey) {
       console.error("RESEND_API_KEY not configured");
       return new Response(
-        JSON.stringify({ error: "Email service not configured" }),
+        JSON.stringify({ error: "Email service not configured" }), // Status 500
         { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
@@ -120,7 +120,7 @@ const handler = async (req: Request): Promise<Response> => {
     } catch (e) {
       console.warn("Failed to parse JSON body:", String(e));
       return new Response(
-        JSON.stringify({ error: "Invalid JSON payload", details: String(e), raw: rawText.slice(0, 1000) }),
+        JSON.stringify({ error: "Invalid JSON payload", details: String(e), raw: rawText.slice(0, 1000) }), // Status 400
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
@@ -140,15 +140,15 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const validatedData = requestSchema.parse(parsedBody);
-    const debugMode = Deno.env.get("FUNCTION_DEBUG") === "true" || new URL(req.url).searchParams.get("debug") === "1";
+    const debugMode = Deno.env.get("FUNCTION_DEBUG") === "true" || new URL(req.url).searchParams.get("debug") === "1"; // Debug mode for more verbose output
     
     const { clientEmail, clientName, serviceType, preferredDate, preferredTime, address, language, staffName, staffPhone } = validatedData;
     
     console.log(`Sending confirmation to ${clientEmail} for ${serviceType}${staffName ? ` (Staff: ${staffName})` : ''}`);
 
-    const isFrench = language === 'fr';
+    const isFrench = language === 'fr'; // Determine language for email content
     
-    // Staff assignment section HTML
+    // Staff assignment section HTML (conditional)
     const staffSection = staffName ? `
       <div style="background: #e8f5e9; border-radius: 12px; padding: 20px; margin: 20px 0;">
         <h3 style="color: #2e7d32; margin-top: 0; font-size: 16px;">
@@ -168,7 +168,7 @@ const handler = async (req: Request): Promise<Response> => {
             <td style="padding: 8px 0; color: #666; font-weight: 500;">
               ${isFrench ? 'Téléphone' : 'Phone'}
             </td>
-            <td style="padding: 8px 0; color: #1a1a2e; font-weight: 600;">
+            <td style="padding: 8px 0; color: #1a1a2e; font-weight: 600;"> 
               ${staffPhone}
             </td>
           </tr>
@@ -176,7 +176,7 @@ const handler = async (req: Request): Promise<Response> => {
         </table>
         <p style="margin: 10px 0 0; font-size: 14px; color: #666;">
           ${isFrench 
-            ? 'Ce technicien sera présent à votre rendez-vous. N\'hésitez pas à le contacter pour toute question.'
+            ? 'Ce technicien sera présent à votre rendez-vous. N\'hésitez pas à le contacter pour toute question.' 
             : 'This technician will be present at your appointment. Feel free to contact them with any questions.'}
         </p>
       </div>
@@ -184,7 +184,7 @@ const handler = async (req: Request): Promise<Response> => {
     
     const subject = isFrench 
       ? `✅ Réservation Confirmée - ${serviceType}`
-      : `✅ Booking Confirmed - ${serviceType}`;
+      : `✅ Booking Confirmed - ${serviceType}`; // Email subject line
     
     const htmlContent = `
       <!DOCTYPE html>
@@ -195,7 +195,7 @@ const handler = async (req: Request): Promise<Response> => {
       </head>
       <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
         <div style="max-width: 600px; margin: 0 auto; background: #ffffff;">
-          <div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: white; padding: 40px 20px; text-align: center;">
+          <div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: white; padding: 40px 20px; text-align: center;"> 
             <h1 style="margin: 0; color: #f5c542; font-size: 28px;">LaFriend's Services</h1>
             <p style="margin: 10px 0 0; opacity: 0.9; font-size: 16px;">
               ${isFrench ? 'Votre réservation est confirmée!' : 'Your booking is confirmed!'}
@@ -209,7 +209,7 @@ const handler = async (req: Request): Promise<Response> => {
             
             <p style="color: #555; line-height: 1.6; font-size: 16px;">
               ${isFrench 
-                ? 'Nous sommes heureux de vous informer que votre réservation a été confirmée. Notre équipe sera présente à la date et l\'heure convenues.'
+                ? 'Nous sommes heureux de vous informer que votre réservation a été confirmée. Notre équipe sera présente à la date et l\'heure convenues.' 
                 : 'We are pleased to inform you that your booking has been confirmed. Our team will be present at the agreed date and time.'}
             </p>
             
@@ -257,7 +257,7 @@ const handler = async (req: Request): Promise<Response> => {
             
             <p style="color: #555; line-height: 1.6; font-size: 16px;">
               ${isFrench 
-                ? 'Si vous avez des questions ou si vous devez modifier votre réservation, n\'hésitez pas à nous contacter.'
+                ? 'Si vous avez des questions ou si vous devez modifier votre réservation, n\'hésitez pas à nous contacter.' 
                 : 'If you have any questions or need to modify your booking, please do not hesitate to contact us.'}
             </p>
             
@@ -265,7 +265,7 @@ const handler = async (req: Request): Promise<Response> => {
               <a href="https://lafriends-services.lovable.app" 
                  style="display: inline-block; background: #f5c542; color: #1a1a2e; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
                 ${isFrench ? 'Visitez notre site' : 'Visit our website'}
-              </a>
+              </a> 
             </div>
           </div>
           
@@ -285,7 +285,7 @@ const handler = async (req: Request): Promise<Response> => {
       </html>
     `;
 
-    // Use custom domain if configured, otherwise use Resend's test domain
+    // Use custom domain if configured, otherwise use Resend's test domain 
     const fromEmail = Deno.env.get("RESEND_FROM_EMAIL") || "LaFriend's Services <onboarding@resend.dev>";
     
     const emailResponse = await fetch("https://api.resend.com/emails", {
@@ -299,7 +299,7 @@ const handler = async (req: Request): Promise<Response> => {
         to: [clientEmail],
         subject,
         html: htmlContent,
-      }),
+      }), // Send email via Resend API
     });
     if (!emailResponse.ok) {
       let errorDetails;
@@ -309,7 +309,7 @@ const handler = async (req: Request): Promise<Response> => {
         errorDetails = { message: `Non-OK response and failed to parse body: ${String(e)}` };
       }
       console.error("Resend API error:", errorDetails);
-      return new Response(
+      return new Response( // Return error response if Resend API fails
         JSON.stringify({ error: errorDetails, request: debugMode ? { headers: Object.fromEntries(req.headers.entries()), payload: validatedData } : undefined }),
         { status: emailResponse.status || 502, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
@@ -319,7 +319,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("Confirmation email sent successfully:", emailResult);
 
     const successPayload: Record<string, unknown> = { success: true, emailResult };
-    if (debugMode) successPayload.request = { headers: Object.fromEntries(req.headers.entries()), payload: validatedData };
+    if (debugMode) successPayload.request = { headers: Object.fromEntries(req.headers.entries()), payload: validatedData }; // Include request details in debug mode
     return new Response(
       JSON.stringify(successPayload),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
@@ -329,14 +329,14 @@ const handler = async (req: Request): Promise<Response> => {
     
     if (error instanceof z.ZodError) {
       return new Response(
-        JSON.stringify({ error: "Invalid input data", details: error.errors }),
+        JSON.stringify({ error: "Invalid input data", details: error.errors }), // Zod validation error
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
     if (error instanceof Error) {
       return new Response(
-        JSON.stringify({ error: error.message }),
+        JSON.stringify({ error: error.message }), // Generic error
         { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
@@ -344,7 +344,7 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(
       JSON.stringify({ error: "An unknown error occurred" }),
       { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
-    );
+    ); // Catch-all for unknown errors
   }
 };
 serve(handler);

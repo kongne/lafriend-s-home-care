@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -11,6 +11,7 @@ import {
   Gift,
   Clock,
   CheckCircle2,
+  Sparkles,
 } from "lucide-react";
 
 interface Booking {
@@ -33,13 +34,13 @@ interface CustomerAnalyticsProps {
 }
 
 // Service price estimates (you can adjust these)
-const SERVICE_PRICES: Record<string, number> = {
-  "Nettoyage Standard": 50,
-  "Nettoyage Approfondi": 80,
-  "Nettoyage de Déménagement": 120,
-  "Nettoyage de Bureau": 100,
-  "Lavage de Vitres": 40,
-  "Nettoyage de Tapis": 60,
+const SERVICE_PRICES_MAP: Record<string, number> = {
+  residential: 25000,
+  commercial: 50000,
+  construction: 75000,
+  windows: 15000,
+  car: 8000,
+  custom: 30000, // Default for custom, can be adjusted
 };
 
 const LOYALTY_TIERS = {
@@ -67,7 +68,13 @@ export const CustomerAnalytics = ({ bookings, profile }: CustomerAnalyticsProps)
 
     // Calculate service breakdown
     const serviceBreakdown = completedBookings.reduce((acc, booking) => {
-      acc[booking.service_type] = (acc[booking.service_type] || 0) + 1;
+      const serviceName = serviceTypeMapping[booking.service_type] || booking.service_type;
+      acc[serviceName] = (acc[serviceName] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const estimatedSpent = completedBookings.reduce((sum, booking) => {
+      const price = SERVICE_PRICES_MAP[booking.service_type] || 0; // Use 0 if service type not found
       return acc;
     }, {} as Record<string, number>);
 
@@ -91,7 +98,7 @@ export const CustomerAnalytics = ({ bookings, profile }: CustomerAnalyticsProps)
       : 100;
 
     return {
-      totalBookings,
+      totalBookings: bookings.length,
       completedBookings: completedBookings.length,
       totalSpent,
       loyaltyPoints,
@@ -101,7 +108,7 @@ export const CustomerAnalytics = ({ bookings, profile }: CustomerAnalyticsProps)
       pointsToNextTier,
       progressToNextTier,
       serviceBreakdown,
-      mostUsedService,
+      mostUsedService: Object.entries(serviceBreakdown).sort((a, b) => b[1] - a[1])[0],
     };
   }, [bookings, profile]);
 
