@@ -1,7 +1,7 @@
 project_id = "ggsvvtzviwxpbjsnpzdv"
 
 [functions.send-booking-confirmation]
-verify_jwt = true
+verify_jwt = false
 
 [functions.chat-support]
 verify_jwt = false
@@ -19,6 +19,9 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.send-referral-notification]
+verify_jwt = false
+
+[functions.send-feedback-request]
 verify_jwt = false
 
 [functions.verify-recaptcha]

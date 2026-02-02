@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import { Users, Copy, Gift, Check, Share2, Loader2 } from "lucide-react";
+import { ReferralLeaderboard } from "./ReferralLeaderboard";
 
 interface Referral {
   id: string;
@@ -323,6 +324,9 @@ export const ReferralProgram = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Referral Leaderboard */}
+      <ReferralLeaderboard />
 
       {/* How it works */}
       <Card>

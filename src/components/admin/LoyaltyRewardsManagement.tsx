@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -253,6 +254,11 @@ export const LoyaltyRewardsManagement = () => {
               <DialogTitle>
                 {editingReward ? "Modifier la récompense" : "Créer une récompense"}
               </DialogTitle>
+              <DialogDescription>
+                {editingReward 
+                  ? "Modifiez les détails de cette récompense" 
+                  : "Créez une nouvelle récompense pour vos clients fidèles"}
+              </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
