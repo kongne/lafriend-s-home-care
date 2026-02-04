@@ -140,3 +140,81 @@ self.addEventListener('message', (event) => {
     self.skipWaiting();
   }
 });
+
+// Push notification event handler
+self.addEventListener('push', (event) => {
+  console.log('[SW] Push received:', event);
+  
+  let data = {
+    title: 'LaFriend\'s Services',
+    body: 'Vous avez une nouvelle notification',
+    icon: '/pwa-192x192.png',
+    badge: '/favicon.png',
+    tag: 'notification',
+    data: { url: '/' }
+  };
+
+  try {
+    if (event.data) {
+      const payload = event.data.json();
+      data = {
+        title: payload.title || data.title,
+        body: payload.body || data.body,
+        icon: payload.icon || data.icon,
+        badge: payload.badge || data.badge,
+        tag: payload.tag || data.tag,
+        data: payload.data || data.data,
+        actions: payload.actions || [],
+        vibrate: payload.vibrate || [200, 100, 200],
+        requireInteraction: payload.requireInteraction || false
+      };
+    }
+  } catch (e) {
+    console.log('[SW] Error parsing push data:', e);
+  }
+
+  const options = {
+    body: data.body,
+    icon: data.icon,
+    badge: data.badge,
+    tag: data.tag,
+    data: data.data,
+    actions: data.actions,
+    vibrate: data.vibrate,
+    requireInteraction: data.requireInteraction
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(data.title, options)
+  );
+});
+
+// Notification click handler
+self.addEventListener('notificationclick', (event) => {
+  console.log('[SW] Notification clicked:', event.notification.tag);
+  
+  event.notification.close();
+
+  const urlToOpen = event.notification.data?.url || '/';
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      // Check if there's already a window/tab open
+      for (const client of windowClients) {
+        if (client.url.includes(self.location.origin) && 'focus' in client) {
+          client.navigate(urlToOpen);
+          return client.focus();
+        }
+      }
+      // Open new window if none exists
+      if (clients.openWindow) {
+        return clients.openWindow(urlToOpen);
+      }
+    })
+  );
+});
+
+// Notification close handler
+self.addEventListener('notificationclose', (event) => {
+  console.log('[SW] Notification closed:', event.notification.tag);
+});

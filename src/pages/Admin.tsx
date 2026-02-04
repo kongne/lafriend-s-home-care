@@ -26,6 +26,7 @@ import { StaffCalendar } from "@/components/admin/StaffCalendar";
 import { NotificationCenter } from "@/components/admin/NotificationCenter";
 import { LoyaltyRewardsManagement } from "@/components/admin/LoyaltyRewardsManagement";
 import { ReferralManagement } from "@/components/admin/ReferralManagement";
+import { BroadcastNotification } from "@/components/admin/BroadcastNotification";
 import { exportToCSV, bookingColumns, contactColumns, subscriberColumns } from "@/lib/exportCsv";
 import { exportToPDF } from "@/lib/exportPdf";
 import { staffEmailSchema } from "@/lib/validation";
@@ -667,9 +668,17 @@ const Admin = () => {
 
       case "notifications":
         return (
-          <div className="space-y-4">
+          <div className="space-y-6">
             <h2 className="text-xl font-semibold">Centre de Notifications</h2>
             <NotificationCenter />
+          </div>
+        );
+
+      case "broadcast":
+        return (
+          <div className="space-y-6">
+            <h2 className="text-xl font-semibold">Diffusion de Messages</h2>
+            <BroadcastNotification />
           </div>
         );
 
