@@ -1,15 +1,6 @@
-import { serve } from "https://deno.land/std@0.208.0/http/server.ts";
+ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
-
-// Restrict CORS to specific origin
-const ALLOWED_ORIGIN = Deno.env.get("ALLOWED_ORIGIN") || "https://www.lafriendsservices.com";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
-  "Access-Control-Max-Age": "86400",
-};
+ import { sendEmail, sendSms, escapeHtml, corsHeaders } from "../_shared/email-service.ts";
 
 // Type definitions
 interface EmailReminder {
@@ -33,52 +24,6 @@ interface BookingData {
   phone?: string;
 }
 
-// Send SMS via Twilio
-const sendSms = async (phone: string, message: string): Promise<{ success: boolean; error?: string }> => {
-  const twilioAccountSid = Deno.env.get("TWILIO_ACCOUNT_SID");
-  const twilioAuthToken = Deno.env.get("TWILIO_AUTH_TOKEN");
-  const twilioPhoneNumber = Deno.env.get("TWILIO_PHONE_NUMBER");
-
-  if (!twilioAccountSid || !twilioAuthToken || !twilioPhoneNumber) {
-    console.log("⚠️ Twilio not configured - skipping SMS");
-    return { success: false, error: "Twilio not configured" };
-  }
-
-  try {
-    // Format phone number for Cameroon (+237)
-    const formattedPhone = phone.startsWith("+") ? phone : `+237${phone.replace(/^0/, '')}`;
-
-    const response = await fetch(
-      `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/Messages.json`,
-      {
-        method: "POST",
-        headers: {
-          "Authorization": `Basic ${btoa(`${twilioAccountSid}:${twilioAuthToken}`)}`,
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: new URLSearchParams({
-          From: twilioPhoneNumber,
-          To: formattedPhone,
-          Body: message,
-        }),
-      }
-    );
-
-    const result = await response.json();
-
-    if (response.ok) {
-      console.log("✅ SMS sent successfully:", result.sid);
-      return { success: true };
-    } else {
-      console.error("❌ Twilio error:", result);
-      return { success: false, error: result.message || "Failed to send SMS" };
-    }
-  } catch (err) {
-    console.error("❌ Error sending SMS:", err);
-    return { success: false, error: err instanceof Error ? err.message : "Unknown error" };
-  }
-};
-
 // Validate environment variables
 const supabaseUrl = Deno.env.get("SUPABASE_URL");
 const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -89,69 +34,6 @@ if (!supabaseUrl || !supabaseKey) {
 
 // Initialize Supabase client
 const supabase = createClient(supabaseUrl, supabaseKey);
-
-// Email validation regex
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-// Email service configuration
-const sendEmail = async (
-  to: string,
-  subject: string,
-  html: string
-): Promise<{ success: boolean; error?: string }> => {
-  try {
-    // Validate email format with strict regex
-    if (!to || !EMAIL_REGEX.test(to) || to.length > 254) {
-      return { success: false, error: "Invalid email address" };
-    }
-    
-    // Validate subject length
-    if (!subject || subject.length > 255) {
-      return { success: false, error: "Invalid subject" };
-    }
-
-    const emailServiceUrl = Deno.env.get("EMAIL_SERVICE_URL");
-    const emailServiceKey = Deno.env.get("EMAIL_SERVICE_KEY");
-
-    if (!emailServiceUrl) {
-      console.warn("⚠️ EMAIL_SERVICE_URL not configured - reminder marked as pending");
-      return { success: false, error: "Email service not configured" };
-    }
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
-
-    const response = await fetch(emailServiceUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(emailServiceKey && { Authorization: `Bearer ${emailServiceKey}` }),
-      },
-      body: JSON.stringify({
-        to,
-        subject,
-        html,
-      }),
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => "Unknown error");
-      return {
-        success: false,
-        error: `Email service returned ${response.status}: ${errorText}`,
-      };
-    }
-
-    return { success: true };
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Error sending email:", errorMessage);
-    return { success: false, error: errorMessage };
-  }
-};
 
 // Generate reminder email HTML with proper formatting
 const generateReminderEmail = (
@@ -346,21 +228,6 @@ const generateReminderEmail = (
   `;
 };
 
-// HTML escape function to prevent XSS
-const escapeHtml = (text: string | unknown): string => {
-  if (typeof text !== "string") {
-    return "";
-  }
-  const map: { [key: string]: string } = {
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#039;",
-  };
-  return text.replace(/[&<>"']/g, (m) => map[m]);
-};
-
 // Main handler for sending reminders
 const handler = async (req: Request): Promise<Response> => {
   console.log("📧 Send appointment reminder function called");
@@ -459,12 +326,12 @@ const handler = async (req: Request): Promise<Response> => {
           booking.address
         );
 
-        // Send email
-        const emailResult = await sendEmail(
-          reminder.email,
-          emailSubject,
-          emailHtml
-        );
+         // Send email using shared Gmail service
+         const emailResult = await sendEmail({
+           to: reminder.email,
+           subject: emailSubject,
+           html: emailHtml,
+         });
 
         // Send SMS reminder if phone is available
         let smsResult: { success: boolean; error?: string } = { success: false, error: "No phone number" };
