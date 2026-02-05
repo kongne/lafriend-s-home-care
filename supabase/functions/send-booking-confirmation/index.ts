@@ -1,8 +1,5 @@
 import { serve } from "https://deno.land/std@0.208.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
-
-const Deno = globalThis.Deno; // Ensure Deno is available globally
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -30,7 +27,7 @@ const checkRateLimit = (ip: string, maxRequests: number = 10, windowMs: number =
 };
 
 // Sanitize input strings
-const sanitizeString = (val: string) => val.replace(/[<>]/g, "").replace(/javascript:/gi, "").replace(/on\w+=/gi, "").trim();
+const sanitizeString = (val: string) => val.replace(/[<>]/g, '').replace(/javascript:/gi, '').replace(/on\w+=/gi, '').trim();
 
 const requestSchema = z.object({
   clientEmail: z.string().email().max(255).transform((val: string) => val.toLowerCase().trim()),
@@ -54,7 +51,7 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     // Verify authentication and admin role
     const authHeader = req.headers.get('Authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!authHeader) {
       return new Response(
         JSON.stringify({ error: 'Unauthorized: Missing Authorization header' }),
         { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
@@ -69,7 +66,7 @@ const handler = async (req: Request): Promise<Response> => {
     if (userError || !user) {
       return new Response(
         JSON.stringify({ error: 'Unauthorized: Invalid token' }),
-        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } },
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
@@ -77,16 +74,16 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
     
-    const { data: hasRole, error: roleError } = await supabaseAdmin.rpc('has_role', {
-      _user_id: user.id,
-      _role: 'admin',
+    const { data: hasRole, error: roleError } = await supabaseAdmin.rpc('has_role', { 
+      _user_id: user.id, 
+      _role: 'admin' 
     });
     
     if (roleError || !hasRole) {
       console.warn(`Unauthorized attempt by user ${user.id} to send booking confirmation`);
       return new Response(
         JSON.stringify({ error: 'Forbidden: Admin access required' }),
-        { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } },
+        { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
@@ -112,7 +109,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Read raw body for better diagnostics and safer parsing
+    // Parse request body
     const rawText = await req.text();
     let parsedBody: unknown;
     try {
@@ -120,27 +117,13 @@ const handler = async (req: Request): Promise<Response> => {
     } catch (e) {
       console.warn("Failed to parse JSON body:", String(e));
       return new Response(
-        JSON.stringify({ error: "Invalid JSON payload", details: String(e), raw: rawText.slice(0, 1000) }), // Status 400
+        JSON.stringify({ error: "Invalid JSON payload", details: String(e), raw: rawText.slice(0, 1000) }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
-    // Log limited headers for debugging
-    try {
-      const hdrs = Object.fromEntries(req.headers.entries());
-      const limited = {
-        host: hdrs.host,
-        origin: hdrs.origin,
-        referer: hdrs.referer,
-        "x-forwarded-for": hdrs["x-forwarded-for"],
-      };
-      console.log("Request headers (limited):", limited);
-    } catch (e) {
-      console.warn("Failed to serialize headers for logging:", String(e));
-    }
-
     const validatedData = requestSchema.parse(parsedBody);
-    const debugMode = Deno.env.get("FUNCTION_DEBUG") === "true" || new URL(req.url).searchParams.get("debug") === "1"; // Debug mode for more verbose output
+    const debugMode = Deno.env.get("FUNCTION_DEBUG") === "true" || new URL(req.url).searchParams.get("debug") === "1";
     
     const { clientEmail, clientName, serviceType, preferredDate, preferredTime, address, language, staffName, staffPhone } = validatedData;
     
@@ -176,7 +159,7 @@ const handler = async (req: Request): Promise<Response> => {
         </table>
         <p style="margin: 10px 0 0; font-size: 14px; color: #666;">
           ${isFrench 
-            ? 'Ce technicien sera présent à votre rendez-vous. N\'hésitez pas à le contacter pour toute question.' 
+            ? 'Ce technicien sera présent à votre rendez-vous. N\'hésitez pas à le contacter pour toute question.'
             : 'This technician will be present at your appointment. Feel free to contact them with any questions.'}
         </p>
       </div>
@@ -262,7 +245,7 @@ const handler = async (req: Request): Promise<Response> => {
             </p>
             
             <div style="text-align: center; margin-top: 30px;">
-              <a href="https://lafriends-services.lovable.app" 
+              <a href="https://lafriendsservices.lovable.app" 
                  style="display: inline-block; background: #f5c542; color: #1a1a2e; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
                 ${isFrench ? 'Visitez notre site' : 'Visit our website'}
               </a> 
@@ -277,7 +260,7 @@ const handler = async (req: Request): Promise<Response> => {
               © ${new Date().getFullYear()} LaFriend's Services Ménagers
             </p>
             <p style="margin: 10px 0 0; font-size: 12px; opacity: 0.7;">
-              📞 +237 693 96 55 01 | 📍 Bafoussam, Cameroun
+              📞 +237 693 13 82 92 | 📍 Bafoussam, Cameroun
             </p>
           </div>
         </div>
@@ -301,15 +284,16 @@ const handler = async (req: Request): Promise<Response> => {
         html: htmlContent,
       }), // Send email via Resend API
     });
+    
     if (!emailResponse.ok) {
       let errorDetails;
       try {
         errorDetails = await emailResponse.json();
       } catch (e) {
-        errorDetails = { message: `Non-OK response and failed to parse body: ${String(e)}` };
+        errorDetails = { message: `Non-OK response: ${String(e)}` };
       }
       console.error("Resend API error:", errorDetails);
-      return new Response( // Return error response if Resend API fails
+      return new Response(
         JSON.stringify({ error: errorDetails, request: debugMode ? { headers: Object.fromEntries(req.headers.entries()), payload: validatedData } : undefined }),
         { status: emailResponse.status || 502, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
@@ -319,9 +303,9 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("Confirmation email sent successfully:", emailResult);
 
     const successPayload: Record<string, unknown> = { success: true, emailResult };
-    if (debugMode) successPayload.request = { headers: Object.fromEntries(req.headers.entries()), payload: validatedData }; // Include request details in debug mode
+    if (debugMode) successPayload.request = { headers: Object.fromEntries(req.headers.entries()), payload: validatedData };
     return new Response(
-      JSON.stringify(successPayload),
+      JSON.stringify({ success: true, emailId: emailResult.id }),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   } catch (error) {
@@ -347,4 +331,5 @@ const handler = async (req: Request): Promise<Response> => {
     ); // Catch-all for unknown errors
   }
 };
+
 serve(handler);

@@ -109,16 +109,32 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
         message: validation.data.message || null,
         is_recurring: formData.isRecurring,
         recurrence_type: formData.isRecurring ? formData.recurrenceType : null,
-        recurrence_end_date: formData.isRecurring && formData.recurrenceEndDate ? formData.recurrenceEndDate : null,
-        recaptcha_token: recaptchaToken || null
+        recurrence_end_date: formData.isRecurring && formData.recurrenceEndDate ? formData.recurrenceEndDate : null
       });
 
       if (error) throw error;
 
+      // Send email confirmation to customer
+      try {
+        await supabase.functions.invoke('send-booking-confirmation', {
+          body: {
+            clientEmail: validation.data.email,
+            clientName: validation.data.fullName,
+            serviceType: validation.data.serviceType,
+            preferredDate: validation.data.preferredDate,
+            preferredTime: validation.data.preferredTime,
+            address: validation.data.address,
+            language: 'fr'
+          }
+        });
+      } catch (emailErr) {
+        // Don't fail the booking if email fails
+        logError("Email confirmation error:", emailErr);
+      }
+
       // Send SMS notification to admin
       try {
         await supabase.functions.invoke('send-sms-notification', {
-          method: 'POST',
           body: {
             booking: {
               full_name: validation.data.fullName,

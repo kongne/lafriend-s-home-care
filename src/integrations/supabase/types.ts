@@ -131,6 +131,67 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_rewards: {
+        Row: {
+          booking_id: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          redeemed_at: string
+          reward_id: string
+          status: string
+          transaction_id: string | null
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          booking_id?: string | null
+          created_at?: string
+          expires_at: string
+          id?: string
+          redeemed_at?: string
+          reward_id: string
+          status?: string
+          transaction_id?: string | null
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          booking_id?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          redeemed_at?: string
+          reward_id?: string
+          status?: string
+          transaction_id?: string | null
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_rewards_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_rewards_reward_id_fkey"
+            columns: ["reward_id"]
+            isOneToOne: false
+            referencedRelation: "loyalty_rewards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_rewards_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "loyalty_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_reminders: {
         Row: {
           booking_id: string | null
@@ -218,6 +279,95 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "feedback_ratings_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loyalty_rewards: {
+        Row: {
+          created_at: string
+          current_redemptions: number
+          description: string
+          id: string
+          is_active: boolean
+          max_redemptions: number | null
+          name: string
+          points_required: number
+          reward_type: string
+          reward_value: number | null
+          service_type: string | null
+          updated_at: string
+          valid_days: number | null
+        }
+        Insert: {
+          created_at?: string
+          current_redemptions?: number
+          description: string
+          id?: string
+          is_active?: boolean
+          max_redemptions?: number | null
+          name: string
+          points_required: number
+          reward_type: string
+          reward_value?: number | null
+          service_type?: string | null
+          updated_at?: string
+          valid_days?: number | null
+        }
+        Update: {
+          created_at?: string
+          current_redemptions?: number
+          description?: string
+          id?: string
+          is_active?: boolean
+          max_redemptions?: number | null
+          name?: string
+          points_required?: number
+          reward_type?: string
+          reward_value?: number | null
+          service_type?: string | null
+          updated_at?: string
+          valid_days?: number | null
+        }
+        Relationships: []
+      }
+      loyalty_transactions: {
+        Row: {
+          balance_after: number
+          booking_id: string | null
+          created_at: string
+          description: string
+          id: string
+          points: number
+          transaction_type: string
+          user_id: string
+        }
+        Insert: {
+          balance_after: number
+          booking_id?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          points: number
+          transaction_type: string
+          user_id: string
+        }
+        Update: {
+          balance_after?: number
+          booking_id?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          points?: number
+          transaction_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loyalty_transactions_booking_id_fkey"
             columns: ["booking_id"]
             isOneToOne: false
             referencedRelation: "bookings"
@@ -318,6 +468,42 @@ export type Database = {
           total_spent?: number | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          bonus_points: number
+          completed_at: string | null
+          created_at: string
+          id: string
+          referral_code: string
+          referred_email: string
+          referred_user_id: string | null
+          referrer_id: string
+          status: string
+        }
+        Insert: {
+          bonus_points?: number
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          referral_code: string
+          referred_email: string
+          referred_user_id?: string | null
+          referrer_id: string
+          status?: string
+        }
+        Update: {
+          bonus_points?: number
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          referral_code?: string
+          referred_email?: string
+          referred_user_id?: string | null
+          referrer_id?: string
+          status?: string
         }
         Relationships: []
       }
@@ -486,13 +672,32 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_loyalty_points: {
+        Args: {
+          p_booking_id?: string
+          p_description: string
+          p_points: number
+          p_transaction_type: string
+          p_user_id: string
+        }
+        Returns: number
+      }
       calculate_loyalty_tier: { Args: { points: number }; Returns: string }
+      generate_referral_code: { Args: { p_user_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      process_referral: {
+        Args: { p_new_user_id: string; p_referral_code: string }
+        Returns: boolean
+      }
+      redeem_loyalty_reward: {
+        Args: { p_reward_id: string; p_user_id: string }
+        Returns: string
       }
     }
     Enums: {

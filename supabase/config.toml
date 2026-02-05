@@ -8,5 +8,18 @@ verify_jwt = false
 
 [functions.send-notification]
 verify_jwt = false
+
 [functions.send-appointment-reminder]
+verify_jwt = false
+
+[functions.send-status-notification]
+verify_jwt = false
+
+[functions.send-sms-notification]
+verify_jwt = false
+
+[functions.send-referral-notification]
+verify_jwt = false
+
+[functions.verify-recaptcha]
 verify_jwt = false

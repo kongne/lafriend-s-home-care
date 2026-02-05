@@ -94,8 +94,7 @@ export const Contact = () => {
         email: validation.data.email,
         phone: validation.data.phone || null,
         subject: validation.data.subject,
-        message: validation.data.message,
-        recaptcha_token: recaptchaToken || null
+        message: validation.data.message
       });
 
       if (error) throw error;

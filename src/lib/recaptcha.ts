@@ -41,9 +41,22 @@ export const verifyRecaptchaToken = async (
   action: string,
   minScore: number = 0.5
 ): Promise<RecaptchaVerifyResponse> => {
+  // If no token (reCAPTCHA not configured), allow submission with a warning
+  if (!token) {
+    console.warn('reCAPTCHA token not available, allowing submission');
+    return {
+      success: true,
+      score: 1,
+      action: action,
+      challenge_ts: new Date().toISOString(),
+      hostname: window.location.hostname,
+    };
+  }
+
   try {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     const response = await fetch(
-      `${import.meta.env.VITE_SUPABASE_FUNCTIONS_URL}/verify-recaptcha`,
+      `${supabaseUrl}/functions/v1/verify-recaptcha`,
       {
         method: 'POST',
         headers: {

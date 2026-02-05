@@ -8,52 +8,106 @@ const corsHeaders = {
 interface StatusNotificationRequest {
   clientEmail: string;
   clientName: string;
+  clientPhone?: string;
   serviceType: string;
   preferredDate: string;
   preferredTime: string;
   address: string;
   newStatus: string;
   language?: string;
+  sendSms?: boolean;
 }
 
-const statusMessages: Record<string, { fr: { subject: string; title: string; message: string }; en: { subject: string; title: string; message: string } }> = {
+const statusMessages: Record<string, { fr: { subject: string; title: string; message: string; sms: string }; en: { subject: string; title: string; message: string; sms: string } }> = {
   confirmed: {
     fr: {
       subject: "✅ Réservation Confirmée",
       title: "Votre réservation est confirmée !",
-      message: "Nous avons le plaisir de vous confirmer votre rendez-vous. Notre équipe sera présente à l'heure convenue."
+      message: "Nous avons le plaisir de vous confirmer votre rendez-vous. Notre équipe sera présente à l'heure convenue.",
+      sms: "✅ LaFriend's: Votre réservation du {date} à {time} est confirmée! Service: {service}. Merci!"
     },
     en: {
       subject: "✅ Booking Confirmed",
       title: "Your booking is confirmed!",
-      message: "We are pleased to confirm your appointment. Our team will be there at the agreed time."
+      message: "We are pleased to confirm your appointment. Our team will be there at the agreed time.",
+      sms: "✅ LaFriend's: Your booking for {date} at {time} is confirmed! Service: {service}. Thank you!"
     }
   },
   completed: {
     fr: {
       subject: "🎉 Service Terminé",
       title: "Service terminé avec succès !",
-      message: "Nous espérons que vous êtes satisfait de notre service. N'hésitez pas à nous contacter pour toute question ou pour une nouvelle réservation."
+      message: "Nous espérons que vous êtes satisfait de notre service. N'hésitez pas à nous contacter pour toute question ou pour une nouvelle réservation.",
+      sms: "🎉 LaFriend's: Service terminé! Merci de votre confiance. Laissez-nous un avis!"
     },
     en: {
       subject: "🎉 Service Completed",
       title: "Service completed successfully!",
-      message: "We hope you are satisfied with our service. Feel free to contact us for any questions or a new booking."
+      message: "We hope you are satisfied with our service. Feel free to contact us for any questions or a new booking.",
+      sms: "🎉 LaFriend's: Service completed! Thank you for your trust. Leave us a review!"
     }
   },
   cancelled: {
     fr: {
       subject: "❌ Réservation Annulée",
       title: "Votre réservation a été annulée",
-      message: "Votre réservation a été annulée. Si vous n'êtes pas à l'origine de cette annulation, veuillez nous contacter immédiatement."
+      message: "Votre réservation a été annulée. Si vous n'êtes pas à l'origine de cette annulation, veuillez nous contacter immédiatement.",
+      sms: "❌ LaFriend's: Votre réservation du {date} a été annulée. Questions? Contactez-nous."
     },
     en: {
       subject: "❌ Booking Cancelled",
       title: "Your booking has been cancelled",
-      message: "Your booking has been cancelled. If you did not request this cancellation, please contact us immediately."
+      message: "Your booking has been cancelled. If you did not request this cancellation, please contact us immediately.",
+      sms: "❌ LaFriend's: Your booking for {date} has been cancelled. Questions? Contact us."
     }
   }
 };
+
+// Send SMS via Twilio
+async function sendSms(phone: string, message: string): Promise<{ success: boolean; error?: string }> {
+  const twilioAccountSid = Deno.env.get("TWILIO_ACCOUNT_SID");
+  const twilioAuthToken = Deno.env.get("TWILIO_AUTH_TOKEN");
+  const twilioPhoneNumber = Deno.env.get("TWILIO_PHONE_NUMBER");
+
+  if (!twilioAccountSid || !twilioAuthToken || !twilioPhoneNumber) {
+    console.log("Twilio not configured - skipping SMS");
+    return { success: false, error: "Twilio not configured" };
+  }
+
+  try {
+    // Format phone number for Cameroon (+237)
+    const formattedPhone = phone.startsWith("+") ? phone : `+237${phone.replace(/^0/, '')}`;
+
+    const response = await fetch(
+      `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/Messages.json`,
+      {
+        method: "POST",
+        headers: {
+          "Authorization": `Basic ${btoa(`${twilioAccountSid}:${twilioAuthToken}`)}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          From: twilioPhoneNumber,
+          To: formattedPhone,
+          Body: message,
+        }),
+      }
+    );
+
+    const result = await response.json();
+
+    if (response.ok) {
+      console.log("SMS sent successfully:", result.sid);
+      return { success: true };
+    } else {
+      console.error("Twilio error:", result);
+      return { success: false, error: result.message || "Failed to send SMS" };
+    }
+  } catch (err) {
+    console.error("Error sending SMS:", err);
+    return { success: false, error: err instanceof Error ? err.message : "Unknown error" };
+  }
+}
 
 const handler = async (req: Request): Promise<Response> => {
   console.log("Send status notification function called");
@@ -75,12 +129,14 @@ const handler = async (req: Request): Promise<Response> => {
     const {
       clientEmail,
       clientName,
+      clientPhone,
       serviceType,
       preferredDate,
       preferredTime,
       address,
       newStatus,
-      language = "fr"
+      language = "fr",
+      sendSms: shouldSendSms = true
     }: StatusNotificationRequest = await req.json();
 
     console.log(`Sending ${newStatus} notification to ${clientEmail}`);
@@ -94,7 +150,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const lang = language === "en" ? "en" : "fr";
-    const { subject, title, message } = statusConfig[lang];
+    const { subject, title, message, sms: smsTemplate } = statusConfig[lang];
 
     const fromEmail = Deno.env.get("RESEND_FROM_EMAIL") || "onboarding@resend.dev";
 
@@ -194,6 +250,7 @@ const handler = async (req: Request): Promise<Response> => {
       </html>
     `;
 
+    // Send email
     const emailResponse = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -211,6 +268,18 @@ const handler = async (req: Request): Promise<Response> => {
     const emailResult = await emailResponse.json();
     console.log("Status notification email sent:", emailResult);
 
+    let smsResult: { success: boolean; error?: string } = { success: false, error: "SMS not requested" };
+
+    // Send SMS if phone is provided and SMS is enabled
+    if (shouldSendSms && clientPhone) {
+      const smsMessage = smsTemplate
+        .replace('{date}', preferredDate)
+        .replace('{time}', preferredTime)
+        .replace('{service}', serviceType);
+      
+      smsResult = await sendSms(clientPhone, smsMessage);
+    }
+
     if (!emailResponse.ok) {
       console.error("Email sending failed:", emailResult);
       return new Response(
@@ -220,7 +289,14 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, emailResult }),
+      JSON.stringify({ 
+        success: true, 
+        emailResult,
+        smsResult,
+        message: smsResult.success 
+          ? "Email et SMS envoyés avec succès"
+          : "Email envoyé avec succès"
+      }),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   } catch (error: any) {

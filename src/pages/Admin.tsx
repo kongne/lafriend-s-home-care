@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import { AdminAnalytics } from "@/components/admin/AdminAnalytics";
+import { EnhancedAnalytics } from "@/components/admin/EnhancedAnalytics";
 import { BulkActions, SelectableItem } from "@/components/admin/BulkActions";
 import { AdminSidebar, MobileSidebarTrigger } from "@/components/admin/AdminSidebar";
 import { AdminHeader } from "@/components/admin/AdminHeader";
@@ -23,6 +24,8 @@ import { StaffManagement } from "@/components/admin/StaffManagement";
 import { StaffAssignmentDialog } from "@/components/admin/StaffAssignmentDialog";
 import { StaffCalendar } from "@/components/admin/StaffCalendar";
 import { NotificationCenter } from "@/components/admin/NotificationCenter";
+import { LoyaltyRewardsManagement } from "@/components/admin/LoyaltyRewardsManagement";
+import { ReferralManagement } from "@/components/admin/ReferralManagement";
 import { exportToCSV, bookingColumns, contactColumns, subscriberColumns } from "@/lib/exportCsv";
 import { exportToPDF } from "@/lib/exportPdf";
 import { staffEmailSchema } from "@/lib/validation";
@@ -302,17 +305,19 @@ const Admin = () => {
             body: {
               clientEmail: booking.email,
               clientName: booking.full_name,
+              clientPhone: booking.phone,
               serviceType: booking.service_type,
               preferredDate: booking.preferred_date,
               preferredTime: booking.preferred_time,
               address: booking.address,
               newStatus: status,
-              language: 'fr'
+              language: 'fr',
+              sendSms: true
             }
           });
           toast({ 
-            title: "Notification envoyée", 
-            description: `Email de ${status === 'confirmed' ? 'confirmation' : status === 'cancelled' ? 'annulation' : 'completion'} envoyé à ${booking.email}` 
+            title: "Notifications envoyées", 
+            description: `Email et SMS de ${status === 'confirmed' ? 'confirmation' : status === 'cancelled' ? 'annulation' : 'completion'} envoyés` 
           });
         } catch (err) {
           logError("Error sending status notification:", err);
@@ -465,14 +470,6 @@ const Admin = () => {
       case "analytics":
         return (
           <div className="space-y-6">
-            {/* KPI Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <KPICard title="Réservations" value={bookings.length} change={12} icon={CalendarDays} />
-              <KPICard title="En attente" value={pendingBookings} icon={Clock} iconColor="text-yellow-500" />
-              <KPICard title="Confirmées" value={confirmedBookings} change={8} icon={CheckCircle2} iconColor="text-green-500" />
-              <KPICard title="Messages" value={contacts.length} icon={Mail} iconColor="text-purple-500" />
-            </div>
-
             {/* Quick Actions */}
             <QuickActions 
               onRefresh={fetchAllData}
@@ -480,14 +477,8 @@ const Admin = () => {
               onExportContacts={() => void exportToPDF(contacts, "messages", contactColumns, "Messages")}
             />
 
-            {/* Recent Bookings Table */}
-            <RecentBookingsTable 
-              bookings={bookings}
-              onStatusChange={updateBookingStatus}
-            />
-
-            {/* Charts & Analytics */}
-            <AdminAnalytics bookings={bookings} contacts={contacts} />
+            {/* Enhanced Analytics with Revenue Tracking */}
+            <EnhancedAnalytics bookings={bookings} contacts={contacts} />
 
             {/* Activity & Tasks */}
             <div className="grid lg:grid-cols-2 gap-6">
@@ -711,6 +702,12 @@ const Admin = () => {
             </div>
           </div>
         );
+
+      case "loyalty":
+        return <LoyaltyRewardsManagement />;
+
+      case "referrals":
+        return <ReferralManagement />;
 
       default:
         return <div className="text-center py-12 text-muted-foreground">Section en construction</div>;
