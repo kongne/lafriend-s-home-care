@@ -19,6 +19,7 @@ import {
   Gift,
   Share2,
   Megaphone,
+  Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -51,6 +52,7 @@ const menuItems = [
   { icon: Share2, label: "Parrainages", value: "referrals", path: "/admin?tab=referrals" },
   { icon: Bell, label: "Notifications", value: "notifications", path: "/admin?tab=notifications" },
   { icon: Megaphone, label: "Diffusion", value: "broadcast", path: "/admin?tab=broadcast" },
+  { icon: Clock, label: "Rappels", value: "reminders", path: "/admin?tab=reminders" },
   { icon: FileText, label: "Rapports", value: "reports", path: "/admin?tab=reports" },
 ];
 

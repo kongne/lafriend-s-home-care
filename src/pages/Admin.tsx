@@ -27,6 +27,7 @@ import { NotificationCenter } from "@/components/admin/NotificationCenter";
 import { LoyaltyRewardsManagement } from "@/components/admin/LoyaltyRewardsManagement";
 import { ReferralManagement } from "@/components/admin/ReferralManagement";
 import { BroadcastNotification } from "@/components/admin/BroadcastNotification";
+import { EmailRemindersManagement } from "@/components/admin/EmailRemindersManagement";
 import { exportToCSV, bookingColumns, contactColumns, subscriberColumns } from "@/lib/exportCsv";
 import { exportToPDF } from "@/lib/exportPdf";
 import { staffEmailSchema } from "@/lib/validation";
@@ -717,6 +718,13 @@ const Admin = () => {
 
       case "referrals":
         return <ReferralManagement />;
+
+      case "reminders":
+        return (
+          <div className="space-y-6">
+            <EmailRemindersManagement />
+          </div>
+        );
 
       default:
         return <div className="text-center py-12 text-muted-foreground">Section en construction</div>;

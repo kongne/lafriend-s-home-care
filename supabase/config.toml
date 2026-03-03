@@ -29,3 +29,6 @@ verify_jwt = false
 
 [functions.broadcast-notification]
 verify_jwt = false
+
+[functions.send-admin-digest]
+verify_jwt = false
