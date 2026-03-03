@@ -23,7 +23,7 @@ export const Newsletter = () => {
     if (!validation.success) {
       toast({
         title: "Erreur",
-        description: validation.error.errors[0].message,
+        description: validation.error.issues[0].message,
         variant: "destructive",
       });
       return;

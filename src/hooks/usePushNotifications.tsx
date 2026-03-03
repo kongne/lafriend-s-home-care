@@ -51,7 +51,7 @@ export function usePushNotifications() {
   const getSubscription = useCallback(async (): Promise<PushSubscription | null> => {
     try {
       const registration = await navigator.serviceWorker.ready;
-      return await registration.pushManager.getSubscription();
+      return await (registration as any).pushManager.getSubscription();
     } catch (error) {
       console.error('Error getting subscription:', error);
       return null;
@@ -90,7 +90,7 @@ export function usePushNotifications() {
       const registration = await navigator.serviceWorker.ready;
 
       // Subscribe to push
-      const subscription = await registration.pushManager.subscribe({
+      const subscription = await (registration as any).pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
       });
