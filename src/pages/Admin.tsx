@@ -379,7 +379,7 @@ const Admin = () => {
   const addStaffEmail = async () => {
     const validation = staffEmailSchema.safeParse({ email: newStaffEmail, name: newStaffName || undefined });
     if (!validation.success) {
-      toast({ title: "Erreur", description: validation.error.errors[0].message, variant: "destructive" });
+      toast({ title: "Erreur", description: validation.error.issues[0].message, variant: "destructive" });
       return;
     }
     const { error } = await supabase.from("staff_emails").insert({ email: validation.data.email, name: validation.data.name || null });
