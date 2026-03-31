@@ -62,67 +62,67 @@ export const Testimonials = () => {
     return () => clearInterval(interval);
   }, [isPaused, nextSlide]);
   return <section id="temoignages" className="py-20 bg-primary">
-      <div className="container mx-auto px-4">
-        <div ref={ref} className={`text-center mb-16 space-y-4 transition-all duration-700 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"}`}>
-          <p className="text-accent font-semibold uppercase tracking-wider">{t('testimonials.tagline')}</p>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-primary-foreground">
-            {t('testimonials.title')}
-          </h2>
-          <p className="text-base sm:text-lg text-primary-foreground/70 max-w-2xl mx-auto">
-            {t('testimonials.subtitle')}
-          </p>
-        </div>
+    <div className="container mx-auto px-4">
+      <div ref={ref} className={`text-center mb-16 space-y-4 transition-all duration-700 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"}`}>
+        <p className="text-accent font-semibold uppercase tracking-wider">{t('testimonials.tagline')}</p>
+        <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-primary-foreground">
+          {t('testimonials.title')}
+        </h2>
+        <p className="text-base sm:text-lg text-primary-foreground/70 max-w-2xl mx-auto">
+          {t('testimonials.subtitle')}
+        </p>
+      </div>
 
-        {/* Featured Testimonial */}
-        <div className="mb-12 relative" onMouseEnter={() => setIsPaused(true)} onMouseLeave={() => setIsPaused(false)}>
-          {/* Navigation Arrows */}
-          <Button variant="ghost" size="icon" onClick={prevSlide} className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 md:-translate-x-6 z-10 bg-card/80 hover:bg-card shadow-lg rounded-full h-10 w-10 md:h-12 md:w-12" aria-label="Previous testimonial">
-            <ChevronLeft className="h-5 w-5 md:h-6 md:w-6" />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={nextSlide} className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 md:translate-x-6 z-10 bg-card/80 hover:bg-card shadow-lg rounded-full h-10 w-10 md:h-12 md:w-12" aria-label="Next testimonial">
-            <ChevronRight className="h-5 w-5 md:h-6 md:w-6" />
-          </Button>
+      {/* Featured Testimonial */}
+      <div className="mb-12 relative" onMouseEnter={() => setIsPaused(true)} onMouseLeave={() => setIsPaused(false)}>
+        {/* Navigation Arrows */}
+        <Button variant="ghost" size="icon" onClick={prevSlide} className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 md:-translate-x-6 z-10 bg-card/80 hover:bg-card shadow-lg rounded-full h-10 w-10 md:h-12 md:w-12" aria-label="Previous testimonial">
+          <ChevronLeft className="h-5 w-5 md:h-6 md:w-6" />
+        </Button>
+        <Button variant="ghost" size="icon" onClick={nextSlide} className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 md:translate-x-6 z-10 bg-card/80 hover:bg-card shadow-lg rounded-full h-10 w-10 md:h-12 md:w-12" aria-label="Next testimonial">
+          <ChevronRight className="h-5 w-5 md:h-6 md:w-6" />
+        </Button>
 
-          <Card className={`relative overflow-hidden bg-gradient-to-br from-card to-card/80 border-accent/20 p-8 md:p-12 transition-all duration-700 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"}`}>
-            <Sparkles className="absolute top-4 right-4 w-8 h-8 text-accent/30" />
-            
-            {/* Animated content wrapper */}
-            <div key={activeIndex} className="flex flex-col md:flex-row items-center gap-8 animate-fade-in">
-              <div className="relative">
-                <img src={testimonials[activeIndex].image} alt={testimonials[activeIndex].name} className="w-24 h-24 md:w-32 md:h-32 rounded-full object-cover ring-4 ring-accent/30 transition-transform duration-500" loading="lazy" decoding="async" />
-                <div className="absolute -bottom-2 -right-2 bg-accent rounded-full p-2">
-                  <Quote className="w-4 h-4 text-accent-foreground" />
-                </div>
-              </div>
-              <div className="flex-1 text-center md:text-left">
-                <div className="flex items-center justify-center md:justify-start gap-1 mb-4">
-                  {[...Array(testimonials[activeIndex].rating)].map((_, i) => <Star key={i} className="w-5 h-5 fill-accent text-accent" />)}
-                </div>
-                <p className="text-lg md:text-xl text-foreground mb-6 italic leading-relaxed">
-                  "{t(testimonials[activeIndex].contentKey)}"
-                </p>
-                <p className="font-bold text-foreground text-lg">{testimonials[activeIndex].name}</p>
-                <p className="text-muted-foreground">{t(testimonials[activeIndex].roleKey)} • {testimonials[activeIndex].location}</p>
+        <Card className={`relative overflow-hidden bg-gradient-to-br from-card to-card/80 border-accent/20 p-8 md:p-12 transition-all duration-700 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"}`}>
+          <Sparkles className="absolute top-4 right-4 w-8 h-8 text-accent/30" />
+
+          {/* Animated content wrapper */}
+          <div key={activeIndex} className="flex flex-col md:flex-row items-center gap-8 animate-fade-in">
+            <div className="relative">
+              <img src={testimonials[activeIndex].image} alt={testimonials[activeIndex].name} className="w-24 h-24 md:w-32 md:h-32 rounded-full object-cover ring-4 ring-accent/30 transition-transform duration-500" loading="lazy" decoding="async" />
+              <div className="absolute -bottom-2 -right-2 bg-accent rounded-full p-2">
+                <Quote className="w-4 h-4 text-accent-foreground" />
               </div>
             </div>
+            <div className="flex-1 text-center md:text-left">
+              <div className="flex items-center justify-center md:justify-start gap-1 mb-4">
+                {[...Array(testimonials[activeIndex].rating)].map((_, i) => <Star key={i} className="w-5 h-5 fill-accent text-accent" />)}
+              </div>
+              <p className="text-lg md:text-xl text-foreground mb-6 italic leading-relaxed">
+                "{t(testimonials[activeIndex].contentKey)}"
+              </p>
+              <p className="font-bold text-foreground text-lg">{testimonials[activeIndex].name}</p>
+              <p className="text-muted-foreground">{t(testimonials[activeIndex].roleKey)} • {testimonials[activeIndex].location}</p>
+            </div>
+          </div>
 
-            {/* Progress bar */}
-            <div className="absolute bottom-0 left-0 right-0 h-1 bg-muted">
-              <div className="h-full bg-accent transition-all ease-linear" style={{
+          {/* Progress bar */}
+          <div className="absolute bottom-0 left-0 right-0 h-1 bg-muted">
+            <div className="h-full bg-accent transition-all ease-linear" style={{
               width: isPaused ? `${(activeIndex + 1) / testimonials.length * 100}%` : '100%',
               animation: isPaused ? 'none' : 'progress 6s linear infinite'
             }} />
-            </div>
+          </div>
 
-            {/* Dots indicator */}
-            <div className="flex justify-center gap-2 mt-6">
-              {testimonials.map((_, index) => <button key={index} onClick={() => goToSlide(index)} className={`h-2 rounded-full transition-all duration-300 ${index === activeIndex ? 'bg-accent w-8' : 'bg-muted-foreground/30 w-2 hover:bg-muted-foreground/50'}`} aria-label={`Go to testimonial ${index + 1}`} />)}
-            </div>
-          </Card>
-        </div>
+          {/* Dots indicator */}
+          <div className="flex justify-center gap-2 mt-6">
+            {testimonials.map((_, index) => <button key={index} onClick={() => goToSlide(index)} className={`h-2 rounded-full transition-all duration-300 ${index === activeIndex ? 'bg-accent w-8' : 'bg-muted-foreground/30 w-2 hover:bg-muted-foreground/50'}`} aria-label={`Go to testimonial ${index + 1}`} />)}
+          </div>
+        </Card>
+      </div>
 
-        {/* Grid of testimonials */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+      {/* Grid of testimonials */}
+      {/*<div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
           {testimonials.map((testimonial, index) => (
             <Card 
               key={index}
@@ -154,7 +154,7 @@ export const Testimonials = () => {
               </p>
             </Card>
           ))}
-        </div>
-      </div>
-    </section>;
+        </div>*/}
+    </div>
+  </section>;
 };

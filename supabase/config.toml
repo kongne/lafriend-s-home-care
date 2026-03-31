@@ -4,10 +4,10 @@ project_id = "ggsvvtzviwxpbjsnpzdv"
 verify_jwt = false
 
 [functions.chat-support]
-verify_jwt = false
+verify_jwt = true
 
 [functions.send-notification]
-verify_jwt = false
+verify_jwt = true
 
 [functions.send-appointment-reminder]
 verify_jwt = false
@@ -16,7 +16,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.send-sms-notification]
-verify_jwt = false
+verify_jwt = true
 
 [functions.send-referral-notification]
 verify_jwt = false
