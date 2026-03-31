@@ -1,6 +1,7 @@
 // Shared Gmail SMTP email service for all edge functions
 // Uses Gmail App Password for authentication
 //import nodemailer from "nodemailer";
+
 interface EmailOptions {
   to: string | string[];
   subject: string;
