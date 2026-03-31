@@ -12,10 +12,6 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
-    legacy({
-      targets: ["defaults", "not IE 11"],
-      modernPolyfills: true, // Enable modern polyfills for better performance
-    }),
     mode === "development" && componentTagger()
   ].filter(Boolean),
   resolve: {
