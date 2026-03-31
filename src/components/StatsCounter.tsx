@@ -67,7 +67,7 @@ export const StatsCounter = () => {
   ];
 
   return (
-    <section className="w-full py-8 sm:py-12 md:py-16 lg:py-20 bg-accent">
+    <section className="w-full py-8 sm:py-12 md:py-16 lg:py-20 bg-accent dark:bg-accent-foreground">
       <div className="container mx-auto px-3 xs:px-4 sm:px-6 md:px-8 lg:px-10">
         <div className="flex flex-col items-end justify-end w-full">
           {/* Stats grid - right-aligned and fully responsive */}
@@ -82,12 +82,12 @@ export const StatsCounter = () => {
                   <div className="inline-flex items-center justify-center w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-full bg-accent-foreground/10 mb-2 xs:mb-3 sm:mb-4 md:mb-5 group-hover:scale-110 transition-transform duration-300 flex-shrink-0">
                     <stat.icon className="w-5 h-5 xs:w-6 xs:h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 lg:w-10 lg:h-10 text-accent-foreground" />
                   </div>
-                  
+
                   {/* Counter value - responsive text sizing */}
                   <div className="text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-accent-foreground mb-1 xs:mb-1.5 sm:mb-2 md:mb-3 leading-tight">
                     <CountUp end={stat.value} suffix={stat.suffix} />
                   </div>
-                  
+
                   {/* Label - responsive text sizing */}
                   <p className="text-xs xs:text-sm sm:text-sm md:text-base lg:text-lg text-accent-foreground/85 font-medium line-clamp-2">
                     {t(stat.labelKey)}

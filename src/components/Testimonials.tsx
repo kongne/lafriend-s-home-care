@@ -1,9 +1,42 @@
-import { Star, Quote, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
+import { Star, Quote, Sparkles, ChevronLeft, ChevronRight, User } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useState, useEffect, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+
+const defaultTestimonials = [{
+  name: "Marie Nguema",
+  roleKey: "testimonials.role.homeowner",
+  contentKey: "testimonials.t1",
+  rating: 5,
+  image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=face",
+  location: "Bafoussam"
+}, {
+  name: "Paul Kamga",
+  roleKey: "testimonials.role.director",
+  contentKey: "testimonials.t2",
+  rating: 5,
+  image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face",
+  location: "Douala"
+}, {
+  name: "Sandrine Bella",
+  roleKey: "testimonials.role.shopmanager",
+  contentKey: "testimonials.t3",
+  rating: 5,
+  image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face",
+  location: "Yaoundé"
+}, {
+  name: "Jean-Pierre Fotso",
+  roleKey: "testimonials.role.foreman",
+  contentKey: "testimonials.t4",
+  rating: 5,
+  image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face",
+  location: "Bafoussam"
+}];
+
 export const Testimonials = () => {
   const {
     ref,
@@ -15,35 +48,49 @@ export const Testimonials = () => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const testimonials = [{
-    name: "Marie Nguema",
-    roleKey: "testimonials.role.homeowner",
-    contentKey: "testimonials.t1",
-    rating: 5,
-    image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=face",
-    location: "Bafoussam"
-  }, {
-    name: "Paul Kamga",
-    roleKey: "testimonials.role.director",
-    contentKey: "testimonials.t2",
-    rating: 5,
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face",
-    location: "Douala"
-  }, {
-    name: "Sandrine Bella",
-    roleKey: "testimonials.role.shopmanager",
-    contentKey: "testimonials.t3",
-    rating: 5,
-    image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face",
-    location: "Yaoundé"
-  }, {
-    name: "Jean-Pierre Fotso",
-    roleKey: "testimonials.role.foreman",
-    contentKey: "testimonials.t4",
-    rating: 5,
-    image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face",
-    location: "Bafoussam"
-  }];
+
+  const { data: fetchedTestimonials } = useQuery({
+    queryKey: ['landing_testimonials'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('feedback_ratings' as any)
+        .select(`
+          id,
+          rating,
+          comment,
+          bookings (
+            full_name,
+            address
+          )
+        `)
+        .not('comment', 'is', null)
+        .gte('rating', 4)
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  const testimonials = fetchedTestimonials && fetchedTestimonials.length > 0
+    ? fetchedTestimonials.map((ft: any) => ({
+        name: ft.bookings?.[0]?.full_name || ft.bookings?.full_name || "Client Anonyme",
+        role: "Client Vérifié",
+        content: ft.comment,
+        rating: ft.rating,
+        image: null,
+        location: ft.bookings?.[0]?.address || ft.bookings?.address || ""
+      }))
+    : defaultTestimonials.map(dt => ({
+        name: dt.name,
+        role: t(dt.roleKey),
+        content: t(dt.contentKey),
+        rating: dt.rating,
+        image: dt.image,
+        location: dt.location
+      }));
+
   const goToSlide = useCallback((index: number) => {
     if (isAnimating) return;
     setIsAnimating(true);
@@ -89,7 +136,13 @@ export const Testimonials = () => {
           {/* Animated content wrapper */}
           <div key={activeIndex} className="flex flex-col md:flex-row items-center gap-8 animate-fade-in">
             <div className="relative">
-              <img src={testimonials[activeIndex].image} alt={testimonials[activeIndex].name} className="w-24 h-24 md:w-32 md:h-32 rounded-full object-cover ring-4 ring-accent/30 transition-transform duration-500" loading="lazy" decoding="async" />
+              {testimonials[activeIndex].image ? (
+                <img src={testimonials[activeIndex].image} alt={testimonials[activeIndex].name} className="w-24 h-24 md:w-32 md:h-32 rounded-full object-cover ring-4 ring-accent/30 transition-transform duration-500" loading="lazy" decoding="async" />
+              ) : (
+                <div className="w-24 h-24 md:w-32 md:h-32 rounded-full ring-4 ring-accent/30 flex items-center justify-center bg-background/50 backdrop-blur-sm">
+                  <User className="w-12 h-12 md:w-16 md:h-16 text-foreground/50" />
+                </div>
+              )}
               <div className="absolute -bottom-2 -right-2 bg-accent rounded-full p-2">
                 <Quote className="w-4 h-4 text-accent-foreground" />
               </div>
@@ -99,10 +152,10 @@ export const Testimonials = () => {
                 {[...Array(testimonials[activeIndex].rating)].map((_, i) => <Star key={i} className="w-5 h-5 fill-accent text-accent" />)}
               </div>
               <p className="text-lg md:text-xl text-foreground mb-6 italic leading-relaxed">
-                "{t(testimonials[activeIndex].contentKey)}"
+                "{testimonials[activeIndex].content}"
               </p>
               <p className="font-bold text-foreground text-lg">{testimonials[activeIndex].name}</p>
-              <p className="text-muted-foreground">{t(testimonials[activeIndex].roleKey)} • {testimonials[activeIndex].location}</p>
+              <p className="text-muted-foreground">{testimonials[activeIndex].role} {testimonials[activeIndex].location ? `• ${testimonials[activeIndex].location}` : ''}</p>
             </div>
           </div>
 
