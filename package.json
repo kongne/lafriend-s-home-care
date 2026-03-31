@@ -73,7 +73,7 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-legacy": "^8.0.1",
-    "@vitejs/plugin-react-swc": "^4.3.0",
+    "@vitejs/plugin-react-swc": "3.7.2",
     "autoprefixer": "^10.4.27",
     "eslint": "^10.1.0",
     "eslint-plugin-react-hooks": "^7.0.1",
