@@ -37,7 +37,7 @@ export const FeedbackList = ({ bookingId, limit = 10 }: FeedbackListProps) => {
   const fetchFeedbacks = async () => {
     try {
       let query = supabase
-        .from("feedback_ratings" as any)
+        .from("feedback_ratings")
         .select("*")
         .order("created_at", { ascending: false })
         .limit(limit);
