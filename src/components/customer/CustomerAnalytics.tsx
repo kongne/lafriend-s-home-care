@@ -55,9 +55,19 @@ export const CustomerAnalytics = ({ bookings, profile }: CustomerAnalyticsProps)
     const completedBookings = bookings.filter((b) => b.status === "completed");
     const totalBookings = bookings.length;
     
+    // Service type display names
+    const serviceNames: Record<string, string> = {
+      residential: "Résidentiel",
+      commercial: "Commercial",
+      construction: "Après construction",
+      windows: "Vitres",
+      car: "Véhicule",
+      custom: "Sur mesure",
+    };
+
     // Calculate estimated spending
     const estimatedSpent = completedBookings.reduce((sum, booking) => {
-      const price = SERVICE_PRICES[booking.service_type] || 50;
+      const price = SERVICE_PRICES_MAP[booking.service_type] || 0;
       return sum + price;
     }, 0);
 
@@ -68,13 +78,8 @@ export const CustomerAnalytics = ({ bookings, profile }: CustomerAnalyticsProps)
 
     // Calculate service breakdown
     const serviceBreakdown = completedBookings.reduce((acc, booking) => {
-      const serviceName = serviceTypeMapping[booking.service_type] || booking.service_type;
+      const serviceName = serviceNames[booking.service_type] || booking.service_type;
       acc[serviceName] = (acc[serviceName] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-
-    const estimatedSpent = completedBookings.reduce((sum, booking) => {
-      const price = SERVICE_PRICES_MAP[booking.service_type] || 0; // Use 0 if service type not found
       return acc;
     }, {} as Record<string, number>);
 
