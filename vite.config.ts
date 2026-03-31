@@ -26,9 +26,13 @@ export default defineConfig(({ mode }) => ({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'ui-vendor': ['@radix-ui/react-dialog', '@radix-ui/react-tabs', '@radix-ui/react-accordion'],
+        manualChunks(id: string) {
+          if (id.includes('react-dom') || id.includes('react-router-dom') || id.includes('node_modules/react/')) {
+            return 'react-vendor';
+          }
+          if (id.includes('@radix-ui/')) {
+            return 'ui-vendor';
+          }
         },
       },
     },
