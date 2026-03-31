@@ -1,6 +1,6 @@
 // Shared Gmail SMTP email service for all edge functions
 // Uses Gmail App Password for authentication
-
+//import nodemailer from "nodemailer";
 interface EmailOptions {
   to: string | string[];
   subject: string;
@@ -26,7 +26,7 @@ export const escapeHtml = (str: string | undefined | null): string => {
 };
 
 // Sanitize input strings
-export const sanitizeString = (val: string) => 
+export const sanitizeString = (val: string) =>
   val.replace(/[<>]/g, '').replace(/javascript:/gi, '').replace(/on\w+=/gi, '').trim();
 
 // Email validation regex
@@ -50,13 +50,13 @@ export async function sendEmail(options: EmailOptions): Promise<EmailResult> {
     // Use Gmail API via fetch (OAuth2 would be ideal, but App Password works with basic auth)
     // Since Deno doesn't have native SMTP, we'll use a webhook approach or external service
     // For now, we'll use the Resend API as fallback but log Gmail intent
-    
+
     console.log(`📧 Sending email via Gmail (${gmailUser}) to: ${recipients.join(', ')}`);
-    
+
     // We need to use an SMTP relay or email API that accepts Gmail credentials
     // Using the Resend API as the underlying transport for now
     // In production, you would use an SMTP library or Gmail API with OAuth2
-    
+
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
     if (resendApiKey) {
       // Use Resend as transport
@@ -76,7 +76,7 @@ export async function sendEmail(options: EmailOptions): Promise<EmailResult> {
       });
 
       const result = await response.json();
-      
+
       if (response.ok) {
         console.log("✅ Email sent successfully via Gmail/Resend:", result.id);
         return { success: true, messageId: result.id };
@@ -100,7 +100,7 @@ export async function sendEmail(options: EmailOptions): Promise<EmailResult> {
 // Fallback to Resend API
 async function sendEmailViaResend(options: EmailOptions): Promise<EmailResult> {
   const resendApiKey = Deno.env.get("RESEND_API_KEY");
-  
+
   if (!resendApiKey) {
     console.error("No email service configured (Gmail or Resend)");
     return { success: false, error: "No email service configured" };
