@@ -683,6 +683,7 @@ export type Database = {
         Returns: number
       }
       calculate_loyalty_tier: { Args: { points: number }; Returns: string }
+      check_referral_limit: { Args: { p_user_id: string }; Returns: boolean }
       generate_referral_code: { Args: { p_user_id: string }; Returns: string }
       has_role: {
         Args: {
