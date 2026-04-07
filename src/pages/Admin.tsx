@@ -404,7 +404,14 @@ const Admin = () => {
 
   const handleBulkBookingAction = useCallback(async (action: string, ids: string[]) => {
     if (action === 'delete') {
-      toast({ title: "Action non disponible", description: "La suppression en masse nécessite une mise à jour des permissions", variant: "destructive" });
+      const { error } = await supabase.from("bookings").delete().in("id", ids);
+      if (!error) {
+        toast({ title: "Suppression effectuée", description: `${ids.length} réservation(s) supprimée(s)` });
+        setSelectedBookings([]);
+        fetchBookings();
+      } else {
+        toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      }
       return;
     }
     const { error } = await supabase.from("bookings").update({ status: action }).in("id", ids);
@@ -419,7 +426,14 @@ const Admin = () => {
 
   const handleBulkContactAction = useCallback(async (action: string, ids: string[]) => {
     if (action === 'delete') {
-      toast({ title: "Action non disponible", description: "La suppression en masse nécessite une mise à jour des permissions", variant: "destructive" });
+      const { error } = await supabase.from("contact_submissions").delete().in("id", ids);
+      if (!error) {
+        toast({ title: "Suppression effectuée", description: `${ids.length} message(s) supprimé(s)` });
+        setSelectedContacts([]);
+        fetchContacts();
+      } else {
+        toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      }
       return;
     }
     const { error } = await supabase.from("contact_submissions").update({ status: action }).in("id", ids);
