@@ -4,7 +4,6 @@ import { Check } from "lucide-react";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { BookingModal } from "./BookingModal";
-import { useLanguage } from "@/contexts/LanguageContext";
 
 export const Pricing = () => {
   const { ref, isVisible } = useScrollReveal();
