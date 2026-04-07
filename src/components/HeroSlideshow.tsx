@@ -9,15 +9,15 @@ interface Slide {
   subtitleKey: string;
 }
 const slides: Slide[] = [{
-  image: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=1920&q=80",
+  image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1920&q=80",
   titleKey: "hero.title",
   subtitleKey: "hero.description"
 }, {
-  image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1920&q=80",
+  image: "https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?w=1920&q=80",
   titleKey: "hero.slide2.title",
   subtitleKey: "hero.slide2.subtitle"
 }, {
-  image: "https://images.unsplash.com/photo-1628177142898-93e36e4e3a50?w=1920&q=80",
+  image: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=1920&q=80",
   titleKey: "hero.slide3.title",
   subtitleKey: "hero.slide3.subtitle"
 }];
