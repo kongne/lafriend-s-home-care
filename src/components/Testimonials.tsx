@@ -12,28 +12,28 @@ const defaultTestimonials = [{
   roleKey: "testimonials.role.homeowner",
   contentKey: "testimonials.t1",
   rating: 5,
-  image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=face",
+  image: "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=100&h=100&fit=crop&crop=face",
   location: "Bafoussam"
 }, {
   name: "Paul Kamga",
   roleKey: "testimonials.role.director",
   contentKey: "testimonials.t2",
   rating: 5,
-  image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face",
+  image: "https://images.unsplash.com/photo-1506277886164-e25aa3f4ef7f?w=100&h=100&fit=crop&crop=face",
   location: "Douala"
 }, {
   name: "Sandrine Bella",
   roleKey: "testimonials.role.shopmanager",
   contentKey: "testimonials.t3",
   rating: 5,
-  image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face",
+  image: "https://images.unsplash.com/photo-1523824921871-d6f1a15151f1?w=100&h=100&fit=crop&crop=face",
   location: "Yaoundé"
 }, {
   name: "Jean-Pierre Fotso",
   roleKey: "testimonials.role.foreman",
   contentKey: "testimonials.t4",
   rating: 5,
-  image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face",
+  image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face",
   location: "Bafoussam"
 }];
 

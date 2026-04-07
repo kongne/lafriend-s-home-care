@@ -14,29 +14,29 @@ interface GalleryItem {
 
 const galleryItems: GalleryItem[] = [
   {
-    before: "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=400&h=300&fit=crop&auto=format&q=80",
-    after: "https://images.unsplash.com/photo-1527515545081-5db817172677?w=400&h=300&fit=crop&auto=format&q=80",
+    before: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=400&h=300&fit=crop&auto=format&q=80",
+    after: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=300&fit=crop&auto=format&q=80",
     titleKey: "gallery.kitchen",
     category: "residential",
     stats: { label: "Temps", value: "3h" }
   },
   {
-    before: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&h=300&fit=crop&auto=format&q=80",
+    before: "https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=400&h=300&fit=crop&auto=format&q=80",
     after: "https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=400&h=300&fit=crop&auto=format&q=80",
     titleKey: "gallery.office",
     category: "commercial",
     stats: { label: "Surface", value: "200m²" }
   },
   {
-    before: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop&auto=format&q=80",
-    after: "https://images.unsplash.com/photo-1520340356584-f9917d1eea6f?w=400&h=300&fit=crop&auto=format&q=80",
+    before: "https://images.unsplash.com/photo-1520340356584-f9917d1eea6f?w=400&h=300&fit=crop&auto=format&q=80",
+    after: "https://images.unsplash.com/photo-1507136566006-cfc505b114fc?w=400&h=300&fit=crop&auto=format&q=80",
     titleKey: "gallery.car",
     category: "car",
     stats: { label: "Durée", value: "1h30" }
   },
   {
-    before: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=300&fit=crop&auto=format&q=80",
-    after: "https://images.unsplash.com/photo-1556909172-54557c7e4fb7?w=400&h=300&fit=crop&auto=format&q=80",
+    before: "https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?w=400&h=300&fit=crop&auto=format&q=80",
+    after: "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=400&h=300&fit=crop&auto=format&q=80",
     titleKey: "gallery.bathroom",
     category: "residential",
     stats: { label: "Temps", value: "2h" }

@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { BookingModal } from "./BookingModal";
 
 export const Pricing = () => {
   const { ref, isVisible } = useScrollReveal();
@@ -101,16 +102,17 @@ export const Pricing = () => {
                 ))}
               </ul>
 
-              <Button
-                onClick={() => document.getElementById('booking')?.scrollIntoView({ behavior: 'smooth' })}
-                className={`w-full font-semibold transition-transform hover:scale-105 ${
-                  plan.popular
-                    ? "bg-accent text-accent-foreground hover:bg-accent/90"
-                    : "bg-primary text-primary-foreground hover:bg-primary/90"
-                }`}
-              >
-                {t('pricing.book')}
-              </Button>
+              <BookingModal>
+                <Button
+                  className={`w-full font-semibold transition-transform hover:scale-105 ${
+                    plan.popular
+                      ? "bg-accent text-accent-foreground hover:bg-accent/90"
+                      : "bg-primary text-primary-foreground hover:bg-primary/90"
+                  }`}
+                >
+                  {t('pricing.book')}
+                </Button>
+              </BookingModal>
             </Card>
           ))}
         </div>
