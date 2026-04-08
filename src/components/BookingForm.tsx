@@ -9,11 +9,12 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Loader2, Repeat, Shield } from "lucide-react";
+import { Loader2, Repeat, Shield, MessageCircle } from "lucide-react";
 import { bookingSchema, rateLimit } from "@/lib/validation";
 import { error as logError } from "@/lib/logger";
 import { Switch } from "@/components/ui/switch";
 import { getRecaptchaToken, verifyRecaptchaToken } from "@/lib/recaptcha";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
   const { t } = useLanguage();
@@ -27,12 +28,14 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
     phone: "",
     address: "",
     serviceType: "",
+    customService: "",
     preferredDate: "",
     preferredTime: "",
     message: "",
     isRecurring: false,
     recurrenceType: "",
-    recurrenceEndDate: ""
+    recurrenceEndDate: "",
+    confirmViaWhatsApp: false,
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -97,13 +100,17 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
         return;
       }
 
+      const serviceLabel = formData.serviceType === "other" 
+        ? formData.customService 
+        : validation.data.serviceType;
+
       const { error } = await supabase.from("bookings").insert({
         user_id: user?.id || null,
         full_name: validation.data.fullName,
         email: validation.data.email,
         phone: validation.data.phone,
         address: validation.data.address,
-        service_type: validation.data.serviceType,
+        service_type: serviceLabel,
         preferred_date: validation.data.preferredDate,
         preferred_time: validation.data.preferredTime,
         message: validation.data.message || null,
@@ -148,8 +155,20 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
           }
         });
       } catch (smsErr) {
-        // Don't fail the booking if SMS fails
         logError("SMS notification error:", smsErr);
+      }
+
+      // Send WhatsApp confirmation if requested
+      if (formData.confirmViaWhatsApp && validation.data.phone) {
+        const whatsappMsg = encodeURIComponent(
+          `✅ Réservation confirmée!\n\n` +
+          `Service: ${serviceLabel}\n` +
+          `Date: ${validation.data.preferredDate}\n` +
+          `Heure: ${validation.data.preferredTime}\n` +
+          `Adresse: ${validation.data.address}\n\n` +
+          `Merci de votre confiance! - LaFriend's Services`
+        );
+        window.open(`https://wa.me/${validation.data.phone.replace(/\D/g, '')}?text=${whatsappMsg}`, "_blank");
       }
 
       toast({
@@ -164,12 +183,14 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
         phone: "",
         address: "",
         serviceType: "",
+        customService: "",
         preferredDate: "",
         preferredTime: "",
         message: "",
         isRecurring: false,
         recurrenceType: "",
-        recurrenceEndDate: ""
+        recurrenceEndDate: "",
+        confirmViaWhatsApp: false,
       });
 
       onSuccess?.();
@@ -272,10 +293,26 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
               <SelectItem value="construction">Nettoyage de Construction</SelectItem>
               <SelectItem value="windows">Nettoyage de Vitres</SelectItem>
               <SelectItem value="car">Lavage de Voiture</SelectItem>
+              <SelectItem value="other">Autre service...</SelectItem>
             </SelectContent>
           </Select>
           {errors.serviceType && <p className="text-sm text-destructive">{errors.serviceType}</p>}
         </div>
+
+        {formData.serviceType === "other" && (
+          <div className="space-y-2">
+            <Label htmlFor="customService">Précisez le service souhaité</Label>
+            <Input
+              id="customService"
+              name="customService"
+              placeholder="Ex: Nettoyage de piscine, Jardinage..."
+              value={formData.customService}
+              onChange={handleChange}
+              required
+              maxLength={200}
+            />
+          </div>
+        )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
@@ -385,6 +422,19 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
             maxLength={1000}
           />
           {errors.message && <p className="text-sm text-destructive">{errors.message}</p>}
+        </div>
+
+        {/* Confirmation Channel */}
+        <div className="flex items-center gap-3 p-3 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-900">
+          <Checkbox
+            id="confirmViaWhatsApp"
+            checked={formData.confirmViaWhatsApp}
+            onCheckedChange={(checked) => setFormData(prev => ({ ...prev, confirmViaWhatsApp: checked as boolean }))}
+          />
+          <label htmlFor="confirmViaWhatsApp" className="flex items-center gap-2 text-sm cursor-pointer">
+            <MessageCircle className="h-4 w-4 text-green-600" />
+            <span>Recevoir la confirmation aussi par WhatsApp</span>
+          </label>
         </div>
 
         <Button 

@@ -10,6 +10,8 @@ import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
 import AdminSettings from "./pages/AdminSettings";
 import CustomerPortal from "./pages/CustomerPortal";
+import ServiceDetails from "./pages/ServiceDetails";
+import QuoteRequest from "./pages/QuoteRequest";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +30,8 @@ const App = () => (
               <Route path="/admin" element={<Admin />} />
               <Route path="/admin/settings" element={<AdminSettings />} />
               <Route path="/customer-portal" element={<CustomerPortal />} />
+              <Route path="/services/:serviceId" element={<ServiceDetails />} />
+              <Route path="/quote" element={<QuoteRequest />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
