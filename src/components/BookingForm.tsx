@@ -424,7 +424,19 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
           {errors.message && <p className="text-sm text-destructive">{errors.message}</p>}
         </div>
 
-        <Button 
+        {/* Confirmation Channel */}
+        <div className="flex items-center gap-3 p-3 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-900">
+          <Checkbox
+            id="confirmViaWhatsApp"
+            checked={formData.confirmViaWhatsApp}
+            onCheckedChange={(checked) => setFormData(prev => ({ ...prev, confirmViaWhatsApp: checked as boolean }))}
+          />
+          <label htmlFor="confirmViaWhatsApp" className="flex items-center gap-2 text-sm cursor-pointer">
+            <MessageCircle className="h-4 w-4 text-green-600" />
+            <span>Recevoir la confirmation aussi par WhatsApp</span>
+          </label>
+        </div>
+
           type="submit" 
           className="w-full bg-accent text-accent-foreground hover:bg-accent/90 font-semibold py-4 sm:py-6" 
           disabled={loading}
