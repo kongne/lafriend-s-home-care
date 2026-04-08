@@ -155,8 +155,20 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
           }
         });
       } catch (smsErr) {
-        // Don't fail the booking if SMS fails
         logError("SMS notification error:", smsErr);
+      }
+
+      // Send WhatsApp confirmation if requested
+      if (formData.confirmViaWhatsApp && validation.data.phone) {
+        const whatsappMsg = encodeURIComponent(
+          `✅ Réservation confirmée!\n\n` +
+          `Service: ${serviceLabel}\n` +
+          `Date: ${validation.data.preferredDate}\n` +
+          `Heure: ${validation.data.preferredTime}\n` +
+          `Adresse: ${validation.data.address}\n\n` +
+          `Merci de votre confiance! - LaFriend's Services`
+        );
+        window.open(`https://wa.me/${validation.data.phone.replace(/\D/g, '')}?text=${whatsappMsg}`, "_blank");
       }
 
       toast({
@@ -171,12 +183,14 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
         phone: "",
         address: "",
         serviceType: "",
+        customService: "",
         preferredDate: "",
         preferredTime: "",
         message: "",
         isRecurring: false,
         recurrenceType: "",
-        recurrenceEndDate: ""
+        recurrenceEndDate: "",
+        confirmViaWhatsApp: false,
       });
 
       onSuccess?.();
