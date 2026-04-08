@@ -437,6 +437,7 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
           </label>
         </div>
 
+        <Button 
           type="submit" 
           className="w-full bg-accent text-accent-foreground hover:bg-accent/90 font-semibold py-4 sm:py-6" 
           disabled={loading}
