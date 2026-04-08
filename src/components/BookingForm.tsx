@@ -293,10 +293,26 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
               <SelectItem value="construction">Nettoyage de Construction</SelectItem>
               <SelectItem value="windows">Nettoyage de Vitres</SelectItem>
               <SelectItem value="car">Lavage de Voiture</SelectItem>
+              <SelectItem value="other">Autre service...</SelectItem>
             </SelectContent>
           </Select>
           {errors.serviceType && <p className="text-sm text-destructive">{errors.serviceType}</p>}
         </div>
+
+        {formData.serviceType === "other" && (
+          <div className="space-y-2">
+            <Label htmlFor="customService">Précisez le service souhaité</Label>
+            <Input
+              id="customService"
+              name="customService"
+              placeholder="Ex: Nettoyage de piscine, Jardinage..."
+              value={formData.customService}
+              onChange={handleChange}
+              required
+              maxLength={200}
+            />
+          </div>
+        )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
