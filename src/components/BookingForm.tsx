@@ -9,11 +9,12 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Loader2, Repeat, Shield } from "lucide-react";
+import { Loader2, Repeat, Shield, MessageCircle } from "lucide-react";
 import { bookingSchema, rateLimit } from "@/lib/validation";
 import { error as logError } from "@/lib/logger";
 import { Switch } from "@/components/ui/switch";
 import { getRecaptchaToken, verifyRecaptchaToken } from "@/lib/recaptcha";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
   const { t } = useLanguage();
