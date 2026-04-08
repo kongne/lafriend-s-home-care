@@ -28,12 +28,14 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
     phone: "",
     address: "",
     serviceType: "",
+    customService: "",
     preferredDate: "",
     preferredTime: "",
     message: "",
     isRecurring: false,
     recurrenceType: "",
-    recurrenceEndDate: ""
+    recurrenceEndDate: "",
+    confirmViaWhatsApp: false,
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -98,13 +100,17 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
         return;
       }
 
+      const serviceLabel = formData.serviceType === "other" 
+        ? formData.customService 
+        : validation.data.serviceType;
+
       const { error } = await supabase.from("bookings").insert({
         user_id: user?.id || null,
         full_name: validation.data.fullName,
         email: validation.data.email,
         phone: validation.data.phone,
         address: validation.data.address,
-        service_type: validation.data.serviceType,
+        service_type: serviceLabel,
         preferred_date: validation.data.preferredDate,
         preferred_time: validation.data.preferredTime,
         message: validation.data.message || null,
