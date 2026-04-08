@@ -605,9 +605,17 @@ const Admin = () => {
                       {contact.phone && <div><strong>Tél:</strong> {contact.phone}</div>}
                       <div className="col-span-2"><strong>Message:</strong> {contact.message}</div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <Button size="sm" variant="outline" onClick={() => updateContactStatus(contact.id, "read")}>Marquer lu</Button>
                       <Button size="sm" variant="outline" onClick={() => updateContactStatus(contact.id, "replied")}>Répondu</Button>
+                      <Button size="sm" variant="outline" onClick={() => window.open(`mailto:${contact.email}?subject=Re: ${encodeURIComponent(contact.subject)}`, "_blank")}>
+                        <Mail className="h-3 w-3 mr-1" />Répondre
+                      </Button>
+                      {contact.phone && (
+                        <Button size="sm" variant="outline" className="text-green-600" onClick={() => window.open(`https://wa.me/${contact.phone!.replace(/\D/g, '')}?text=${encodeURIComponent(`Bonjour ${contact.full_name}, concernant votre message "${contact.subject}"...`)}`, "_blank")}>
+                          WhatsApp
+                        </Button>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
