@@ -552,6 +552,9 @@ const Admin = () => {
                       <Button size="sm" variant="outline" onClick={() => updateBookingStatus(booking.id, "confirmed")}>Confirmer</Button>
                       <Button size="sm" variant="outline" onClick={() => updateBookingStatus(booking.id, "completed")}>Terminé</Button>
                       <Button size="sm" variant="destructive" onClick={() => updateBookingStatus(booking.id, "cancelled")}>Annuler</Button>
+                      <Button size="sm" variant="outline" className="text-green-600 border-green-600" onClick={() => window.open(`https://wa.me/${booking.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Bonjour ${booking.full_name}, concernant votre réservation du ${booking.preferred_date}...`)}`, "_blank")}>
+                        WhatsApp
+                      </Button>
                       {booking.status === 'confirmed' && (
                         <Button size="sm" variant="secondary" onClick={() => sendBookingConfirmation(booking)} disabled={sendingConfirmation === booking.id}>
                           {sendingConfirmation === booking.id ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
