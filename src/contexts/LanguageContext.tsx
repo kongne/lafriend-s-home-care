@@ -161,6 +161,11 @@ export const translations: Translations = {
   'about.stat2': { fr: 'Service Disponible', en: 'Available Service' },
   'about.stat3': { fr: 'Années d\'Expérience', en: 'Years of Experience' },
   'about.stat4': { fr: 'Garantie Qualité', en: 'Quality Guarantee' },
+  'about.p4': { fr: 'Basée à Bafoussam, notre entreprise intervient dans toute la région de l\'Ouest Cameroun. Nous sommes fiers de contribuer à un cadre de vie plus sain pour nos communautés, avec un service client disponible 7j/7 et une garantie satisfaction à 100%.', en: 'Based in Bafoussam, our company serves the entire West Cameroon region. We are proud to contribute to a healthier living environment for our communities, with customer service available 7 days a week and a 100% satisfaction guarantee.' },
+  'about.highlight1': { fr: 'Équipe certifiée et assurée', en: 'Certified and insured team' },
+  'about.highlight2': { fr: 'Produits 100% écologiques', en: '100% eco-friendly products' },
+  'about.highlight3': { fr: 'Service dans tout l\'Ouest Cameroun', en: 'Service across West Cameroon' },
+  'about.highlight4': { fr: 'Support client 7j/7', en: '7/7 customer support' },
   
   // FAQ section
   'faq.tagline': { fr: 'FAQ', en: 'FAQ' },
