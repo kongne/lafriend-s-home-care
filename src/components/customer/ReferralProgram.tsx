@@ -45,7 +45,7 @@ export const ReferralProgram = () => {
       .select("referral_code")
       .eq("referrer_id", user.id)
       .limit(1)
-      .single();
+      .maybeSingle();
 
     if (existingReferral?.referral_code) {
       setReferralCode(existingReferral.referral_code);
@@ -171,7 +171,7 @@ export const ReferralProgram = () => {
   return (
     <div className="space-y-6">
       {/* Referral Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
@@ -225,7 +225,7 @@ export const ReferralProgram = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <div className="flex-1 p-4 bg-muted rounded-lg text-center">
               <p className="text-3xl font-bold tracking-wider text-accent">
                 {referralCode || "..."}
@@ -235,7 +235,7 @@ export const ReferralProgram = () => {
               {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
             </Button>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row">
             <Button className="flex-1" onClick={shareReferral} disabled={!referralCode}>
               <Share2 className="h-4 w-4 mr-2" />
               Partager
@@ -257,7 +257,7 @@ export const ReferralProgram = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row">
             <Input
               type="email"
               placeholder="Email de votre ami"
@@ -265,7 +265,7 @@ export const ReferralProgram = () => {
               onChange={(e) => setNewReferralEmail(e.target.value)}
               disabled={sending}
             />
-            <Button onClick={sendReferralInvite} disabled={sending || !newReferralEmail}>
+            <Button onClick={sendReferralInvite} disabled={sending || !newReferralEmail} className="w-full sm:w-auto">
               {sending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Inviter
             </Button>
@@ -292,17 +292,14 @@ export const ReferralProgram = () => {
           ) : (
             <div className="space-y-3">
               {referrals.map((referral) => (
-                <div
-                  key={referral.id}
-                  className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
-                >
+                <div key={referral.id} className="flex flex-col gap-3 rounded-lg bg-muted/50 p-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <p className="font-medium">{referral.referred_email}</p>
                     <p className="text-xs text-muted-foreground">
                       {new Date(referral.created_at).toLocaleDateString("fr-FR")}
                     </p>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 sm:self-auto">
                     <Badge 
                       className={
                         referral.status === "completed" 
@@ -334,7 +331,7 @@ export const ReferralProgram = () => {
           <CardTitle>Comment ça marche?</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid md:grid-cols-3 gap-4">
+          <div className="grid gap-4 md:grid-cols-3">
             <div className="text-center p-4">
               <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-3">
                 <span className="text-accent font-bold">1</span>

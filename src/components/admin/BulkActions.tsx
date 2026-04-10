@@ -70,11 +70,11 @@ export const BulkActions = ({
   const actions = type === 'bookings' ? bookingActions : contactActions;
 
   return (
-    <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg mb-4">
+    <div className="mb-4 flex flex-col gap-3 rounded-lg bg-muted/50 p-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-center gap-2">
         <Checkbox 
-          checked={allSelected}
-          onCheckedChange={onSelectAll}
+          checked={allSelected ? true : someSelected ? "indeterminate" : false}
+          onCheckedChange={(checked) => onSelectAll(Boolean(checked))}
           className="data-[state=checked]:bg-accent data-[state=checked]:border-accent"
         />
         <span className="text-sm text-muted-foreground">
@@ -87,7 +87,7 @@ export const BulkActions = ({
       {selectedIds.length > 0 && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" className="w-full sm:w-auto">
               Actions groupées
               <ChevronDown className="ml-2 h-4 w-4" />
             </Button>

@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { NotificationCenter } from "@/components/admin/NotificationCenter";
 import { CustomerAnalytics } from "@/components/customer/CustomerAnalytics";
 import { LoyaltyRewards } from "@/components/customer/LoyaltyRewards";
 import { ReferralProgram } from "@/components/customer/ReferralProgram";
@@ -292,11 +293,16 @@ const CustomerPortal = () => {
       
       <main className="container mx-auto px-4 py-8 pt-24">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">Mon Espace Client</h1>
-          <p className="text-muted-foreground mt-2">
-            Gérez vos réservations et suivez vos rendez-vous
-          </p>
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Mon Espace Client</h1>
+            <p className="text-muted-foreground mt-2">
+              Gérez vos réservations et suivez vos rendez-vous
+            </p>
+          </div>
+          <div className="self-start sm:self-auto">
+            <NotificationCenter />
+          </div>
         </div>
 
         {/* Profile Summary */}
@@ -323,7 +329,7 @@ const CustomerPortal = () => {
                   </div>
                 </div>
               </div>
-              <div className="flex gap-4">
+              <div className="flex flex-wrap gap-3 sm:gap-4 sm:justify-end">
                 <div className="text-center px-4 py-2 bg-background rounded-lg">
                   <div className="text-2xl font-bold text-accent">{upcomingBookings.length}</div>
                   <div className="text-xs text-muted-foreground">À venir</div>
@@ -343,24 +349,24 @@ const CustomerPortal = () => {
 
         {/* Bookings Tabs */}
         <Tabs defaultValue="upcoming" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-flex">
-            <TabsTrigger value="upcoming" className="gap-2">
+          <TabsList className="grid h-auto w-full grid-cols-2 gap-2 sm:grid-cols-3 lg:w-auto lg:grid-cols-5">
+            <TabsTrigger value="upcoming" className="gap-2 px-3 py-2 text-xs sm:text-sm">
               <Calendar className="h-4 w-4" />
               <span className="hidden sm:inline">À venir</span> ({upcomingBookings.length})
             </TabsTrigger>
-            <TabsTrigger value="recurring" className="gap-2">
+            <TabsTrigger value="recurring" className="gap-2 px-3 py-2 text-xs sm:text-sm">
               <Repeat className="h-4 w-4" />
               <span className="hidden sm:inline">Récurrents</span> ({recurringBookings.length})
             </TabsTrigger>
-            <TabsTrigger value="history" className="gap-2">
+            <TabsTrigger value="history" className="gap-2 px-3 py-2 text-xs sm:text-sm">
               <Clock className="h-4 w-4" />
               <span className="hidden sm:inline">Historique</span> ({pastBookings.length})
             </TabsTrigger>
-            <TabsTrigger value="analytics" className="gap-2">
+            <TabsTrigger value="analytics" className="gap-2 px-3 py-2 text-xs sm:text-sm">
               <BarChart3 className="h-4 w-4" />
               <span className="hidden sm:inline">Fidélité</span>
             </TabsTrigger>
-            <TabsTrigger value="referral" className="gap-2">
+            <TabsTrigger value="referral" className="gap-2 px-3 py-2 text-xs sm:text-sm">
               <Users className="h-4 w-4" />
               <span className="hidden sm:inline">Parrainage</span>
             </TabsTrigger>
@@ -427,7 +433,10 @@ const CustomerPortal = () => {
           </TabsContent>
 
           <TabsContent value="analytics">
-            <LoyaltyRewards profile={profile} onPointsUpdate={fetchProfile} />
+            <div className="space-y-6">
+              <CustomerAnalytics bookings={bookings} profile={profile} />
+              <LoyaltyRewards profile={profile} onPointsUpdate={fetchProfile} />
+            </div>
           </TabsContent>
 
           <TabsContent value="referral">

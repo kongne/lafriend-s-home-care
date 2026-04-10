@@ -123,17 +123,21 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
 
       // Send email confirmation to customer
       try {
-        await supabase.functions.invoke('send-booking-confirmation', {
+        const { data: emailData, error: emailErr } = await supabase.functions.invoke('send-booking-confirmation', {
           body: {
             clientEmail: validation.data.email,
             clientName: validation.data.fullName,
-            serviceType: validation.data.serviceType,
+            serviceType: serviceLabel,
             preferredDate: validation.data.preferredDate,
             preferredTime: validation.data.preferredTime,
             address: validation.data.address,
             language: 'fr'
           }
         });
+
+        if (emailErr || !(emailData as { ok?: boolean })?.ok) {
+          throw new Error(emailErr?.message || (emailData as { error?: string })?.error || "Erreur d'envoi de l'email");
+        }
       } catch (emailErr) {
         // Don't fail the booking if email fails
         logError("Email confirmation error:", emailErr);
@@ -141,19 +145,23 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
 
       // Send SMS notification to admin
       try {
-        await supabase.functions.invoke('send-sms-notification', {
+        const { data: smsData, error: smsError } = await supabase.functions.invoke('send-sms-notification', {
           body: {
             booking: {
               full_name: validation.data.fullName,
               email: validation.data.email,
               phone: validation.data.phone,
               address: validation.data.address,
-              service_type: validation.data.serviceType,
+              service_type: serviceLabel,
               preferred_date: validation.data.preferredDate,
               preferred_time: validation.data.preferredTime,
             }
           }
         });
+
+        if (smsError || !(smsData as { ok?: boolean })?.ok) {
+          throw new Error(smsError?.message || (smsData as { error?: string })?.error || "Erreur d'envoi du SMS");
+        }
       } catch (smsErr) {
         logError("SMS notification error:", smsErr);
       }

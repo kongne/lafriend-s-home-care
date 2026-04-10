@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -42,12 +43,14 @@ interface Notification {
 }
 
 export const NotificationCenter = () => {
+  const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const [showArchived, setShowArchived] = useState(false);
   const [snoozedIds, setSnoozedIds] = useState<Set<string>>(new Set());
+  const [isAdmin, setIsAdmin] = useState(false);
   const { toast } = useToast();
 
   const unreadCount = notifications.filter(n => !n.is_read && !n.is_archived).length;
@@ -108,6 +111,24 @@ export const NotificationCenter = () => {
       supabase.removeChannel(channel);
     };
   }, [toast]);
+
+  useEffect(() => {
+    const checkRole = async () => {
+      if (!user) {
+        setIsAdmin(false);
+        return;
+      }
+
+      const { data } = await supabase.rpc("has_role", {
+        _user_id: user.id,
+        _role: "admin",
+      });
+
+      setIsAdmin(Boolean(data));
+    };
+
+    void checkRole();
+  }, [user]);
 
   const markAsRead = async (id: string) => {
     const { error } = await supabase
@@ -300,7 +321,7 @@ export const NotificationCenter = () => {
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-[450px] bg-popover z-50 p-0">
+      <DropdownMenuContent align="end" className="z-50 w-[min(92vw,450px)] max-w-[450px] bg-popover p-0">
         {/* Header with title and action buttons */}
         <div className="p-4 border-b space-y-3">
           <div className="flex justify-between items-center">
@@ -324,7 +345,7 @@ export const NotificationCenter = () => {
                   <CheckCheck className="h-4 w-4" />
                 </Button>
               )}
-              {showArchived && notifications.filter(n => n.is_archived).length > 0 && (
+              {isAdmin && showArchived && notifications.filter(n => n.is_archived).length > 0 && (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -339,7 +360,7 @@ export const NotificationCenter = () => {
           </div>
 
           {/* Search and Filter */}
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row">
             <div className="flex-1 relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <input
@@ -357,7 +378,7 @@ export const NotificationCenter = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-9 gap-1"
+                className="h-9 gap-1 w-full sm:w-auto"
                   title="Filtrer par type"
                 >
                   <Filter className="h-4 w-4" />
@@ -392,7 +413,7 @@ export const NotificationCenter = () => {
               variant={showArchived ? "default" : "outline"}
               size="sm"
               onClick={() => setShowArchived(!showArchived)}
-              className="h-9"
+              className="h-9 w-full sm:w-auto"
               title={showArchived ? "Voir actifs" : "Voir archives"}
             >
               {showArchived ? "Archive" : "Actifs"}
@@ -401,7 +422,7 @@ export const NotificationCenter = () => {
         </div>
 
         {/* Notifications List */}
-        <ScrollArea className="h-[450px]">
+        <ScrollArea className="h-[min(70vh,450px)]">
           {loading ? (
             <div className="p-4 text-center text-muted-foreground text-sm">
               Chargement...
@@ -473,7 +494,7 @@ export const NotificationCenter = () => {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 shrink-0 transition-opacity">
+                  <div className="flex shrink-0 gap-1 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
                     {!notification.is_read && !showArchived && (
                       <Button
                         variant="ghost"
@@ -481,11 +502,11 @@ export const NotificationCenter = () => {
                         className="h-6 w-6"
                         onClick={(e) => {
                           e.stopPropagation();
-                          markAsUnread(notification.id);
+                          markAsRead(notification.id);
                         }}
-                        title="Marquer comme non lu"
+                        title="Marquer comme lu"
                       >
-                        <EyeOff className="h-3 w-3" />
+                        <Check className="h-3 w-3" />
                       </Button>
                     )}
                     {notification.is_read && !showArchived && (
@@ -499,7 +520,7 @@ export const NotificationCenter = () => {
                         }}
                         title="Marquer comme non lu"
                       >
-                        <Eye className="h-3 w-3" />
+                        <EyeOff className="h-3 w-3" />
                       </Button>
                     )}
 
@@ -546,18 +567,20 @@ export const NotificationCenter = () => {
                       </Button>
                     )}
 
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 text-destructive hover:text-destructive"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteNotification(notification.id);
-                      }}
-                      title="Supprimer"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
+                    {isAdmin && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-destructive hover:text-destructive"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteNotification(notification.id);
+                        }}
+                        title="Supprimer"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               ))}

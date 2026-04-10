@@ -52,6 +52,7 @@ import {
 
 interface Booking {
   id: string;
+  user_id?: string | null;
   full_name: string;
   email: string;
   phone: string;
@@ -290,19 +291,52 @@ const Admin = () => {
     if (!error && data) setSubscribers(data);
   };
 
+  const createBookingNotification = async (booking: Booking, status: string) => {
+    if (!booking.user_id) return;
+
+    const content: Record<string, { title: string; message: string }> = {
+      confirmed: {
+        title: "Réservation confirmée",
+        message: `Votre réservation ${booking.service_type} du ${booking.preferred_date} à ${booking.preferred_time} est confirmée.`,
+      },
+      completed: {
+        title: "Service terminé",
+        message: `Votre prestation ${booking.service_type} a été marquée comme terminée.`,
+      },
+      cancelled: {
+        title: "Réservation annulée",
+        message: `Votre réservation ${booking.service_type} du ${booking.preferred_date} a été annulée.`,
+      },
+    };
+
+    const payload = content[status];
+    if (!payload) return;
+
+    await supabase.from("notifications").insert({
+      user_id: booking.user_id,
+      type: "booking",
+      title: payload.title,
+      message: payload.message,
+      link: "/customer-portal",
+      is_read: false,
+      is_archived: false,
+    });
+  };
+
   const updateBookingStatus = async (id: string, status: string) => {
     // Find the booking to get email info
     const booking = bookings.find(b => b.id === id);
     
     const { error } = await supabase.from("bookings").update({ status }).eq("id", id);
     if (!error) {
-      toast({ title: "Statut mis à jour" });
+      await createBookingNotification(booking as Booking, status);
+      toast({ title: "Statut mis à jour", description: "La réservation a bien été mise à jour." });
       fetchBookings();
       
       // Send status notification email
       if (booking && (status === 'confirmed' || status === 'completed' || status === 'cancelled')) {
         try {
-          await supabase.functions.invoke('send-status-notification', {
+          const { data, error: functionError } = await supabase.functions.invoke('send-status-notification', {
             method: 'POST',
             body: {
               clientEmail: booking.email,
@@ -317,6 +351,11 @@ const Admin = () => {
               sendSms: true
             }
           });
+
+          if (functionError || !(data as { ok?: boolean })?.ok) {
+            throw new Error(functionError?.message || (data as { error?: string })?.error || "Impossible d'envoyer la notification client");
+          }
+
           toast({ 
             title: "Notifications envoyées", 
             description: `Email et SMS de ${status === 'confirmed' ? 'confirmation' : status === 'cancelled' ? 'annulation' : 'completion'} envoyés` 
@@ -365,6 +404,22 @@ const Admin = () => {
         const errMsg = (error as any)?.message || "Erreur lors de l'envoi de la confirmation";
         toast({ title: "Erreur", description: errMsg, variant: "destructive" });
         return;
+      }
+
+      if (!(data as { ok?: boolean })?.ok) {
+        throw new Error((data as { error?: string })?.error || "Erreur lors de l'envoi de la confirmation");
+      }
+
+      if (booking.user_id) {
+        await supabase.from("notifications").insert({
+          user_id: booking.user_id,
+          type: "booking",
+          title: "Confirmation envoyée",
+          message: `La confirmation pour votre réservation ${booking.service_type} a été envoyée.`,
+          link: "/customer-portal",
+          is_read: false,
+          is_archived: false,
+        });
       }
 
       toast({ title: "Confirmation envoyée", description: `Email envoyé à ${booking.email}` });
@@ -540,13 +595,13 @@ const Admin = () => {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm mb-4">
+                    <div className="mb-4 grid grid-cols-1 gap-2 text-sm sm:grid-cols-2 lg:grid-cols-4">
                       <div><strong>Email:</strong> {booking.email}</div>
                       <div><strong>Tél:</strong> {booking.phone}</div>
                       <div><strong>Service:</strong> {booking.service_type}</div>
                       <div><strong>Date:</strong> {booking.preferred_date} à {booking.preferred_time}</div>
-                      <div className="col-span-2"><strong>Adresse:</strong> {booking.address}</div>
-                      {booking.message && <div className="col-span-2"><strong>Message:</strong> {booking.message}</div>}
+                      <div className="sm:col-span-2 lg:col-span-4"><strong>Adresse:</strong> {booking.address}</div>
+                      {booking.message && <div className="sm:col-span-2 lg:col-span-4"><strong>Message:</strong> {booking.message}</div>}
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <Button size="sm" variant="outline" onClick={() => updateBookingStatus(booking.id, "confirmed")}>Confirmer</Button>
@@ -599,7 +654,7 @@ const Admin = () => {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-2 gap-2 text-sm mb-4">
+                    <div className="mb-4 grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
                       <div><strong>De:</strong> {contact.full_name}</div>
                       <div><strong>Email:</strong> {contact.email}</div>
                       {contact.phone && <div><strong>Tél:</strong> {contact.phone}</div>}
@@ -628,7 +683,7 @@ const Admin = () => {
       case "subscribers":
         return (
           <div className="space-y-4">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <h2 className="text-xl font-semibold">Abonnés Newsletter ({subscribers.length})</h2>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={() => exportToCSV(subscribers, "abonnes", subscriberColumns)}><Download className="h-4 w-4 mr-2" />CSV</Button>
@@ -778,7 +833,7 @@ const Admin = () => {
 
         <main className="p-4 md:p-6 lg:p-8">
           {/* Page Title & Refresh */}
-          <div className="flex items-center justify-between mb-6">
+          <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h1 className="text-2xl md:text-3xl font-bold text-foreground capitalize">
                 {activeTab === "analytics" ? "Tableau de bord" : activeTab}

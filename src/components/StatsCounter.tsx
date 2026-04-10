@@ -9,10 +9,22 @@ interface StatItem {
   labelKey: string;
 }
 
+const getCountdownStart = (value: number) => {
+  if (value >= 100) return value + 20;
+  if (value >= 50) return value + 10;
+  if (value >= 10) return value + 5;
+  return value + 3;
+};
+
 const CountUp = ({ end, duration = 2000, suffix = "" }: { end: number; duration?: number; suffix?: string }) => {
-  const [count, setCount] = useState(0);
+  const startValue = getCountdownStart(end);
+  const [count, setCount] = useState(startValue);
   const [hasStarted, setHasStarted] = useState(false);
   const ref = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    setCount(startValue);
+  }, [startValue]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -21,7 +33,7 @@ const CountUp = ({ end, duration = 2000, suffix = "" }: { end: number; duration?
           setHasStarted(true);
         }
       },
-      { threshold: 0.5 }
+      { threshold: 0.2, rootMargin: "0px 0px -10% 0px" }
     );
 
     if (ref.current) {
@@ -34,6 +46,11 @@ const CountUp = ({ end, duration = 2000, suffix = "" }: { end: number; duration?
   useEffect(() => {
     if (!hasStarted) return;
 
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setCount(end);
+      return;
+    }
+
     let startTime: number;
     let animationFrame: number;
 
@@ -41,17 +58,19 @@ const CountUp = ({ end, duration = 2000, suffix = "" }: { end: number; duration?
       if (!startTime) startTime = timestamp;
       const progress = Math.min((timestamp - startTime) / duration, 1);
       const easeOutQuart = 1 - Math.pow(1 - progress, 4);
-      setCount(Math.floor(easeOutQuart * end));
+      setCount(Math.max(end, Math.ceil(startValue - easeOutQuart * (startValue - end))));
 
       if (progress < 1) {
         animationFrame = requestAnimationFrame(animate);
+      } else {
+        setCount(end);
       }
     };
 
     animationFrame = requestAnimationFrame(animate);
 
     return () => cancelAnimationFrame(animationFrame);
-  }, [hasStarted, end, duration]);
+  }, [hasStarted, end, duration, startValue]);
 
   return <span ref={ref}>{count}{suffix}</span>;
 };
