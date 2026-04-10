@@ -79,11 +79,17 @@ export function BroadcastNotification() {
         throw error;
       }
 
-      setStats(data?.stats || { total: 0, sent: 0, failed: 0 });
+      if (!(data as { ok?: boolean })?.ok) {
+        throw new Error((data as { error?: string })?.error || "Impossible d'envoyer la notification");
+      }
+
+      const resolvedStats = ((data as { data?: { stats?: BroadcastStats } })?.data?.stats) || { total: 0, sent: 0, failed: 0 };
+
+      setStats(resolvedStats);
 
       toast({
         title: "Diffusion réussie",
-        description: `Notification envoyée à ${data?.stats?.sent || 0} utilisateur(s)`
+        description: `Notification envoyée à ${resolvedStats.sent} utilisateur(s)`
       });
 
       // Clear form
@@ -173,7 +179,7 @@ export function BroadcastNotification() {
           </div>
 
           {/* Recipients and Type */}
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label>Destinataires</Label>
               <Select value={recipientType} onValueChange={(v) => setRecipientType(v as RecipientType)}>
@@ -333,7 +339,7 @@ export function BroadcastNotification() {
       </Card>
 
       {/* Quick Send Cards */}
-      <div className="grid md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <Card className="cursor-pointer hover:border-accent transition-colors" onClick={() => {
           setTitle("🎉 Promotion du jour!");
           setMessage("Profitez de 20% de réduction sur tous nos services de nettoyage. Offre valable aujourd'hui uniquement!");

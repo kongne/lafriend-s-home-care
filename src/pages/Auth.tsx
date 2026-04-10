@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Mail, Lock, User } from "lucide-react";
 
 const loginSchema = z.object({
@@ -51,13 +52,43 @@ const Auth = () => {
 
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user, signIn, signUp } = useAuth();
 
   useEffect(() => {
-    if (user) {
-      navigate("/");
+    const referralCode = searchParams.get("ref");
+    if (referralCode) {
+      localStorage.setItem("pendingReferralCode", referralCode);
     }
-  }, [user, navigate]);
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const finalizeAuth = async () => {
+      const pendingReferralCode = localStorage.getItem("pendingReferralCode");
+
+      if (pendingReferralCode) {
+        const { data, error } = await supabase.rpc("process_referral", {
+          p_referral_code: pendingReferralCode,
+          p_new_user_id: user.id,
+        });
+
+        localStorage.removeItem("pendingReferralCode");
+
+        if (!error && data) {
+          toast({
+            title: "Parrainage appliqué",
+            description: "Vos points de bienvenue ont bien été ajoutés.",
+          });
+        }
+      }
+
+      navigate("/");
+    };
+
+    void finalizeAuth();
+  }, [user, navigate, toast]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -105,7 +136,6 @@ const Auth = () => {
             title: "Connexion réussie",
             description: "Bienvenue !",
           });
-          navigate("/");
         }
       } else {
         const result = signupSchema.safeParse(formData);
@@ -141,7 +171,6 @@ const Auth = () => {
             title: "Compte créé",
             description: "Votre compte a été créé avec succès !",
           });
-          navigate("/");
         }
       }
     } catch (error) {
@@ -169,6 +198,12 @@ const Auth = () => {
                 : "Inscrivez-vous pour réserver nos services"}
             </p>
           </div>
+
+          {searchParams.get("ref") && (
+            <div className="mb-6 rounded-xl border border-accent/30 bg-accent/10 px-4 py-3 text-sm text-foreground">
+              Code de parrainage détecté : <span className="font-semibold">{searchParams.get("ref")}</span>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
