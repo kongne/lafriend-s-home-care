@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -42,12 +43,14 @@ interface Notification {
 }
 
 export const NotificationCenter = () => {
+  const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const [showArchived, setShowArchived] = useState(false);
   const [snoozedIds, setSnoozedIds] = useState<Set<string>>(new Set());
+  const [isAdmin, setIsAdmin] = useState(false);
   const { toast } = useToast();
 
   const unreadCount = notifications.filter(n => !n.is_read && !n.is_archived).length;
@@ -108,6 +111,24 @@ export const NotificationCenter = () => {
       supabase.removeChannel(channel);
     };
   }, [toast]);
+
+  useEffect(() => {
+    const checkRole = async () => {
+      if (!user) {
+        setIsAdmin(false);
+        return;
+      }
+
+      const { data } = await supabase.rpc("has_role", {
+        _user_id: user.id,
+        _role: "admin",
+      });
+
+      setIsAdmin(Boolean(data));
+    };
+
+    void checkRole();
+  }, [user]);
 
   const markAsRead = async (id: string) => {
     const { error } = await supabase
@@ -324,7 +345,7 @@ export const NotificationCenter = () => {
                   <CheckCheck className="h-4 w-4" />
                 </Button>
               )}
-              {showArchived && notifications.filter(n => n.is_archived).length > 0 && (
+              {isAdmin && showArchived && notifications.filter(n => n.is_archived).length > 0 && (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -546,18 +567,20 @@ export const NotificationCenter = () => {
                       </Button>
                     )}
 
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 text-destructive hover:text-destructive"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteNotification(notification.id);
-                      }}
-                      title="Supprimer"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
+                    {isAdmin && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-destructive hover:text-destructive"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteNotification(notification.id);
+                        }}
+                        title="Supprimer"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               ))}

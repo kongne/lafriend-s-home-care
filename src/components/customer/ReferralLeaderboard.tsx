@@ -23,89 +23,32 @@ export function ReferralLeaderboard() {
 
   useEffect(() => {
     fetchLeaderboard();
-    getCurrentUser();
   }, []);
-
-  const getCurrentUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      setCurrentUserId(user.id);
-    }
-  };
 
   const fetchLeaderboard = async () => {
     setLoading(true);
     try {
-      // Fetch completed referrals grouped by referrer
-      const { data: referrals, error } = await supabase
-        .from("referrals")
-        .select("referrer_id, bonus_points, status")
-        .eq("status", "completed");
+      const { data, error } = await supabase.functions.invoke("get-referral-leaderboard", {
+        method: "POST",
+      });
 
       if (error) throw error;
 
-      if (!referrals || referrals.length === 0) {
-        setLeaderboard([]);
-        setLoading(false);
-        return;
+      if (!(data as { ok?: boolean })?.ok) {
+        throw new Error((data as { error?: string })?.error || "Impossible de charger le classement");
       }
 
-      // Group by referrer and calculate stats
-      const referrerStats = new Map<string, { count: number; points: number }>();
-      
-      referrals.forEach((r) => {
-        const existing = referrerStats.get(r.referrer_id) || { count: 0, points: 0 };
-        referrerStats.set(r.referrer_id, {
-          count: existing.count + 1,
-          points: existing.points + r.bonus_points,
-        });
-      });
+      const payload = (data as {
+        data?: {
+          leaderboard?: LeaderboardEntry[];
+          currentUserId?: string | null;
+          currentUserRank?: LeaderboardEntry | null;
+        };
+      }).data;
 
-      // Get unique referrer IDs
-      const referrerIds = Array.from(referrerStats.keys());
-
-      // Fetch profiles for names
-      const { data: profiles, error: profileError } = await supabase
-        .from("profiles")
-        .select("user_id, full_name")
-        .in("user_id", referrerIds);
-
-      if (profileError) {
-        logError("Error fetching profiles:", profileError);
-      }
-
-      // Create profile map
-      const profileMap = new Map<string, string>();
-      profiles?.forEach((p) => {
-        profileMap.set(p.user_id, p.full_name || "Utilisateur");
-      });
-
-      // Build leaderboard entries
-      const entries: LeaderboardEntry[] = Array.from(referrerStats.entries())
-        .map(([referrerId, stats]) => ({
-          referrer_id: referrerId,
-          referrer_name: profileMap.get(referrerId) || "Utilisateur Anonyme",
-          successful_referrals: stats.count,
-          total_points_earned: stats.points,
-          rank: 0,
-        }))
-        .sort((a, b) => b.successful_referrals - a.successful_referrals);
-
-      // Assign ranks
-      entries.forEach((entry, index) => {
-        entry.rank = index + 1;
-      });
-
-      // Find current user's rank
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const userEntry = entries.find((e) => e.referrer_id === user.id);
-        if (userEntry) {
-          setCurrentUserRank(userEntry);
-        }
-      }
-
-      setLeaderboard(entries.slice(0, 10)); // Top 10
+      setLeaderboard(payload?.leaderboard || []);
+      setCurrentUserId(payload?.currentUserId || null);
+      setCurrentUserRank(payload?.currentUserRank || null);
     } catch (err) {
       logError("Error fetching leaderboard:", err);
     } finally {

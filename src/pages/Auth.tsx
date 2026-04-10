@@ -63,32 +63,10 @@ const Auth = () => {
   }, [searchParams]);
 
   useEffect(() => {
-    if (!user) return;
-
-    const finalizeAuth = async () => {
-      const pendingReferralCode = localStorage.getItem("pendingReferralCode");
-
-      if (pendingReferralCode) {
-        const { data, error } = await supabase.rpc("process_referral", {
-          p_referral_code: pendingReferralCode,
-          p_new_user_id: user.id,
-        });
-
-        localStorage.removeItem("pendingReferralCode");
-
-        if (!error && data) {
-          toast({
-            title: "Parrainage appliqué",
-            description: "Vos points de bienvenue ont bien été ajoutés.",
-          });
-        }
-      }
-
+    if (user) {
       navigate("/");
-    };
-
-    void finalizeAuth();
-  }, [user, navigate, toast]);
+    }
+  }, [user, navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

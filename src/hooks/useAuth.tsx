@@ -1,4 +1,4 @@
-import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
+import { useState, useEffect, useRef, createContext, useContext, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -17,6 +17,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const processedReferralRef = useRef<string | null>(null);
+
+  const processPendingReferral = async (userId: string) => {
+    const referralCode = localStorage.getItem('pendingReferralCode');
+
+    if (!referralCode) return;
+
+    const marker = `${userId}:${referralCode}`;
+    if (processedReferralRef.current === marker) return;
+    processedReferralRef.current = marker;
+
+    try {
+      await supabase.rpc('process_referral', {
+        p_referral_code: referralCode,
+        p_new_user_id: userId,
+      });
+    } finally {
+      localStorage.removeItem('pendingReferralCode');
+    }
+  };
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -24,6 +44,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
+        if (session?.user) {
+          void processPendingReferral(session.user.id);
+        }
         setLoading(false);
       }
     );
@@ -32,6 +55,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
+      if (session?.user) {
+        void processPendingReferral(session.user.id);
+      }
       setLoading(false);
     });
 
