@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import {
@@ -35,6 +36,7 @@ import {
   Mail,
 } from "lucide-react";
 import { error as logError } from "@/lib/logger";
+import { BulkActions } from "./BulkActions";
 
 interface Referral {
   id: string;
@@ -72,6 +74,25 @@ export function ReferralManagement() {
   const [editingReferral, setEditingReferral] = useState<Referral | null>(null);
   const [newBonusPoints, setNewBonusPoints] = useState("");
   const [saving, setSaving] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  const toggleSelection = (id: string, checked: boolean) => {
+    setSelectedIds(prev => checked ? [...prev, id] : prev.filter(i => i !== id));
+  };
+
+  const handleBulkAction = useCallback(async (action: string, ids: string[]): Promise<{ success: number; failed: number }> => {
+    if (action === 'delete') {
+      // Admins need a delete policy — for now update status
+      const { error } = await supabase.from("referrals").update({ status: 'cancelled' }).in("id", ids);
+      setSelectedIds([]);
+      fetchReferrals();
+      return error ? { success: 0, failed: ids.length } : { success: ids.length, failed: 0 };
+    }
+    const { error } = await supabase.from("referrals").update({ status: action }).in("id", ids);
+    setSelectedIds([]);
+    fetchReferrals();
+    return error ? { success: 0, failed: ids.length } : { success: ids.length, failed: 0 };
+  }, []);
 
   useEffect(() => {
     fetchReferrals();
