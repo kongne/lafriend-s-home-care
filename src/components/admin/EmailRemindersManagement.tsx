@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,8 @@ import {
   Send,
   Loader2,
 } from "lucide-react";
+import { BulkActions } from "./BulkActions";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface EmailReminder {
   id: string;
