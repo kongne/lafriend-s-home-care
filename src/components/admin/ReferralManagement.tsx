@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import {
@@ -35,6 +36,7 @@ import {
   Mail,
 } from "lucide-react";
 import { error as logError } from "@/lib/logger";
+import { BulkActions } from "./BulkActions";
 
 interface Referral {
   id: string;
@@ -72,6 +74,25 @@ export function ReferralManagement() {
   const [editingReferral, setEditingReferral] = useState<Referral | null>(null);
   const [newBonusPoints, setNewBonusPoints] = useState("");
   const [saving, setSaving] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  const toggleSelection = (id: string, checked: boolean) => {
+    setSelectedIds(prev => checked ? [...prev, id] : prev.filter(i => i !== id));
+  };
+
+  const handleBulkAction = useCallback(async (action: string, ids: string[]): Promise<{ success: number; failed: number }> => {
+    if (action === 'delete') {
+      // Admins need a delete policy — for now update status
+      const { error } = await supabase.from("referrals").update({ status: 'cancelled' }).in("id", ids);
+      setSelectedIds([]);
+      fetchReferrals();
+      return error ? { success: 0, failed: ids.length } : { success: ids.length, failed: 0 };
+    }
+    const { error } = await supabase.from("referrals").update({ status: action }).in("id", ids);
+    setSelectedIds([]);
+    fetchReferrals();
+    return error ? { success: 0, failed: ids.length } : { success: ids.length, failed: 0 };
+  }, []);
 
   useEffect(() => {
     fetchReferrals();
@@ -286,10 +307,19 @@ export function ReferralManagement() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border">
+          <BulkActions
+            selectedIds={selectedIds}
+            onSelectAll={(checked) => setSelectedIds(checked ? filteredReferrals.map(r => r.id) : [])}
+            allSelected={selectedIds.length === filteredReferrals.length && filteredReferrals.length > 0}
+            someSelected={selectedIds.length > 0 && selectedIds.length < filteredReferrals.length}
+            onBulkAction={handleBulkAction}
+            type="referrals"
+          />
+          <div className="rounded-md border overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-10"></TableHead>
                   <TableHead>Code</TableHead>
                   <TableHead>Email Parrainé</TableHead>
                   <TableHead>Statut</TableHead>
@@ -301,13 +331,19 @@ export function ReferralManagement() {
               <TableBody>
                 {filteredReferrals.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                       Aucun parrainage trouvé
                     </TableCell>
                   </TableRow>
                 ) : (
                   filteredReferrals.map((referral) => (
                     <TableRow key={referral.id}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedIds.includes(referral.id)}
+                          onCheckedChange={(checked) => toggleSelection(referral.id, checked as boolean)}
+                        />
+                      </TableCell>
                       <TableCell className="font-mono font-medium">
                         {referral.referral_code}
                       </TableCell>

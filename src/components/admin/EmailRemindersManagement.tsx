@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,8 @@ import {
   Send,
   Loader2,
 } from "lucide-react";
+import { BulkActions } from "./BulkActions";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface EmailReminder {
   id: string;
@@ -46,6 +48,20 @@ export const EmailRemindersManagement = () => {
   const [rescheduleId, setRescheduleId] = useState<string | null>(null);
   const [newDateTime, setNewDateTime] = useState("");
   const [saving, setSaving] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  const handleBulkAction = useCallback(async (action: string, ids: string[]): Promise<{ success: number; failed: number }> => {
+    if (action === 'delete') {
+      const { error } = await supabase.from("email_reminders").delete().in("id", ids);
+      setSelectedIds([]);
+      fetchReminders();
+      return error ? { success: 0, failed: ids.length } : { success: ids.length, failed: 0 };
+    }
+    const { error } = await supabase.from("email_reminders").update({ status: action }).in("id", ids);
+    setSelectedIds([]);
+    fetchReminders();
+    return error ? { success: 0, failed: ids.length } : { success: ids.length, failed: 0 };
+  }, []);
 
   const fetchReminders = async () => {
     setLoading(true);
@@ -165,6 +181,15 @@ export const EmailRemindersManagement = () => {
         ))}
       </div>
 
+      <BulkActions
+        selectedIds={selectedIds}
+        onSelectAll={(checked) => setSelectedIds(checked ? filtered.map(r => r.id) : [])}
+        allSelected={selectedIds.length === filtered.length && filtered.length > 0}
+        someSelected={selectedIds.length > 0 && selectedIds.length < filtered.length}
+        onBulkAction={handleBulkAction}
+        type="reminders"
+      />
+
       {loading ? (
         <div className="flex justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -181,7 +206,13 @@ export const EmailRemindersManagement = () => {
           {filtered.map((reminder) => (
             <Card key={reminder.id} className="hover:shadow-sm transition-shadow">
               <CardContent className="p-4">
-                <div className="flex flex-col sm:flex-row justify-between gap-3">
+                <div className="flex items-start gap-3">
+                  <Checkbox
+                    checked={selectedIds.includes(reminder.id)}
+                    onCheckedChange={(checked) => setSelectedIds(prev => checked ? [...prev, reminder.id] : prev.filter(i => i !== reminder.id))}
+                    className="mt-1"
+                  />
+                <div className="flex flex-col sm:flex-row justify-between gap-3 flex-1 min-w-0">
                   <div className="space-y-1 min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
                       {getStatusBadge(reminder.status)}
@@ -243,6 +274,7 @@ export const EmailRemindersManagement = () => {
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   )}
+                </div>
                 </div>
               </CardContent>
             </Card>

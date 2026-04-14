@@ -17,15 +17,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ChevronDown, CheckCircle, XCircle, Trash2, Clock } from "lucide-react";
+import { ChevronDown, CheckCircle, XCircle, Trash2, Clock, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface BulkActionsProps {
   selectedIds: string[];
   onSelectAll: (checked: boolean) => void;
   allSelected: boolean;
   someSelected: boolean;
-  onBulkAction: (action: string, ids: string[]) => Promise<void>;
-  type: 'bookings' | 'contacts';
+  onBulkAction: (action: string, ids: string[]) => Promise<{ success: number; failed: number }>;
+  type: 'bookings' | 'contacts' | 'referrals' | 'reminders';
 }
 
 export const BulkActions = ({ 
@@ -47,30 +48,46 @@ export const BulkActions = ({
     if (selectedIds.length === 0) return;
     setLoading(true);
     try {
-      await onBulkAction(confirmDialog.action, selectedIds);
+      const result = await onBulkAction(confirmDialog.action, selectedIds);
+      if (result.failed === 0) {
+        toast.success(`${result.success} élément(s) traité(s) avec succès`);
+      } else {
+        toast.warning(`${result.success} réussi(s), ${result.failed} échoué(s)`);
+      }
+    } catch {
+      toast.error("Erreur lors de l'action groupée");
     } finally {
       setLoading(false);
       setConfirmDialog({ open: false, action: '', label: '' });
     }
   };
 
-  const bookingActions = [
-    { action: 'confirmed', label: 'Confirmer', icon: CheckCircle, color: 'text-green-500' },
-    { action: 'completed', label: 'Marquer terminé', icon: Clock, color: 'text-blue-500' },
-    { action: 'cancelled', label: 'Annuler', icon: XCircle, color: 'text-red-500' },
-    { action: 'delete', label: 'Supprimer', icon: Trash2, color: 'text-destructive' },
-  ];
+  const actionsMap: Record<string, { action: string; label: string; icon: typeof CheckCircle; color: string }[]> = {
+    bookings: [
+      { action: 'confirmed', label: 'Confirmer', icon: CheckCircle, color: 'text-green-500' },
+      { action: 'completed', label: 'Marquer terminé', icon: Clock, color: 'text-blue-500' },
+      { action: 'cancelled', label: 'Annuler', icon: XCircle, color: 'text-red-500' },
+      { action: 'delete', label: 'Supprimer', icon: Trash2, color: 'text-destructive' },
+    ],
+    contacts: [
+      { action: 'read', label: 'Marquer lu', icon: CheckCircle, color: 'text-blue-500' },
+      { action: 'replied', label: 'Marquer répondu', icon: CheckCircle, color: 'text-green-500' },
+      { action: 'delete', label: 'Supprimer', icon: Trash2, color: 'text-destructive' },
+    ],
+    referrals: [
+      { action: 'completed', label: 'Marquer complété', icon: CheckCircle, color: 'text-green-500' },
+      { action: 'delete', label: 'Supprimer', icon: Trash2, color: 'text-destructive' },
+    ],
+    reminders: [
+      { action: 'cancelled', label: 'Annuler', icon: XCircle, color: 'text-red-500' },
+      { action: 'delete', label: 'Supprimer', icon: Trash2, color: 'text-destructive' },
+    ],
+  };
 
-  const contactActions = [
-    { action: 'read', label: 'Marquer lu', icon: CheckCircle, color: 'text-blue-500' },
-    { action: 'replied', label: 'Marquer répondu', icon: CheckCircle, color: 'text-green-500' },
-    { action: 'delete', label: 'Supprimer', icon: Trash2, color: 'text-destructive' },
-  ];
-
-  const actions = type === 'bookings' ? bookingActions : contactActions;
+  const actions = actionsMap[type] || [];
 
   return (
-    <div className="mb-4 flex flex-col gap-3 rounded-lg bg-muted/50 p-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="mb-4 flex flex-col gap-3 rounded-lg bg-muted/50 p-3 sm:p-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-center gap-2">
         <Checkbox 
           checked={allSelected ? true : someSelected ? "indeterminate" : false}
@@ -127,7 +144,12 @@ export const BulkActions = ({
               disabled={loading}
               className={confirmDialog.action === 'delete' ? 'bg-destructive hover:bg-destructive/90' : ''}
             >
-              {loading ? 'En cours...' : 'Confirmer'}
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  En cours...
+                </>
+              ) : 'Confirmer'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -153,7 +175,7 @@ export const SelectableItem = ({ id, selected, onSelect, children }: SelectableI
           className="data-[state=checked]:bg-accent data-[state=checked]:border-accent"
         />
       </div>
-      <div className="flex-1">
+      <div className="flex-1 min-w-0">
         {children}
       </div>
     </div>
