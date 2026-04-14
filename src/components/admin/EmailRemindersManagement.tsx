@@ -181,6 +181,15 @@ export const EmailRemindersManagement = () => {
         ))}
       </div>
 
+      <BulkActions
+        selectedIds={selectedIds}
+        onSelectAll={(checked) => setSelectedIds(checked ? filtered.map(r => r.id) : [])}
+        allSelected={selectedIds.length === filtered.length && filtered.length > 0}
+        someSelected={selectedIds.length > 0 && selectedIds.length < filtered.length}
+        onBulkAction={handleBulkAction}
+        type="reminders"
+      />
+
       {loading ? (
         <div className="flex justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -197,7 +206,13 @@ export const EmailRemindersManagement = () => {
           {filtered.map((reminder) => (
             <Card key={reminder.id} className="hover:shadow-sm transition-shadow">
               <CardContent className="p-4">
-                <div className="flex flex-col sm:flex-row justify-between gap-3">
+                <div className="flex items-start gap-3">
+                  <Checkbox
+                    checked={selectedIds.includes(reminder.id)}
+                    onCheckedChange={(checked) => setSelectedIds(prev => checked ? [...prev, reminder.id] : prev.filter(i => i !== reminder.id))}
+                    className="mt-1"
+                  />
+                <div className="flex flex-col sm:flex-row justify-between gap-3 flex-1 min-w-0">
                   <div className="space-y-1 min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
                       {getStatusBadge(reminder.status)}
