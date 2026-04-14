@@ -80,6 +80,7 @@ const CustomerPortal = () => {
   const { toast } = useToast();
   
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [unreadNotifCount, setUnreadNotifCount] = useState(0);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
@@ -351,7 +352,7 @@ const CustomerPortal = () => {
 
         {/* Bookings Tabs */}
         <Tabs defaultValue="upcoming" className="space-y-6">
-          <TabsList className="grid h-auto w-full grid-cols-2 gap-2 sm:grid-cols-3 lg:w-auto lg:grid-cols-5">
+          <TabsList className="grid h-auto w-full grid-cols-2 gap-2 sm:grid-cols-3 lg:w-auto lg:grid-cols-6">
             <TabsTrigger value="upcoming" className="gap-2 px-3 py-2 text-xs sm:text-sm">
               <Calendar className="h-4 w-4" />
               <span className="hidden sm:inline">À venir</span> ({upcomingBookings.length})
@@ -363,6 +364,15 @@ const CustomerPortal = () => {
             <TabsTrigger value="history" className="gap-2 px-3 py-2 text-xs sm:text-sm">
               <Clock className="h-4 w-4" />
               <span className="hidden sm:inline">Historique</span> ({pastBookings.length})
+            </TabsTrigger>
+            <TabsTrigger value="notifications" className="gap-2 px-3 py-2 text-xs sm:text-sm relative">
+              <Bell className="h-4 w-4" />
+              <span className="hidden sm:inline">Notifications</span>
+              {unreadNotifCount > 0 && (
+                <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-[10px] bg-accent text-accent-foreground">
+                  {unreadNotifCount}
+                </Badge>
+              )}
             </TabsTrigger>
             <TabsTrigger value="analytics" className="gap-2 px-3 py-2 text-xs sm:text-sm">
               <BarChart3 className="h-4 w-4" />
@@ -439,6 +449,10 @@ const CustomerPortal = () => {
               <CustomerAnalytics bookings={bookings} profile={profile} />
               <LoyaltyRewards profile={profile} onPointsUpdate={fetchProfile} />
             </div>
+          </TabsContent>
+
+          <TabsContent value="notifications">
+            <CustomerNotifications onUnreadCountChange={setUnreadNotifCount} />
           </TabsContent>
 
           <TabsContent value="referral">
