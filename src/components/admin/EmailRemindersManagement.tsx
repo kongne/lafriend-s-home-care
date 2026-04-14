@@ -48,6 +48,20 @@ export const EmailRemindersManagement = () => {
   const [rescheduleId, setRescheduleId] = useState<string | null>(null);
   const [newDateTime, setNewDateTime] = useState("");
   const [saving, setSaving] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  const handleBulkAction = useCallback(async (action: string, ids: string[]): Promise<{ success: number; failed: number }> => {
+    if (action === 'delete') {
+      const { error } = await supabase.from("email_reminders").delete().in("id", ids);
+      setSelectedIds([]);
+      fetchReminders();
+      return error ? { success: 0, failed: ids.length } : { success: ids.length, failed: 0 };
+    }
+    const { error } = await supabase.from("email_reminders").update({ status: action }).in("id", ids);
+    setSelectedIds([]);
+    fetchReminders();
+    return error ? { success: 0, failed: ids.length } : { success: ids.length, failed: 0 };
+  }, []);
 
   const fetchReminders = async () => {
     setLoading(true);
