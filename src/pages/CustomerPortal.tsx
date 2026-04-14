@@ -13,6 +13,7 @@ import { NotificationCenter } from "@/components/admin/NotificationCenter";
 import { CustomerAnalytics } from "@/components/customer/CustomerAnalytics";
 import { LoyaltyRewards } from "@/components/customer/LoyaltyRewards";
 import { ReferralProgram } from "@/components/customer/ReferralProgram";
+import { CustomerNotifications } from "@/components/customer/CustomerNotifications";
 import { 
   Calendar, 
   Clock, 
@@ -29,6 +30,7 @@ import {
   BarChart3,
   Award,
   Users,
+  Bell,
 } from "lucide-react";
 import { format, parseISO, isPast, isFuture } from "date-fns";
 import { fr } from "date-fns/locale";
