@@ -307,10 +307,19 @@ export function ReferralManagement() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border">
+          <BulkActions
+            selectedIds={selectedIds}
+            onSelectAll={(checked) => setSelectedIds(checked ? filteredReferrals.map(r => r.id) : [])}
+            allSelected={selectedIds.length === filteredReferrals.length && filteredReferrals.length > 0}
+            someSelected={selectedIds.length > 0 && selectedIds.length < filteredReferrals.length}
+            onBulkAction={handleBulkAction}
+            type="referrals"
+          />
+          <div className="rounded-md border overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-10"></TableHead>
                   <TableHead>Code</TableHead>
                   <TableHead>Email Parrainé</TableHead>
                   <TableHead>Statut</TableHead>
