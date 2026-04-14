@@ -344,6 +344,7 @@ export function ReferralManagement() {
                           onCheckedChange={(checked) => toggleSelection(referral.id, checked as boolean)}
                         />
                       </TableCell>
+                      <TableCell className="font-mono font-medium">
                         {referral.referral_code}
                       </TableCell>
                       <TableCell>{referral.referred_email}</TableCell>
