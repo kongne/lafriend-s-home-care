@@ -275,6 +275,7 @@ export const EmailRemindersManagement = () => {
                     </Button>
                   )}
                 </div>
+                </div>
               </CardContent>
             </Card>
           ))}
