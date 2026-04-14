@@ -457,49 +457,31 @@ const Admin = () => {
     }
   };
 
-  const handleBulkBookingAction = useCallback(async (action: string, ids: string[]) => {
+  const handleBulkBookingAction = useCallback(async (action: string, ids: string[]): Promise<{ success: number; failed: number }> => {
     if (action === 'delete') {
       const { error } = await supabase.from("bookings").delete().in("id", ids);
-      if (!error) {
-        toast({ title: "Suppression effectuée", description: `${ids.length} réservation(s) supprimée(s)` });
-        setSelectedBookings([]);
-        fetchBookings();
-      } else {
-        toast({ title: "Erreur", description: error.message, variant: "destructive" });
-      }
-      return;
-    }
-    const { error } = await supabase.from("bookings").update({ status: action }).in("id", ids);
-    if (!error) {
-      toast({ title: "Mise à jour effectuée", description: `${ids.length} réservation(s) mise(s) à jour` });
       setSelectedBookings([]);
       fetchBookings();
-    } else {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      return error ? { success: 0, failed: ids.length } : { success: ids.length, failed: 0 };
     }
-  }, [toast]);
+    const { error } = await supabase.from("bookings").update({ status: action }).in("id", ids);
+    setSelectedBookings([]);
+    fetchBookings();
+    return error ? { success: 0, failed: ids.length } : { success: ids.length, failed: 0 };
+  }, []);
 
-  const handleBulkContactAction = useCallback(async (action: string, ids: string[]) => {
+  const handleBulkContactAction = useCallback(async (action: string, ids: string[]): Promise<{ success: number; failed: number }> => {
     if (action === 'delete') {
       const { error } = await supabase.from("contact_submissions").delete().in("id", ids);
-      if (!error) {
-        toast({ title: "Suppression effectuée", description: `${ids.length} message(s) supprimé(s)` });
-        setSelectedContacts([]);
-        fetchContacts();
-      } else {
-        toast({ title: "Erreur", description: error.message, variant: "destructive" });
-      }
-      return;
-    }
-    const { error } = await supabase.from("contact_submissions").update({ status: action }).in("id", ids);
-    if (!error) {
-      toast({ title: "Mise à jour effectuée", description: `${ids.length} message(s) mis à jour` });
       setSelectedContacts([]);
       fetchContacts();
-    } else {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      return error ? { success: 0, failed: ids.length } : { success: ids.length, failed: 0 };
     }
-  }, [toast]);
+    const { error } = await supabase.from("contact_submissions").update({ status: action }).in("id", ids);
+    setSelectedContacts([]);
+    fetchContacts();
+    return error ? { success: 0, failed: ids.length } : { success: ids.length, failed: 0 };
+  }, []);
 
   const toggleBookingSelection = (id: string, checked: boolean) => {
     setSelectedBookings(prev => checked ? [...prev, id] : prev.filter(i => i !== id));
