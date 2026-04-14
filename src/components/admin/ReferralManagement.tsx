@@ -331,14 +331,19 @@ export function ReferralManagement() {
               <TableBody>
                 {filteredReferrals.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                       Aucun parrainage trouvé
                     </TableCell>
                   </TableRow>
                 ) : (
                   filteredReferrals.map((referral) => (
                     <TableRow key={referral.id}>
-                      <TableCell className="font-mono font-medium">
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedIds.includes(referral.id)}
+                          onCheckedChange={(checked) => toggleSelection(referral.id, checked as boolean)}
+                        />
+                      </TableCell>
                         {referral.referral_code}
                       </TableCell>
                       <TableCell>{referral.referred_email}</TableCell>
