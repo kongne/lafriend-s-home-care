@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { PushNotificationToggle } from "./PushNotificationToggle";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -143,6 +144,9 @@ export const CustomerNotifications = ({ onUnreadCountChange }: CustomerNotificat
 
   return (
     <div className="space-y-4">
+      {/* Push notification toggle */}
+      <PushNotificationToggle />
+
       {/* Header bar */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
