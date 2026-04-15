@@ -85,6 +85,27 @@ export const NotificationCenter = () => {
             title: newNotif.title,
             description: newNotif.message,
           });
+          // Trigger native browser notification if permitted
+          if ('Notification' in window && Notification.permission === 'granted') {
+            try {
+              new Notification(newNotif.title, {
+                body: newNotif.message,
+                icon: '/pwa-192x192.png',
+                badge: '/favicon.png',
+                tag: `notif-${newNotif.id}`,
+              });
+            } catch (e) {
+              // Fallback: use service worker for mobile
+              navigator.serviceWorker?.ready?.then(reg => {
+                reg.showNotification(newNotif.title, {
+                  body: newNotif.message,
+                  icon: '/pwa-192x192.png',
+                  badge: '/favicon.png',
+                  tag: `notif-${newNotif.id}`,
+                });
+              }).catch(() => {});
+            }
+          }
         }
       )
       .on(
