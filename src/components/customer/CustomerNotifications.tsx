@@ -82,7 +82,8 @@ export const CustomerNotifications = ({ onUnreadCountChange }: CustomerNotificat
         (payload) => {
           const n = payload.new as Notification;
           setNotifications((prev) => [n, ...prev]);
-          onUnreadCountChange?.((prev: number) => prev + 1);
+          const unread = [n, ...notifications].filter((x) => !x.is_read).length;
+          onUnreadCountChange?.(unread);
           // Browser notification
           if ('Notification' in window && window.Notification.permission === 'granted') {
             try {
