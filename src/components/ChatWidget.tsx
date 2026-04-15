@@ -56,10 +56,12 @@ export const ChatWidget = () => {
 
       if (error) throw error;
 
-      if (data.error) {
+      const response = data as { ok?: boolean; data?: { message?: string }; error?: string };
+
+      if (!response.ok || !response.data?.message) {
         toast({
           title: t('chat.error'),
-          description: data.error,
+          description: response.error || t('chat.errorDesc'),
           variant: "destructive",
         });
         return;
@@ -67,7 +69,7 @@ export const ChatWidget = () => {
 
       const assistantMessage: Message = {
         role: "assistant",
-        content: data.message,
+        content: response.data.message,
       };
       setMessages((prev) => [...prev, assistantMessage]);
     } catch (err) {

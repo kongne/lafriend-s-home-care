@@ -1,10 +1,6 @@
 import { serve } from "https://deno.land/std@0.208.0/http/server.ts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+import { sendEmail, corsHeaders, checkRateLimit } from "../_shared/email-service.ts";
 
 function respond(ok: boolean, payload: Record<string, unknown>): Response {
   return new Response(JSON.stringify({ ok, ...payload }), {
@@ -12,16 +8,6 @@ function respond(ok: boolean, payload: Record<string, unknown>): Response {
     headers: { "Content-Type": "application/json", ...corsHeaders },
   });
 }
-
-const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
-const checkRateLimit = (ip: string, max = 10, windowMs = 60000): boolean => {
-  const now = Date.now();
-  const r = rateLimitStore.get(ip);
-  if (!r || now > r.resetTime) { rateLimitStore.set(ip, { count: 1, resetTime: now + windowMs }); return true; }
-  if (r.count >= max) return false;
-  r.count++;
-  return true;
-};
 
 const sanitizeString = (val: string) => val.replace(/[<>]/g, '').replace(/javascript:/gi, '').replace(/on\w+=/gi, '').trim();
 
@@ -44,12 +30,9 @@ const handler = async (req: Request): Promise<Response> => {
     const clientIP = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
     if (!checkRateLimit(clientIP)) return respond(false, { error: "Too many requests" });
 
-    const resendApiKey = Deno.env.get("RESEND_API_KEY");
-    if (!resendApiKey) return respond(false, { error: "Email service not configured" });
-
     const rawText = await req.text();
     let parsedBody: unknown;
-    try { parsedBody = rawText ? JSON.parse(rawText) : {}; } catch (e) {
+    try { parsedBody = rawText ? JSON.parse(rawText) : {}; } catch {
       return respond(false, { error: "Invalid JSON payload" });
     }
 
@@ -95,21 +78,13 @@ const handler = async (req: Request): Promise<Response> => {
         </div>
       </body></html>`;
 
-    const fromEmail = Deno.env.get("RESEND_FROM_EMAIL") || "LaFriend's Services <onboarding@resend.dev>";
-    const emailResponse = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { "Authorization": `Bearer ${resendApiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: fromEmail, to: [clientEmail], subject, html: htmlContent }),
-    });
+    const emailResult = await sendEmail({ to: clientEmail, subject, html: htmlContent });
 
-    if (!emailResponse.ok) {
-      let errorDetails;
-      try { errorDetails = await emailResponse.json(); } catch { errorDetails = { message: "Unknown" }; }
-      return respond(false, { error: "Email send failed", diagnostics: errorDetails });
+    if (!emailResult.success) {
+      return respond(false, { error: emailResult.error || "Email send failed" });
     }
 
-    const emailResult = await emailResponse.json();
-    return respond(true, { data: { emailId: emailResult.id } });
+    return respond(true, { data: { emailId: emailResult.messageId } });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return respond(false, { error: "Invalid input", diagnostics: error.errors });
