@@ -71,7 +71,34 @@ export const CustomerNotifications = ({ onUnreadCountChange }: CustomerNotificat
 
   useEffect(() => {
     fetchNotifications();
-  }, [fetchNotifications]);
+
+    if (!user) return;
+    // Subscribe to realtime for browser push alerts
+    const channel = supabase
+      .channel("customer-notif-realtime")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` },
+        (payload) => {
+          const n = payload.new as Notification;
+          setNotifications((prev) => [n, ...prev]);
+          onUnreadCountChange?.((prev: number) => prev + 1);
+          // Browser notification
+          if ('Notification' in window && window.Notification.permission === 'granted') {
+            try {
+              new window.Notification(n.title, { body: n.message, icon: '/pwa-192x192.png', tag: `notif-${n.id}` });
+            } catch {
+              navigator.serviceWorker?.ready?.then(reg => {
+                reg.showNotification(n.title, { body: n.message, icon: '/pwa-192x192.png', tag: `notif-${n.id}` });
+              });
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [fetchNotifications, user, onUnreadCountChange]);
 
   const markAllRead = async () => {
     if (!user) return;
