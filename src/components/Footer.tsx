@@ -1,7 +1,4 @@
-import { useState } from "react";
-import { Loader2 } from "lucide-react";
-
-const Facebook = ({ className }: { className?: string }) => (
+import { useLanguage } from "@/contexts/LanguageContext";
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
 );
 const Twitter = ({ className }: { className?: string }) => (
@@ -121,29 +118,15 @@ export const Footer = () => {
             </ul>
           </div>
 
-          {/* Newsletter */}
+          {/* Contact Info */}
           <div>
-            <h4 className="text-lg font-bold mb-4">{t('footer.newsletter')}</h4>
-            <p className="text-primary-foreground/80 mb-4">
-              {t('footer.newsletterDesc')}
-            </p>
-            <form onSubmit={handleNewsletterSubmit} className="flex gap-2">
-              <input
-                type="email"
-                placeholder={t('footer.emailPlaceholder')}
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="flex-1 px-4 py-2 rounded bg-primary-foreground/10 text-primary-foreground placeholder:text-primary-foreground/50 focus:outline-none focus:ring-2 focus:ring-accent"
-              />
-              <button 
-                type="submit"
-                disabled={loading}
-                className="px-4 py-2 bg-accent text-accent-foreground rounded hover:bg-accent/90 transition-colors font-semibold disabled:opacity-50"
-              >
-                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "OK"}
-              </button>
-            </form>
+            <h4 className="text-lg font-bold mb-4">{t('nav.contact')}</h4>
+            <ul className="space-y-3 text-sm text-primary-foreground/80">
+              <li>📞 +237 693 13 82 92</li>
+              <li className="break-all">📧 lafriendsservices@gmail.com</li>
+              <li>📍 Bafoussam, Cameroun</li>
+              <li>🕐 Lun - Dim: 8:00 - 18:00</li>
+            </ul>
           </div>
         </div>
 
