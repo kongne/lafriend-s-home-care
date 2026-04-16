@@ -355,7 +355,7 @@ const CustomerPortal = () => {
           <TabsList className="flex flex-wrap h-auto w-full gap-1 sm:gap-2">
             <TabsTrigger value="upcoming" className="gap-1 px-2 sm:px-3 py-2 text-xs sm:text-sm flex-1 min-w-0">
               <Calendar className="h-4 w-4 shrink-0" />
-              <span className="truncate hidden sm:inline">{t('nav.services') || 'À venir'}</span> ({upcomingBookings.length})
+              <span className="truncate hidden sm:inline">À venir</span> ({upcomingBookings.length})
             </TabsTrigger>
             <TabsTrigger value="recurring" className="gap-1 px-2 sm:px-3 py-2 text-xs sm:text-sm flex-1 min-w-0">
               <Repeat className="h-4 w-4 shrink-0" />
