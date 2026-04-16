@@ -121,16 +121,16 @@ export const Testimonials = () => {
       </div>
 
       {/* Featured Testimonial */}
-      <div className="mb-12 relative" onMouseEnter={() => setIsPaused(true)} onMouseLeave={() => setIsPaused(false)}>
+      <div className="mb-12 relative px-6 sm:px-0" onMouseEnter={() => setIsPaused(true)} onMouseLeave={() => setIsPaused(false)}>
         {/* Navigation Arrows */}
-        <Button variant="ghost" size="icon" onClick={prevSlide} className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 md:-translate-x-6 z-10 bg-card/80 hover:bg-card shadow-lg rounded-full h-10 w-10 md:h-12 md:w-12" aria-label="Previous testimonial">
-          <ChevronLeft className="h-5 w-5 md:h-6 md:w-6" />
+        <Button variant="ghost" size="icon" onClick={prevSlide} className="absolute left-0 sm:-left-2 md:-left-6 top-1/2 -translate-y-1/2 z-10 bg-card/80 hover:bg-card shadow-lg rounded-full h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12" aria-label="Previous testimonial">
+          <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6" />
         </Button>
-        <Button variant="ghost" size="icon" onClick={nextSlide} className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 md:translate-x-6 z-10 bg-card/80 hover:bg-card shadow-lg rounded-full h-10 w-10 md:h-12 md:w-12" aria-label="Next testimonial">
-          <ChevronRight className="h-5 w-5 md:h-6 md:w-6" />
+        <Button variant="ghost" size="icon" onClick={nextSlide} className="absolute right-0 sm:-right-2 md:translate-x-6 top-1/2 -translate-y-1/2 z-10 bg-card/80 hover:bg-card shadow-lg rounded-full h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12" aria-label="Next testimonial">
+          <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6" />
         </Button>
 
-        <Card className={`relative overflow-hidden bg-gradient-to-br from-card to-card/80 border-accent/20 p-8 md:p-12 transition-all duration-700 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"}`}>
+        <Card className={`relative overflow-hidden bg-gradient-to-br from-card to-card/80 border-accent/20 p-5 sm:p-8 md:p-12 transition-all duration-700 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"}`}>
           <Sparkles className="absolute top-4 right-4 w-8 h-8 text-accent/30" />
 
           {/* Animated content wrapper */}

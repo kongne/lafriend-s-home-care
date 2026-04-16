@@ -1,5 +1,26 @@
 import { z } from "zod";
 
+// Known valid email domains (allow all gmail.com regardless of source)
+const ALLOWED_DOMAINS = [
+  'gmail.com', 'yahoo.com', 'yahoo.fr', 'hotmail.com', 'hotmail.fr',
+  'outlook.com', 'outlook.fr', 'live.com', 'icloud.com', 'aol.com',
+  'mail.com', 'protonmail.com', 'zoho.com', 'gmx.com', 'yandex.com',
+];
+
+/**
+ * Validates that an email domain is legitimate.
+ * Always accepts gmail.com and other major providers.
+ * For unknown domains, checks basic format.
+ */
+export const isValidEmailDomain = (email: string): boolean => {
+  const domain = email.split('@')[1]?.toLowerCase();
+  if (!domain) return false;
+  // Always accept known providers (including gmail.com from any source)
+  if (ALLOWED_DOMAINS.includes(domain)) return true;
+  // Accept any domain with at least one dot and 2+ char TLD
+  return /^[a-z0-9.-]+\.[a-z]{2,}$/.test(domain);
+};
+
 // Rate limiting store
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 
@@ -49,6 +70,7 @@ export const bookingSchema = z.object({
   email: z.string()
     .email("Adresse email invalide")
     .max(254, "L'email ne peut pas dépasser 254 caractères")
+    .refine(isValidEmailDomain, "Domaine email non valide")
     .transform(val => val.toLowerCase().trim()),
   phone: z.string()
     .min(8, "Numéro de téléphone invalide")
@@ -107,6 +129,7 @@ export const newsletterSchema = z.object({
   email: z.string()
     .email("Adresse email invalide")
     .max(254, "L'email ne peut pas dépasser 254 caractères")
+    .refine(isValidEmailDomain, "Domaine email non valide")
     .transform(val => val.toLowerCase().trim()),
 });
 

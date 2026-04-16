@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { z } from "zod";
+import { isValidEmailDomain } from "@/lib/validation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,7 +13,8 @@ import { Loader2, Mail, Lock, User } from "lucide-react";
 const loginSchema = z.object({
   email: z.string()
     .email("Email invalide")
-    .max(254, "Email trop long"),
+    .max(254, "Email trop long")
+    .refine(isValidEmailDomain, "Domaine email non valide"),
   password: z.string()
     .min(8, "Le mot de passe doit contenir au moins 8 caractères")
     .max(128, "Le mot de passe ne peut pas dépasser 128 caractères"),
