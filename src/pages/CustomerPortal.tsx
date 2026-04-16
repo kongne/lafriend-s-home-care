@@ -291,10 +291,10 @@ const CustomerPortal = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       <Navbar />
       
-      <main className="container mx-auto px-4 py-8 pt-24">
+      <main className="container mx-auto px-3 sm:px-4 py-8 pt-24 max-w-full">
         {/* Header */}
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
@@ -352,35 +352,35 @@ const CustomerPortal = () => {
 
         {/* Bookings Tabs */}
         <Tabs defaultValue="upcoming" className="space-y-6">
-          <TabsList className="grid h-auto w-full grid-cols-2 gap-2 sm:grid-cols-3 lg:w-auto lg:grid-cols-6">
-            <TabsTrigger value="upcoming" className="gap-2 px-3 py-2 text-xs sm:text-sm">
-              <Calendar className="h-4 w-4" />
-              <span className="hidden sm:inline">À venir</span> ({upcomingBookings.length})
+          <TabsList className="flex flex-wrap h-auto w-full gap-1 sm:gap-2">
+            <TabsTrigger value="upcoming" className="gap-1 px-2 sm:px-3 py-2 text-xs sm:text-sm flex-1 min-w-0">
+              <Calendar className="h-4 w-4 shrink-0" />
+              <span className="truncate hidden sm:inline">{t('nav.services') || 'À venir'}</span> ({upcomingBookings.length})
             </TabsTrigger>
-            <TabsTrigger value="recurring" className="gap-2 px-3 py-2 text-xs sm:text-sm">
-              <Repeat className="h-4 w-4" />
-              <span className="hidden sm:inline">Récurrents</span> ({recurringBookings.length})
+            <TabsTrigger value="recurring" className="gap-1 px-2 sm:px-3 py-2 text-xs sm:text-sm flex-1 min-w-0">
+              <Repeat className="h-4 w-4 shrink-0" />
+              <span className="truncate hidden sm:inline">Récurrents</span> ({recurringBookings.length})
             </TabsTrigger>
-            <TabsTrigger value="history" className="gap-2 px-3 py-2 text-xs sm:text-sm">
-              <Clock className="h-4 w-4" />
-              <span className="hidden sm:inline">Historique</span> ({pastBookings.length})
+            <TabsTrigger value="history" className="gap-1 px-2 sm:px-3 py-2 text-xs sm:text-sm flex-1 min-w-0">
+              <Clock className="h-4 w-4 shrink-0" />
+              <span className="truncate hidden sm:inline">Historique</span> ({pastBookings.length})
             </TabsTrigger>
-            <TabsTrigger value="notifications" className="gap-2 px-3 py-2 text-xs sm:text-sm relative">
-              <Bell className="h-4 w-4" />
-              <span className="hidden sm:inline">Notifications</span>
+            <TabsTrigger value="notifications" className="gap-1 px-2 sm:px-3 py-2 text-xs sm:text-sm flex-1 min-w-0 relative">
+              <Bell className="h-4 w-4 shrink-0" />
+              <span className="truncate hidden sm:inline">Notifs</span>
               {unreadNotifCount > 0 && (
                 <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-[10px] bg-accent text-accent-foreground">
                   {unreadNotifCount}
                 </Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="analytics" className="gap-2 px-3 py-2 text-xs sm:text-sm">
-              <BarChart3 className="h-4 w-4" />
-              <span className="hidden sm:inline">Fidélité</span>
+            <TabsTrigger value="analytics" className="gap-1 px-2 sm:px-3 py-2 text-xs sm:text-sm flex-1 min-w-0">
+              <BarChart3 className="h-4 w-4 shrink-0" />
+              <span className="truncate hidden sm:inline">Fidélité</span>
             </TabsTrigger>
-            <TabsTrigger value="referral" className="gap-2 px-3 py-2 text-xs sm:text-sm">
-              <Users className="h-4 w-4" />
-              <span className="hidden sm:inline">Parrainage</span>
+            <TabsTrigger value="referral" className="gap-1 px-2 sm:px-3 py-2 text-xs sm:text-sm flex-1 min-w-0">
+              <Users className="h-4 w-4 shrink-0" />
+              <span className="truncate hidden sm:inline">Parrainage</span>
             </TabsTrigger>
           </TabsList>
 
