@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, forwardRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MessageCircle, X, Send } from "lucide-react";
@@ -12,7 +12,7 @@ interface Message {
   content: string;
 }
 
-export const ChatWidget = () => {
+export const ChatWidget = forwardRef<HTMLDivElement>((_props, ref) => {
   const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
@@ -92,7 +92,7 @@ export const ChatWidget = () => {
   };
 
   return (
-    <>
+    <div ref={ref}>
       {/* Chat Button */}
       {!isOpen && (
         <Button
@@ -180,6 +180,7 @@ export const ChatWidget = () => {
           </div>
         </div>
       )}
-    </>
+    </div>
   );
-};
+});
+ChatWidget.displayName = "ChatWidget";

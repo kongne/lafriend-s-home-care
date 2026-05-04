@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -79,12 +80,10 @@ const CustomerPortal = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  const [bookings, setBookings] = useState<Booking[]>([]);
   const [unreadNotifCount, setUnreadNotifCount] = useState(0);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
   const [cancelingBooking, setCancelingBooking] = useState<Booking | null>(null);
+  const queryClient = useQueryClient();
   const [editForm, setEditForm] = useState({
     preferred_date: "",
     preferred_time: "",
@@ -95,42 +94,55 @@ const CustomerPortal = () => {
   useEffect(() => {
     if (!authLoading && !user) {
       navigate("/auth?redirect=/customer-portal");
-      return;
-    }
-    if (user) {
-      fetchData();
     }
   }, [user, authLoading, navigate]);
 
-  const fetchData = async () => {
-    setLoading(true);
-    await Promise.all([fetchBookings(), fetchProfile()]);
-    setLoading(false);
-  };
+  const bookingsQuery = useQuery({
+    queryKey: ["bookings", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("*")
+        .eq("user_id", user!.id)
+        .order("preferred_date", { ascending: false });
+      if (error) throw error;
+      return (data || []) as Booking[];
+    },
+  });
 
-  const fetchBookings = async () => {
-    const { data, error } = await supabase
-      .from("bookings")
-      .select("*")
-      .eq("user_id", user!.id)
-      .order("preferred_date", { ascending: false });
+  const profileQuery = useQuery({
+    queryKey: ["profile", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data as Profile | null;
+    },
+  });
 
-    if (!error && data) {
-      setBookings(data);
-    }
-  };
+  const bookings = bookingsQuery.data ?? [];
+  const profile = profileQuery.data ?? null;
+  const loading = bookingsQuery.isLoading || profileQuery.isLoading;
 
-  const fetchProfile = async () => {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("user_id", user!.id)
-      .maybeSingle();
+  const fetchProfile = () => queryClient.invalidateQueries({ queryKey: ["profile", user?.id] });
+  const fetchBookings = () => queryClient.invalidateQueries({ queryKey: ["bookings", user?.id] });
 
-    if (!error && data) {
-      setProfile(data);
-    }
-  };
+  const updateBookingMutation = useMutation({
+    mutationFn: async (payload: { id: string; values: Partial<Booking> }) => {
+      const { error } = await supabase
+        .from("bookings")
+        .update(payload.values)
+        .eq("id", payload.id)
+        .eq("user_id", user!.id);
+      if (error) throw error;
+    },
+    onSuccess: () => fetchBookings(),
+  });
 
   const getStatusBadge = (status: string) => {
     const config: Record<string, { color: string; icon: React.ReactNode; label: string }> = {
@@ -176,42 +188,34 @@ const CustomerPortal = () => {
 
   const handleSaveEdit = async () => {
     if (!editingBooking) return;
-
-    const { error } = await supabase
-      .from("bookings")
-      .update({
-        preferred_date: editForm.preferred_date,
-        preferred_time: editForm.preferred_time,
-        recurrence_type: editForm.recurrence_type || null,
-        recurrence_end_date: editForm.recurrence_end_date || null,
-      })
-      .eq("id", editingBooking.id)
-      .eq("user_id", user!.id);
-
-    if (error) {
-      toast({ title: "Erreur", description: "Impossible de modifier la réservation", variant: "destructive" });
-    } else {
+    try {
+      await updateBookingMutation.mutateAsync({
+        id: editingBooking.id,
+        values: {
+          preferred_date: editForm.preferred_date,
+          preferred_time: editForm.preferred_time,
+          recurrence_type: editForm.recurrence_type || null,
+          recurrence_end_date: editForm.recurrence_end_date || null,
+        },
+      });
       toast({ title: "Réservation modifiée", description: "Vos modifications ont été enregistrées" });
       setEditingBooking(null);
-      fetchBookings();
+    } catch {
+      toast({ title: "Erreur", description: "Impossible de modifier la réservation", variant: "destructive" });
     }
   };
 
   const handleCancelBooking = async () => {
     if (!cancelingBooking) return;
-
-    const { error } = await supabase
-      .from("bookings")
-      .update({ status: "cancelled" })
-      .eq("id", cancelingBooking.id)
-      .eq("user_id", user!.id);
-
-    if (error) {
-      toast({ title: "Erreur", description: "Impossible d'annuler la réservation", variant: "destructive" });
-    } else {
+    try {
+      await updateBookingMutation.mutateAsync({
+        id: cancelingBooking.id,
+        values: { status: "cancelled" },
+      });
       toast({ title: "Réservation annulée", description: "Votre réservation a été annulée" });
       setCancelingBooking(null);
-      fetchBookings();
+    } catch {
+      toast({ title: "Erreur", description: "Impossible d'annuler la réservation", variant: "destructive" });
     }
   };
 
