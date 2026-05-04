@@ -80,7 +80,6 @@ const CustomerPortal = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  const [bookings, setBookings] = useState<Booking[]>([]);
   const [unreadNotifCount, setUnreadNotifCount] = useState(0);
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
   const [cancelingBooking, setCancelingBooking] = useState<Booking | null>(null);
