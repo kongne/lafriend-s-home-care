@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, forwardRef } from "react";
 import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { BookingForm } from "./BookingForm";
@@ -11,7 +11,7 @@ interface BookingModalProps {
   className?: string;
 }
 
-export const BookingModal = ({ children, className }: BookingModalProps) => {
+export const BookingModal = forwardRef<HTMLButtonElement, BookingModalProps>(({ children, className }, ref) => {
   const { t } = useLanguage();
   const [open, setOpen] = useState(false);
 
@@ -20,6 +20,7 @@ export const BookingModal = ({ children, className }: BookingModalProps) => {
       <DialogTrigger asChild>
         {children || (
           <Button 
+            ref={ref}
             size="lg"
             className={`bg-accent text-accent-foreground hover:bg-accent/90 font-semibold text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-6 ${className}`}
           >
@@ -36,4 +37,5 @@ export const BookingModal = ({ children, className }: BookingModalProps) => {
       </DialogContent>
     </Dialog>
   );
-};
+});
+BookingModal.displayName = "BookingModal";
