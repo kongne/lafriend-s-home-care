@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +10,7 @@ import { format, parseISO, differenceInHours } from "date-fns";
 import { fr } from "date-fns/locale";
 import type { Booking } from "@/hooks/portal/useBookings";
 
-const STATUS: Record<string, { color: string; icon: JSX.Element; label: string }> = {
+const STATUS: Record<string, { color: string; icon: ReactNode; label: string }> = {
   pending: { color: "bg-yellow-500", icon: <AlertCircle className="h-3 w-3" />, label: "En attente" },
   confirmed: { color: "bg-green-500", icon: <CheckCircle2 className="h-3 w-3" />, label: "Confirmé" },
   completed: { color: "bg-blue-500", icon: <CheckCircle2 className="h-3 w-3" />, label: "Terminé" },
