@@ -21,7 +21,8 @@ import {
   Calendar, Clock, Loader2, Repeat, User, Phone, Mail,
   BarChart3, Users, Bell, Settings as SettingsIcon, History,
 } from "lucide-react";
-import { isPast, isFuture, parseISO } from "date-fns";
+import { isPast, isFuture, parseISO, format } from "date-fns";
+import { fr } from "date-fns/locale";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
