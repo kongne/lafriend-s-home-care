@@ -1,13 +1,10 @@
-import { useState, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/components/ui/use-toast";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { NotificationCenter } from "@/components/admin/NotificationCenter";
@@ -15,181 +12,75 @@ import { CustomerAnalytics } from "@/components/customer/CustomerAnalytics";
 import { LoyaltyRewards } from "@/components/customer/LoyaltyRewards";
 import { ReferralProgram } from "@/components/customer/ReferralProgram";
 import { CustomerNotifications } from "@/components/customer/CustomerNotifications";
-import { 
-  Calendar, 
-  Clock, 
-  MapPin, 
-  Loader2, 
-  Repeat, 
-  Edit2, 
-  XCircle,
-  CheckCircle2,
-  AlertCircle,
-  User,
-  Phone,
-  Mail,
-  BarChart3,
-  Award,
-  Users,
-  Bell,
+import { BookingCard } from "@/components/customer/portal/BookingCard";
+import { BookingSkeleton } from "@/components/customer/portal/BookingSkeleton";
+import { EmptyState } from "@/components/customer/portal/EmptyState";
+import { ReviewDialog } from "@/components/customer/portal/ReviewDialog";
+import { SettingsTab } from "@/components/customer/portal/SettingsTab";
+import {
+  Calendar, Clock, Loader2, Repeat, User, Phone, Mail,
+  BarChart3, Users, Bell, Settings as SettingsIcon, History,
 } from "lucide-react";
-import { format, parseISO, isPast, isFuture } from "date-fns";
+import { isPast, isFuture, parseISO, format } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
-interface Booking {
-  id: string;
-  full_name: string;
-  email: string;
-  phone: string;
-  address: string;
-  service_type: string;
-  preferred_date: string;
-  preferred_time: string;
-  message: string | null;
-  status: string;
-  created_at: string;
-  is_recurring: boolean;
-  recurrence_type: string | null;
-  recurrence_end_date: string | null;
-  assigned_staff_id: string | null;
-}
-
-interface Profile {
-  id: string;
-  full_name: string | null;
-  phone: string | null;
-  address: string | null;
-  total_spent?: number | null;
-  loyalty_points?: number | null;
-  loyalty_tier?: string | null;
-}
+import { useBookings, type Booking } from "@/hooks/portal/useBookings";
+import { useProfile } from "@/hooks/portal/useProfile";
+import { useReviews } from "@/hooks/portal/useReviews";
+import { useNotifications } from "@/hooks/portal/useNotifications";
+import { downloadInvoice } from "@/lib/invoice";
+import { toast } from "sonner";
 
 const CustomerPortal = () => {
-  const { user, loading: authLoading, signOut } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const { toast } = useToast();
-  
-  const [unreadNotifCount, setUnreadNotifCount] = useState(0);
+
+  const { bookings, isLoading: bookingsLoading, updateBooking } = useBookings();
+  const { profile, isLoading: profileLoading } = useProfile();
+  const { reviews } = useReviews();
+  const { unreadCount } = useNotifications();
+
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
   const [cancelingBooking, setCancelingBooking] = useState<Booking | null>(null);
-  const queryClient = useQueryClient();
+  const [reviewBooking, setReviewBooking] = useState<Booking | null>(null);
   const [editForm, setEditForm] = useState({
-    preferred_date: "",
-    preferred_time: "",
-    recurrence_type: "",
-    recurrence_end_date: ""
+    preferred_date: "", preferred_time: "", recurrence_type: "", recurrence_end_date: "",
   });
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      navigate("/auth?redirect=/customer-portal");
-    }
+    if (!authLoading && !user) navigate("/auth?redirect=/customer-portal");
   }, [user, authLoading, navigate]);
 
-  const bookingsQuery = useQuery({
-    queryKey: ["bookings", user?.id],
-    enabled: !!user?.id,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("bookings")
-        .select("*")
-        .eq("user_id", user!.id)
-        .order("preferred_date", { ascending: false });
-      if (error) throw error;
-      return (data || []) as Booking[];
-    },
-  });
-
-  const profileQuery = useQuery({
-    queryKey: ["profile", user?.id],
-    enabled: !!user?.id,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("user_id", user!.id)
-        .maybeSingle();
-      if (error) throw error;
-      return data as Profile | null;
-    },
-  });
-
-  const bookings = bookingsQuery.data ?? [];
-  const profile = profileQuery.data ?? null;
-  const loading = bookingsQuery.isLoading || profileQuery.isLoading;
-
-  const fetchProfile = () => queryClient.invalidateQueries({ queryKey: ["profile", user?.id] });
-  const fetchBookings = () => queryClient.invalidateQueries({ queryKey: ["bookings", user?.id] });
-
-  const updateBookingMutation = useMutation({
-    mutationFn: async (payload: { id: string; values: Partial<Booking> }) => {
-      const { error } = await supabase
-        .from("bookings")
-        .update(payload.values)
-        .eq("id", payload.id)
-        .eq("user_id", user!.id);
-      if (error) throw error;
-    },
-    onSuccess: () => fetchBookings(),
-  });
-
-  const getStatusBadge = (status: string) => {
-    const config: Record<string, { color: string; icon: React.ReactNode; label: string }> = {
-      pending: { color: "bg-yellow-500", icon: <AlertCircle className="h-3 w-3" />, label: "En attente" },
-      confirmed: { color: "bg-green-500", icon: <CheckCircle2 className="h-3 w-3" />, label: "Confirmé" },
-      completed: { color: "bg-blue-500", icon: <CheckCircle2 className="h-3 w-3" />, label: "Terminé" },
-      cancelled: { color: "bg-red-500", icon: <XCircle className="h-3 w-3" />, label: "Annulé" },
-    };
-    const { color, icon, label } = config[status] || config.pending;
-    return (
-      <Badge className={`${color} text-white flex items-center gap-1`}>
-        {icon} {label}
-      </Badge>
-    );
-  };
-
-  const getRecurrenceLabel = (type: string | null) => {
-    const labels: Record<string, string> = {
-      weekly: "Hebdomadaire",
-      biweekly: "Bi-hebdomadaire",
-      monthly: "Mensuel",
-    };
-    return labels[type || ""] || type;
-  };
+  const reviewedIds = useMemo(() => new Set(reviews.map((r) => r.booking_id)), [reviews]);
 
   const upcomingBookings = bookings.filter(
-    b => isFuture(parseISO(b.preferred_date)) && b.status !== "cancelled"
+    (b) => isFuture(parseISO(b.preferred_date)) && b.status !== "cancelled"
   );
   const pastBookings = bookings.filter(
-    b => isPast(parseISO(b.preferred_date)) || b.status === "cancelled"
+    (b) => isPast(parseISO(b.preferred_date)) || b.status === "cancelled"
   );
-  const recurringBookings = bookings.filter(b => b.is_recurring && b.status !== "cancelled");
+  const recurringBookings = bookings.filter((b) => b.is_recurring && b.status !== "cancelled");
+  const completedBookings = bookings.filter((b) => b.status === "completed");
 
-  const handleEditClick = (booking: Booking) => {
-    setEditingBooking(booking);
+  const openReschedule = (b: Booking) => {
+    setEditingBooking(b);
     setEditForm({
-      preferred_date: booking.preferred_date,
-      preferred_time: booking.preferred_time,
-      recurrence_type: booking.recurrence_type || "",
-      recurrence_end_date: booking.recurrence_end_date || ""
+      preferred_date: b.preferred_date,
+      preferred_time: b.preferred_time,
+      recurrence_type: b.recurrence_type || "",
+      recurrence_end_date: b.recurrence_end_date || "",
     });
   };
 
-  const handleSaveEdit = async () => {
+  const saveReschedule = async () => {
     if (!editingBooking) return;
     try {
-      await updateBookingMutation.mutateAsync({
+      await updateBooking.mutateAsync({
         id: editingBooking.id,
         values: {
           preferred_date: editForm.preferred_date,
@@ -198,95 +89,46 @@ const CustomerPortal = () => {
           recurrence_end_date: editForm.recurrence_end_date || null,
         },
       });
-      toast({ title: "Réservation modifiée", description: "Vos modifications ont été enregistrées" });
+      toast.success("Réservation replanifiée");
       setEditingBooking(null);
-    } catch {
-      toast({ title: "Erreur", description: "Impossible de modifier la réservation", variant: "destructive" });
-    }
+    } catch { /* handled by mutation */ }
   };
 
-  const handleCancelBooking = async () => {
+  const confirmCancel = async () => {
     if (!cancelingBooking) return;
     try {
-      await updateBookingMutation.mutateAsync({
+      await updateBooking.mutateAsync({
         id: cancelingBooking.id,
         values: { status: "cancelled" },
       });
-      toast({ title: "Réservation annulée", description: "Votre réservation a été annulée" });
+      toast.success("Réservation annulée");
       setCancelingBooking(null);
-    } catch {
-      toast({ title: "Erreur", description: "Impossible d'annuler la réservation", variant: "destructive" });
-    }
+    } catch { /* handled */ }
   };
 
-  const BookingCard = ({ booking, showActions = true }: { booking: Booking; showActions?: boolean }) => (
-    <Card className="overflow-hidden hover:shadow-lg transition-shadow">
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <div>
-            <CardTitle className="text-lg">{booking.service_type}</CardTitle>
-            <CardDescription className="mt-1">
-              Réservé le {format(parseISO(booking.created_at), "d MMMM yyyy", { locale: fr })}
-            </CardDescription>
-          </div>
-          {getStatusBadge(booking.status)}
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Calendar className="h-4 w-4 text-accent" />
-          <span>{format(parseISO(booking.preferred_date), "EEEE d MMMM yyyy", { locale: fr })}</span>
-        </div>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Clock className="h-4 w-4 text-accent" />
-          <span>{booking.preferred_time}</span>
-        </div>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <MapPin className="h-4 w-4 text-accent" />
-          <span className="truncate">{booking.address}</span>
-        </div>
-        
-        {booking.is_recurring && (
-          <div className="flex items-center gap-2 text-sm">
-            <Repeat className="h-4 w-4 text-green-500" />
-            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-              {getRecurrenceLabel(booking.recurrence_type)}
-              {booking.recurrence_end_date && (
-                <span className="ml-1">
-                  jusqu'au {format(parseISO(booking.recurrence_end_date), "d MMM yyyy", { locale: fr })}
-                </span>
-              )}
-            </Badge>
-          </div>
-        )}
+  const togglePause = (b: Booking) => {
+    updateBooking.mutate({ id: b.id, values: { is_paused: !b.is_paused } });
+    toast.success(b.is_paused ? "Abonnement repris" : "Abonnement mis en pause");
+  };
 
-        {showActions && booking.status !== "cancelled" && booking.status !== "completed" && (
-          <div className="flex gap-2 pt-3 border-t">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleEditClick(booking)}
-              className="flex-1"
-            >
-              <Edit2 className="h-4 w-4 mr-1" />
-              Modifier
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCancelingBooking(booking)}
-              className="flex-1 text-destructive hover:text-destructive"
-            >
-              <XCircle className="h-4 w-4 mr-1" />
-              Annuler
-            </Button>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
+  const openWhatsApp = (b: Booking) => {
+    const msg = encodeURIComponent(`Bonjour, à propos de ma réservation du ${b.preferred_date} à ${b.preferred_time} (${b.service_type}).`);
+    const phone = b.phone.replace(/\D/g, "");
+    window.open(`https://wa.me/${phone}?text=${msg}`, "_blank");
+  };
 
-  if (authLoading || loading) {
+  const cardHandlers = {
+    onReschedule: openReschedule,
+    onCancel: setCancelingBooking,
+    onPauseToggle: togglePause,
+    onReview: setReviewBooking,
+    onInvoice: downloadInvoice,
+    onWhatsApp: openWhatsApp,
+  };
+
+  const loading = bookingsLoading || profileLoading;
+
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-accent" />
@@ -366,15 +208,15 @@ const CustomerPortal = () => {
               <span className="truncate hidden sm:inline">Récurrents</span> ({recurringBookings.length})
             </TabsTrigger>
             <TabsTrigger value="history" className="gap-1 px-2 sm:px-3 py-2 text-xs sm:text-sm flex-1 min-w-0">
-              <Clock className="h-4 w-4 shrink-0" />
+              <History className="h-4 w-4 shrink-0" />
               <span className="truncate hidden sm:inline">Historique</span> ({pastBookings.length})
             </TabsTrigger>
             <TabsTrigger value="notifications" className="gap-1 px-2 sm:px-3 py-2 text-xs sm:text-sm flex-1 min-w-0 relative">
               <Bell className="h-4 w-4 shrink-0" />
               <span className="truncate hidden sm:inline">Notifs</span>
-              {unreadNotifCount > 0 && (
+              {unreadCount > 0 && (
                 <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-[10px] bg-accent text-accent-foreground">
-                  {unreadNotifCount}
+                  {unreadCount}
                 </Badge>
               )}
             </TabsTrigger>
@@ -386,63 +228,55 @@ const CustomerPortal = () => {
               <Users className="h-4 w-4 shrink-0" />
               <span className="truncate hidden sm:inline">Parrainage</span>
             </TabsTrigger>
+            <TabsTrigger value="settings" className="gap-1 px-2 sm:px-3 py-2 text-xs sm:text-sm flex-1 min-w-0">
+              <SettingsIcon className="h-4 w-4 shrink-0" />
+              <span className="truncate hidden sm:inline">Paramètres</span>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="upcoming">
-            {upcomingBookings.length === 0 ? (
-              <Card className="p-12 text-center">
-                <Calendar className="h-12 w-12 mx-auto text-muted-foreground/30 mb-4" />
-                <h3 className="text-lg font-medium mb-2">Aucune réservation à venir</h3>
-                <p className="text-muted-foreground mb-4">
-                  Vous n'avez pas de réservations programmées
-                </p>
-                <Button onClick={() => navigate("/#booking")} className="bg-accent text-accent-foreground">
-                  Réserver maintenant
-                </Button>
-              </Card>
+            {loading ? <BookingSkeleton /> : upcomingBookings.length === 0 ? (
+              <EmptyState
+                icon={Calendar}
+                title="Aucune réservation à venir"
+                description="Réservez votre premier service en quelques clics"
+                actionLabel="Réserver maintenant"
+                onAction={() => navigate("/#booking")}
+              />
             ) : (
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {upcomingBookings.map(booking => (
-                  <BookingCard key={booking.id} booking={booking} />
+                {upcomingBookings.map((b) => (
+                  <BookingCard key={b.id} booking={b} hasReview={reviewedIds.has(b.id)} {...cardHandlers} />
                 ))}
               </div>
             )}
           </TabsContent>
 
           <TabsContent value="recurring">
-            {recurringBookings.length === 0 ? (
-              <Card className="p-12 text-center">
-                <Repeat className="h-12 w-12 mx-auto text-muted-foreground/30 mb-4" />
-                <h3 className="text-lg font-medium mb-2">Aucun abonnement récurrent</h3>
-                <p className="text-muted-foreground mb-4">
-                  Économisez du temps en programmant des nettoyages réguliers
-                </p>
-                <Button onClick={() => navigate("/#booking")} className="bg-accent text-accent-foreground">
-                  Créer un abonnement
-                </Button>
-              </Card>
+            {loading ? <BookingSkeleton /> : recurringBookings.length === 0 ? (
+              <EmptyState
+                icon={Repeat}
+                title="Aucun abonnement récurrent"
+                description="Économisez du temps avec des nettoyages réguliers"
+                actionLabel="Créer un abonnement"
+                onAction={() => navigate("/#booking")}
+              />
             ) : (
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {recurringBookings.map(booking => (
-                  <BookingCard key={booking.id} booking={booking} />
+                {recurringBookings.map((b) => (
+                  <BookingCard key={b.id} booking={b} hasReview={reviewedIds.has(b.id)} {...cardHandlers} />
                 ))}
               </div>
             )}
           </TabsContent>
 
           <TabsContent value="history">
-            {pastBookings.length === 0 ? (
-              <Card className="p-12 text-center">
-                <Clock className="h-12 w-12 mx-auto text-muted-foreground/30 mb-4" />
-                <h3 className="text-lg font-medium mb-2">Aucun historique</h3>
-                <p className="text-muted-foreground">
-                  Vos réservations passées apparaîtront ici
-                </p>
-              </Card>
+            {loading ? <BookingSkeleton /> : pastBookings.length === 0 ? (
+              <EmptyState icon={Clock} title="Aucun historique" description="Vos réservations passées apparaîtront ici" />
             ) : (
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {pastBookings.map(booking => (
-                  <BookingCard key={booking.id} booking={booking} showActions={false} />
+                {pastBookings.map((b) => (
+                  <BookingCard key={b.id} booking={b} hasReview={reviewedIds.has(b.id)} {...cardHandlers} />
                 ))}
               </div>
             )}
@@ -451,16 +285,20 @@ const CustomerPortal = () => {
           <TabsContent value="analytics">
             <div className="space-y-6">
               <CustomerAnalytics bookings={bookings} profile={profile} />
-              <LoyaltyRewards profile={profile} onPointsUpdate={fetchProfile} />
+              <LoyaltyRewards profile={profile} />
             </div>
           </TabsContent>
 
           <TabsContent value="notifications">
-            <CustomerNotifications onUnreadCountChange={setUnreadNotifCount} />
+            <CustomerNotifications />
           </TabsContent>
 
           <TabsContent value="referral">
             <ReferralProgram />
+          </TabsContent>
+
+          <TabsContent value="settings">
+            <SettingsTab />
           </TabsContent>
         </Tabs>
       </main>
@@ -471,9 +309,9 @@ const CustomerPortal = () => {
       <Dialog open={!!editingBooking} onOpenChange={() => setEditingBooking(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Modifier la réservation</DialogTitle>
+            <DialogTitle>Replanifier la réservation</DialogTitle>
             <DialogDescription>
-              Modifiez les détails de votre réservation
+              Choisissez une nouvelle date et heure (au moins 24h à l'avance).
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -541,7 +379,7 @@ const CustomerPortal = () => {
             <Button variant="outline" onClick={() => setEditingBooking(null)}>
               Annuler
             </Button>
-            <Button onClick={handleSaveEdit} className="bg-accent text-accent-foreground">
+            <Button onClick={saveReschedule} className="bg-accent text-accent-foreground">
               Enregistrer
             </Button>
           </DialogFooter>
@@ -571,12 +409,14 @@ const CustomerPortal = () => {
             <Button variant="outline" onClick={() => setCancelingBooking(null)}>
               Non, garder
             </Button>
-            <Button variant="destructive" onClick={handleCancelBooking}>
+            <Button variant="destructive" onClick={confirmCancel}>
               Oui, annuler
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ReviewDialog booking={reviewBooking} onClose={() => setReviewBooking(null)} />
     </div>
   );
 };

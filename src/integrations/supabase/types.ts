@@ -22,6 +22,7 @@ export type Database = {
           email: string
           full_name: string
           id: string
+          is_paused: boolean
           is_recurring: boolean
           message: string | null
           parent_booking_id: string | null
@@ -42,6 +43,7 @@ export type Database = {
           email: string
           full_name: string
           id?: string
+          is_paused?: boolean
           is_recurring?: boolean
           message?: string | null
           parent_booking_id?: string | null
@@ -62,6 +64,7 @@ export type Database = {
           email?: string
           full_name?: string
           id?: string
+          is_paused?: boolean
           is_recurring?: boolean
           message?: string | null
           parent_booking_id?: string | null
@@ -441,6 +444,8 @@ export type Database = {
           loyalty_points: number | null
           loyalty_tier: string | null
           phone: string | null
+          preferred_time_slot: string | null
+          special_instructions: string | null
           total_spent: number | null
           updated_at: string
           user_id: string
@@ -453,6 +458,8 @@ export type Database = {
           loyalty_points?: number | null
           loyalty_tier?: string | null
           phone?: string | null
+          preferred_time_slot?: string | null
+          special_instructions?: string | null
           total_spent?: number | null
           updated_at?: string
           user_id: string
@@ -465,6 +472,8 @@ export type Database = {
           loyalty_points?: number | null
           loyalty_tier?: string | null
           phone?: string | null
+          preferred_time_slot?: string | null
+          special_instructions?: string | null
           total_spent?: number | null
           updated_at?: string
           user_id?: string
@@ -504,6 +513,42 @@ export type Database = {
           referred_user_id?: string | null
           referrer_id?: string
           status?: string
+        }
+        Relationships: []
+      }
+      reviews: {
+        Row: {
+          booking_id: string
+          comment: string | null
+          created_at: string
+          id: string
+          is_public: boolean
+          rating: number
+          staff_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          booking_id: string
+          comment?: string | null
+          created_at?: string
+          id?: string
+          is_public?: boolean
+          rating: number
+          staff_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          booking_id?: string
+          comment?: string | null
+          created_at?: string
+          id?: string
+          is_public?: boolean
+          rating?: number
+          staff_id?: string | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
