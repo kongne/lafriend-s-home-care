@@ -420,6 +420,16 @@ const CustomerPortal = () => {
       </Dialog>
 
       <ReviewDialog booking={reviewBooking} onClose={() => setReviewBooking(null)} />
+
+      {chatBooking && (
+        <BookingChatDialog
+          open={!!chatBooking}
+          onOpenChange={(o) => !o && setChatBooking(null)}
+          bookingId={chatBooking.id}
+          bookingTitle={`${chatBooking.service_type} — ${chatBooking.preferred_date}`}
+          assignedStaffId={chatBooking.assigned_staff_id}
+        />
+      )}
     </div>
   );
 };
