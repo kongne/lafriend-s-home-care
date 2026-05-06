@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Calendar, Clock, MapPin, Repeat, Edit2, XCircle, CheckCircle2, AlertCircle,
-  Star, Pause, Play, FileDown, MessageCircle,
+  Star, Pause, Play, FileDown, MessageCircle, MessagesSquare,
 } from "lucide-react";
 import { format, parseISO, differenceInHours } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -30,10 +30,11 @@ interface Props {
   onReview?: (b: Booking) => void;
   onInvoice?: (b: Booking) => void;
   onWhatsApp?: (b: Booking) => void;
+  onChat?: (b: Booking) => void;
 }
 
 export const BookingCard = ({
-  booking, hasReview, onReschedule, onCancel, onPauseToggle, onReview, onInvoice, onWhatsApp,
+  booking, hasReview, onReschedule, onCancel, onPauseToggle, onReview, onInvoice, onWhatsApp, onChat,
 }: Props) => {
   const status = STATUS[booking.status] || STATUS.pending;
 
@@ -131,6 +132,11 @@ export const BookingCard = ({
           {isActive && onWhatsApp && booking.phone && (
             <Button variant="ghost" size="sm" onClick={() => onWhatsApp(booking)} className="text-green-600">
               <MessageCircle className="h-3.5 w-3.5 mr-1" /> WhatsApp
+            </Button>
+          )}
+          {onChat && (
+            <Button variant="ghost" size="sm" onClick={() => onChat(booking)} className="text-accent">
+              <MessagesSquare className="h-3.5 w-3.5 mr-1" /> Discuter
             </Button>
           )}
         </div>
