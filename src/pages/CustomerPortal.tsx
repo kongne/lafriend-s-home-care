@@ -35,6 +35,7 @@ import { useReviews } from "@/hooks/portal/useReviews";
 import { useNotifications } from "@/hooks/portal/useNotifications";
 import { downloadInvoice } from "@/lib/invoice";
 import { toast } from "sonner";
+import { BookingChatDialog } from "@/components/chat/BookingChatDialog";
 
 const CustomerPortal = () => {
   const { user, loading: authLoading } = useAuth();
@@ -48,6 +49,7 @@ const CustomerPortal = () => {
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
   const [cancelingBooking, setCancelingBooking] = useState<Booking | null>(null);
   const [reviewBooking, setReviewBooking] = useState<Booking | null>(null);
+  const [chatBooking, setChatBooking] = useState<Booking | null>(null);
   const [editForm, setEditForm] = useState({
     preferred_date: "", preferred_time: "", recurrence_type: "", recurrence_end_date: "",
   });
@@ -124,6 +126,7 @@ const CustomerPortal = () => {
     onReview: setReviewBooking,
     onInvoice: downloadInvoice,
     onWhatsApp: openWhatsApp,
+    onChat: setChatBooking,
   };
 
   const loading = bookingsLoading || profileLoading;
