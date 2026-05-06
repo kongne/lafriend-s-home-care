@@ -100,15 +100,16 @@ export const useChatMessages = (roomId: string | null) => {
 
   const sendMessage = useMutation({
     mutationFn: async (input: { content?: string; type?: ChatMessage["type"]; media_url?: string; media_metadata?: Record<string, unknown>; parent_message_id?: string }) => {
-      const { data, error } = await supabase.from("chat_messages").insert({
+      const row = {
         room_id: roomId!,
         user_id: user!.id,
         content: input.content ?? null,
         type: input.type ?? "text",
         media_url: input.media_url ?? null,
-        media_metadata: input.media_metadata ?? {},
+        media_metadata: (input.media_metadata ?? {}) as never,
         parent_message_id: input.parent_message_id ?? null,
-      }).select("*").single();
+      };
+      const { data, error } = await supabase.from("chat_messages").insert(row).select("*").single();
       if (error) throw error;
       return data as ChatMessage;
     },
