@@ -14,11 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          action: string
+          category: string | null
+          created_at: string
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          category?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          category?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       bookings: {
         Row: {
           address: string
           assigned_staff_id: string | null
           created_at: string
+          discount_amount: number
           email: string
           full_name: string
           id: string
@@ -27,6 +58,7 @@ export type Database = {
           message: string | null
           parent_booking_id: string | null
           phone: string
+          points_redeemed: number
           preferred_date: string
           preferred_time: string
           recurrence_end_date: string | null
@@ -40,6 +72,7 @@ export type Database = {
           address: string
           assigned_staff_id?: string | null
           created_at?: string
+          discount_amount?: number
           email: string
           full_name: string
           id?: string
@@ -48,6 +81,7 @@ export type Database = {
           message?: string | null
           parent_booking_id?: string | null
           phone: string
+          points_redeemed?: number
           preferred_date: string
           preferred_time: string
           recurrence_end_date?: string | null
@@ -61,6 +95,7 @@ export type Database = {
           address?: string
           assigned_staff_id?: string | null
           created_at?: string
+          discount_amount?: number
           email?: string
           full_name?: string
           id?: string
@@ -69,6 +104,7 @@ export type Database = {
           message?: string | null
           parent_booking_id?: string | null
           phone?: string
+          points_redeemed?: number
           preferred_date?: string
           preferred_time?: string
           recurrence_end_date?: string | null
@@ -89,6 +125,171 @@ export type Database = {
           {
             foreignKeyName: "bookings_parent_booking_id_fkey"
             columns: ["parent_booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_messages: {
+        Row: {
+          content: string | null
+          created_at: string
+          deleted_at: string | null
+          id: string
+          is_edited: boolean
+          is_pinned: boolean
+          media_metadata: Json | null
+          media_url: string | null
+          parent_message_id: string | null
+          room_id: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          is_edited?: boolean
+          is_pinned?: boolean
+          media_metadata?: Json | null
+          media_url?: string | null
+          parent_message_id?: string | null
+          room_id: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          is_edited?: boolean
+          is_pinned?: boolean
+          media_metadata?: Json | null
+          media_url?: string | null
+          parent_message_id?: string | null
+          room_id?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_parent_message_id_fkey"
+            columns: ["parent_message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "chat_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_participants: {
+        Row: {
+          id: string
+          joined_at: string
+          last_read_at: string | null
+          role: string
+          room_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          joined_at?: string
+          last_read_at?: string | null
+          role?: string
+          room_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          joined_at?: string
+          last_read_at?: string | null
+          role?: string
+          room_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_participants_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "chat_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_read_receipts: {
+        Row: {
+          id: string
+          message_id: string
+          read_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          message_id: string
+          read_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          message_id?: string
+          read_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_read_receipts_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_rooms: {
+        Row: {
+          booking_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          metadata: Json | null
+          name: string | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          booking_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          metadata?: Json | null
+          name?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          booking_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          metadata?: Json | null
+          name?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_rooms_booking_id_fkey"
+            columns: ["booking_id"]
             isOneToOne: false
             referencedRelation: "bookings"
             referencedColumns: ["id"]
@@ -737,6 +938,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_room_participant: {
+        Args: { _room_id: string; _user_id: string }
+        Returns: boolean
+      }
       process_referral: {
         Args: { p_new_user_id: string; p_referral_code: string }
         Returns: boolean
@@ -744,6 +949,10 @@ export type Database = {
       redeem_loyalty_reward: {
         Args: { p_reward_id: string; p_user_id: string }
         Returns: string
+      }
+      redeem_points_for_booking: {
+        Args: { p_booking_id: string; p_points: number; p_user_id: string }
+        Returns: number
       }
     }
     Enums: {
