@@ -30,6 +30,7 @@ import { BroadcastNotification } from "@/components/admin/BroadcastNotification"
 import { EmailRemindersManagement } from "@/components/admin/EmailRemindersManagement";
 import { exportToCSV, bookingColumns, contactColumns, subscriberColumns } from "@/lib/exportCsv";
 import { exportToPDF } from "@/lib/exportPdf";
+import { downloadReport } from "@/lib/adminReports";
 import { staffEmailSchema } from "@/lib/validation";
 import { cn } from "@/lib/utils";
 import { 
@@ -748,29 +749,39 @@ const Admin = () => {
       case "reports":
         return (
           <div className="space-y-6">
-            <h2 className="text-xl font-semibold">Rapports et Exports</h2>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-semibold">Rapports et Exports</h2>
+                <p className="text-sm text-muted-foreground">CSV agrégé côté serveur • PDF formaté côté client</p>
+              </div>
+            </div>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => void exportToPDF(bookings, "rapport-reservations", bookingColumns, "Rapport des Réservations")}>
-                <CardContent className="pt-6 text-center">
-                  <CalendarDays className="h-12 w-12 mx-auto mb-4 text-accent" />
-                  <h3 className="font-semibold mb-2">Rapport Réservations</h3>
-                  <p className="text-sm text-muted-foreground">Exporter toutes les réservations en PDF</p>
-                </CardContent>
-              </Card>
-              <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => void exportToPDF(contacts, "rapport-messages", contactColumns, "Rapport des Messages")}>
-                <CardContent className="pt-6 text-center">
-                  <Mail className="h-12 w-12 mx-auto mb-4 text-purple-500" />
-                  <h3 className="font-semibold mb-2">Rapport Messages</h3>
-                  <p className="text-sm text-muted-foreground">Exporter tous les messages en PDF</p>
-                </CardContent>
-              </Card>
-              <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => void exportToPDF(subscribers, "rapport-abonnes", subscriberColumns, "Rapport des Abonnés")}>
-                <CardContent className="pt-6 text-center">
-                  <Users className="h-12 w-12 mx-auto mb-4 text-green-500" />
-                  <h3 className="font-semibold mb-2">Rapport Abonnés</h3>
-                  <p className="text-sm text-muted-foreground">Exporter tous les abonnés en PDF</p>
-                </CardContent>
-              </Card>
+              {[
+                { type: "bookings" as const, label: "Réservations", desc: "Toutes les réservations + remises et points", icon: CalendarDays, color: "text-accent", pdf: () => exportToPDF(bookings, "rapport-reservations", bookingColumns, "Rapport des Réservations") },
+                { type: "contacts" as const, label: "Messages", desc: "Tous les messages reçus", icon: Mail, color: "text-purple-500", pdf: () => exportToPDF(contacts, "rapport-messages", contactColumns, "Rapport des Messages") },
+                { type: "subscribers" as const, label: "Abonnés newsletter", desc: "Liste des abonnés actifs", icon: Users, color: "text-green-500", pdf: () => exportToPDF(subscribers, "rapport-abonnes", subscriberColumns, "Rapport des Abonnés") },
+                { type: "revenue" as const, label: "Revenus mensuels", desc: "Synthèse par mois (estimé)", icon: TrendingUp, color: "text-emerald-500" },
+                { type: "loyalty" as const, label: "Transactions fidélité", desc: "Points gagnés / utilisés", icon: BarChart3, color: "text-amber-500" },
+                { type: "referrals" as const, label: "Parrainages", desc: "Codes et conversions", icon: Send, color: "text-blue-500" },
+              ].map((r) => (
+                <Card key={r.type} className="hover:shadow-md transition-shadow">
+                  <CardContent className="pt-6 text-center space-y-3">
+                    <r.icon className={`h-12 w-12 mx-auto ${r.color}`} />
+                    <h3 className="font-semibold">{r.label}</h3>
+                    <p className="text-sm text-muted-foreground">{r.desc}</p>
+                    <div className="flex gap-2 justify-center pt-2">
+                      <Button size="sm" variant="outline" onClick={() => void downloadReport(r.type)}>
+                        <Download className="h-3.5 w-3.5 mr-1" /> CSV
+                      </Button>
+                      {r.pdf && (
+                        <Button size="sm" variant="ghost" onClick={() => void r.pdf!()}>
+                          <FileText className="h-3.5 w-3.5 mr-1" /> PDF
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           </div>
         );
