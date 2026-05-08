@@ -6,6 +6,7 @@ import { Loader2, Send, Paperclip, Image as ImageIcon, Pin, Trash2, X } from "lu
 import { useChatMessages, type ChatMessage } from "@/hooks/chat/useChatMessages";
 import { useAuth } from "@/hooks/useAuth";
 import { uploadChatAttachment, transformedUrl, fileKind } from "@/lib/mediaUpload";
+import { VoiceRecorder } from "@/components/chat/VoiceRecorder";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -63,6 +64,21 @@ export const ChatRoom = ({ roomId, title, onClose }: Props) => {
     setUploading(false);
     setProgress(0);
     if (fileRef.current) fileRef.current.value = "";
+  };
+
+  const sendVoice = async (blob: Blob, durationSec: number) => {
+    if (!user?.id) return;
+    try {
+      const file = new File([blob], `voice-${Date.now()}.webm`, { type: blob.type || "audio/webm" });
+      const result = await uploadChatAttachment(file, user.id, roomId);
+      sendMessage.mutate({
+        type: "audio",
+        media_url: result.url,
+        media_metadata: { name: file.name, size: file.size, mime: file.type, path: result.path, duration: durationSec },
+      });
+    } catch {
+      toast.error("Échec de l'envoi de la note vocale");
+    }
   };
 
   const pinned = messages.filter((m) => m.is_pinned);
@@ -125,6 +141,7 @@ export const ChatRoom = ({ roomId, title, onClose }: Props) => {
         <Button variant="ghost" size="icon" onClick={() => fileRef.current?.click()} disabled={uploading}>
           <Paperclip className="h-4 w-4" />
         </Button>
+        <VoiceRecorder onSend={sendVoice} maxSec={300} />
         <Input
           value={text}
           onChange={(e) => { setText(e.target.value); sendTyping(); }}
