@@ -1,64 +1,72 @@
+# Scope — One large pass
 
+Given the size, I'll execute in 4 sequential phases, each ending with a deployable checkpoint. All emails stay on Gmail SMTP with branded HTML templates.
 
-# Comprehensive Fix & Enhancement Plan
+## Phase 1 — The 4 requested features
 
-## Current Issues Identified
+### 1.1 CSV reports export (admin)
+- New edge function `export-reports` (verify_jwt=true, admin-gated): aggregates bookings, contacts, subscribers, loyalty, referrals into CSVs. Returns base64-encoded ZIP or a single CSV per `type` query param.
+- Update `src/pages/Admin.tsx` reports tab + `QuickActions` to call the function and trigger download for: bookings, contacts, subscribers, revenue summary, loyalty transactions.
+- Reuse existing `exportToCSV` for client-side fallback; edge function adds server-aggregated reports (revenue by month, top customers, staff workload).
 
-1. **Console errors**: `ChatWidget` and `BookingModal` missing `forwardRef` — causes React warnings
-2. **NotificationCenter** is shared between admin and customer — same dropdown component, no dedicated customer notification page
-3. **Bulk actions** only support bookings/contacts — no bulk actions for referrals or reminders
-4. **BulkActions** has no success summary after completion (just a toast)
-5. **Edge functions** need redeployment to ensure latest code is live
-6. **Notifications RLS**: users can't delete their own notifications (only admins can)
+### 1.2 Pay-with-Points in BookingForm
+- Add a step in `BookingForm` (after service selection, before submit) showing user's loyalty balance.
+- Slider/input to choose points to redeem (multiples of 10), live preview: estimated price → discount → final price.
+- On successful insert, call `redeem_points_for_booking(user_id, booking_id, points)` RPC.
+- Show confirmation summary card with breakdown.
 
-## Plan
+### 1.3 Voice note recorder in chat
+- New component `VoiceRecorder.tsx` using `MediaRecorder` (audio/webm;codecs=opus), max 5 min with countdown.
+- Live waveform visualizer (optional: simple animated bars).
+- Upload to `chat-attachments` via existing `uploadChatAttachment` (already supports audio kind).
+- Send as `chat_messages` with `type='audio'`.
+- In `ChatRoom.tsx` audio bubbles: HTML5 `<audio>` player + duration display.
 
-### 1. Fix React forwardRef warnings
-- Wrap `ChatWidget` and `BookingModal` with `React.forwardRef` to eliminate console errors
+### 1.4 Branded transactional emails (Gmail SMTP)
+- New edge functions: `send-reschedule-notification`, `send-cancellation-notification` (mirror existing `send-booking-confirmation` style).
+- Refresh `send-booking-confirmation` and `send-status-notification` templates with consistent branded HTML (navy/gold, logo, Poppins fallback, FR/EN).
+- Wire from `BookingCard` reschedule/cancel actions and admin booking status updates.
 
-### 2. Create dedicated Customer Notification Page
-- Create `src/components/customer/CustomerNotifications.tsx` — a full-page notification center (not a dropdown)
-- Features: unread counter badge in tabs, search/filter by type, "mark all read" button, swipe-to-archive on mobile
-- Add a "Notifications" tab to `CustomerPortal.tsx` TabsList with unread badge counter
-- Keep the dropdown `NotificationCenter` in the header as a quick-access bell, but clicking "Voir tout" navigates to the dedicated tab
+## Phase 2 — KYC / Identity Verification
 
-### 3. Enhance BulkActions with success summaries and loading states
-- Update `BulkActions.tsx`: after action completes, show a summary toast with count of successful/failed items
-- Add a progress indicator during bulk operations (spinner overlay on the action bar)
-- Extend `BulkActions` type prop to support `'referrals' | 'reminders'` in addition to existing types
-- Add referral bulk actions: mark completed, delete
-- Add reminder bulk actions: cancel, delete
+- Migration: `identities` private storage bucket; `identity_documents` table (user_id, doc_type cni|passport, front_url, back_url, selfie_url, status pending|approved|rejected, reviewed_by, reviewed_at, rejection_reason, expires_at). RLS: owner + admin only.
+- Add `is_verified boolean DEFAULT false` to `profiles` and `staff_members`.
+- Onboarding flow `src/pages/Onboarding.tsx`:
+  - Step 1: Phone OTP (Supabase phone auth — needs Twilio already configured ✓).
+  - Step 2: Upload CNI front/back (file inputs, image compression).
+  - Step 3: Selfie capture via `getUserMedia`.
+- Admin verification queue `src/components/admin/VerificationQueue.tsx`: side-by-side ID vs Selfie, Approve/Reject with reason → notification to user.
+- Cron-style edge function `purge-rejected-identities` (manual trigger or pg_cron): delete docs older than 30 days where status='rejected' or user deleted.
 
-### 4. Add bulk actions to Admin referrals and reminders tabs
-- Update `ReferralManagement.tsx` to integrate `BulkActions` with selectable referral rows
-- Update `EmailRemindersManagement.tsx` to integrate `BulkActions` with selectable reminder rows
+## Phase 3 — Audit & monitoring
 
-### 5. Add notification DELETE policy for users
-- Database migration: add RLS policy allowing users to delete their own notifications (`auth.uid() = user_id`)
+- Extend `audit_logs` table (already exists): add triggers on `bookings`, `staff_members`, `identity_documents`, `user_roles` for INSERT/UPDATE/DELETE → log to `audit_logs`.
+- Edge function `security-alert`: on suspicious event (5 failed logins, admin login from new IP), email admin via Gmail SMTP.
+- New admin tab "Security": active sessions count, recent audit events table, failed login attempts (from auth.audit_log_entries via service role), Emergency Kill Switch toggle (sets `app_settings.maintenance_mode=true` → app shows maintenance page).
+- New `app_settings` singleton table.
 
-### 6. Deploy all updated edge functions
-- Deploy: `send-booking-confirmation`, `send-status-notification`, `broadcast-notification`, `send-appointment-reminder`, `get-referral-leaderboard`, `send-notification`, `send-referral-notification`, `send-feedback-request`, `send-admin-digest`, `send-sms-notification`
+## Phase 4 — Admin MFA + RLS audit
 
-### 7. Mobile responsiveness pass
-- Verify and fix responsive classes in `CustomerNotifications` (new component) — ensure all grids use `grid-cols-1` on mobile
-- Ensure `BulkActions` action bar stacks vertically on mobile with full-width buttons
+- Enable Supabase MFA via `configure_auth`.
+- Force MFA enrollment for admins: redirect from `/admin` to `/admin/setup-mfa` if `aal < aal2` and role='admin'.
+- Run `supabase--linter` + manual RLS review pass on every table; fix any gaps found.
+- Enable HIBP password protection.
+- Update `mem://security/access-control-and-rls` and security memory.
 
-## Technical Details
+## Technical notes
 
-### Files to create:
-- `src/components/customer/CustomerNotifications.tsx`
+- All new edge functions follow `{ ok, data?, error? }` HTTP 200 contract (per project rule).
+- All Zod schemas use v4 `.issues`.
+- Translations FR/EN added to `LanguageContext` for every new UI string.
+- Confetti on successful verification approval (matches existing pattern).
+- Realtime invalidation via existing TanStack Query hooks.
 
-### Files to edit:
-- `src/components/ChatWidget.tsx` — add forwardRef
-- `src/components/BookingModal.tsx` — add forwardRef  
-- `src/components/admin/BulkActions.tsx` — extend types, add success summaries
-- `src/pages/CustomerPortal.tsx` — add Notifications tab
-- `src/components/admin/ReferralManagement.tsx` — add bulk selection
-- `src/components/admin/EmailRemindersManagement.tsx` — add bulk selection
+## Out of scope (will flag at the end)
 
-### Database migration:
-- Add DELETE policy for users on notifications table: `(auth.uid() IS NOT NULL) AND (user_id = auth.uid())`
+- Face comparison API (Rekognition) — needs paid AWS account; admin manual review only for now.
+- Database rollback automation — Supabase handles backups natively, just document in ADMIN_PLAYBOOK.md.
+- Custom domain for branded `From:` email — stays `lafriendsservices@gmail.com`.
 
-### Edge function deployments:
-- All 10 edge functions redeployed to ensure latest code is live
+## Estimated execution
 
+This will span many tool calls (~15-25 file creations, 4-5 migrations, 6+ edge functions). Expect a long single response.
