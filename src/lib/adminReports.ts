@@ -5,13 +5,6 @@ export type ReportType = "bookings" | "contacts" | "subscribers" | "loyalty" | "
 
 export const downloadReport = async (type: ReportType): Promise<boolean> => {
   try {
-    const { data, error } = await supabase.functions.invoke("export-reports", {
-      body: {},
-      method: "POST",
-      // pass type via querystring
-    });
-    // The functions.invoke client doesn't accept query params directly,
-    // so we call via fetch instead:
     const session = (await supabase.auth.getSession()).data.session;
     if (!session) {
       toast.error("Session expirée");
