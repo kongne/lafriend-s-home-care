@@ -81,6 +81,8 @@ const CustomerPortal = () => {
 
   const saveReschedule = async () => {
     if (!editingBooking) return;
+    const oldDate = editingBooking.preferred_date;
+    const oldTime = editingBooking.preferred_time;
     try {
       await updateBooking.mutateAsync({
         id: editingBooking.id,
@@ -91,6 +93,18 @@ const CustomerPortal = () => {
           recurrence_end_date: editForm.recurrence_end_date || null,
         },
       });
+      void supabase.functions.invoke("send-reschedule-notification", {
+        body: {
+          clientEmail: editingBooking.email,
+          clientName: editingBooking.full_name,
+          serviceType: editingBooking.service_type,
+          oldDate, oldTime,
+          newDate: editForm.preferred_date,
+          newTime: editForm.preferred_time,
+          address: editingBooking.address,
+          language: "fr",
+        },
+      });
       toast.success("Réservation replanifiée");
       setEditingBooking(null);
     } catch { /* handled by mutation */ }
@@ -98,10 +112,21 @@ const CustomerPortal = () => {
 
   const confirmCancel = async () => {
     if (!cancelingBooking) return;
+    const b = cancelingBooking;
     try {
       await updateBooking.mutateAsync({
-        id: cancelingBooking.id,
+        id: b.id,
         values: { status: "cancelled" },
+      });
+      void supabase.functions.invoke("send-cancellation-notification", {
+        body: {
+          clientEmail: b.email,
+          clientName: b.full_name,
+          serviceType: b.service_type,
+          preferredDate: b.preferred_date,
+          preferredTime: b.preferred_time,
+          language: "fr",
+        },
       });
       toast.success("Réservation annulée");
       setCancelingBooking(null);
