@@ -36,6 +36,7 @@ import { useNotifications } from "@/hooks/portal/useNotifications";
 import { downloadInvoice } from "@/lib/invoice";
 import { toast } from "sonner";
 import { BookingChatDialog } from "@/components/chat/BookingChatDialog";
+import { supabase } from "@/integrations/supabase/client";
 
 const CustomerPortal = () => {
   const { user, loading: authLoading } = useAuth();
