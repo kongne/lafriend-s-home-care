@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,12 +10,13 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Loader2, Repeat, Shield, MessageCircle, CheckCircle2, ArrowLeft, ArrowRight, Calculator } from "lucide-react";
+import { Loader2, Repeat, Shield, MessageCircle, CheckCircle2, ArrowLeft, ArrowRight, Calculator, Sparkles } from "lucide-react";
 import { bookingSchema, rateLimit } from "@/lib/validation";
 import { error as logError } from "@/lib/logger";
 import { Switch } from "@/components/ui/switch";
 import { getRecaptchaToken, verifyRecaptchaToken } from "@/lib/recaptcha";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Slider } from "@/components/ui/slider";
 
 const SERVICE_BASE_PRICE: Record<string, number> = {
   residential: 25000,
@@ -48,6 +50,8 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
   const [step, setStep] = useState<1 | 2>(1);
   const [submitted, setSubmitted] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [loyaltyPoints, setLoyaltyPoints] = useState(0);
+  const [pointsToRedeem, setPointsToRedeem] = useState(0);
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -65,13 +69,21 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
     confirmViaWhatsApp: false,
   });
 
+  useEffect(() => {
+    if (!user?.id) { setLoyaltyPoints(0); return; }
+    void supabase.from("profiles").select("loyalty_points").eq("user_id", user.id).maybeSingle()
+      .then(({ data }) => setLoyaltyPoints(data?.loyalty_points || 0));
+  }, [user?.id]);
+
   const hours = parseInt(formData.estimatedHours || "0", 10) || 0;
   const basePrice = SERVICE_BASE_PRICE[formData.serviceType] || 0;
   const subtotal = basePrice * Math.max(1, hours / 2);
   const discount = formData.isRecurring && formData.recurrenceType
     ? subtotal * (RECURRENCE_DISCOUNT[formData.recurrenceType] || 0)
     : 0;
-  const estimatedTotal = Math.round(subtotal - discount);
+  const pointsDiscount = pointsToRedeem * 10; // 1 pt = 10 FCFA
+  const estimatedTotal = Math.max(0, Math.round(subtotal - discount - pointsDiscount));
+  const maxRedeemable = Math.min(loyaltyPoints, Math.floor(Math.max(0, subtotal - discount) / 10));
   const formatPrice = (n: number) => n.toLocaleString("fr-FR") + " FCFA";
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -156,6 +168,26 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
       });
 
       if (error) throw error;
+
+      // Apply Pay-with-Points if any
+      if (user?.id && pointsToRedeem > 0) {
+        try {
+          const { data: insertedRows } = await supabase
+            .from("bookings")
+            .select("id")
+            .eq("user_id", user.id)
+            .order("created_at", { ascending: false })
+            .limit(1);
+          const newBookingId = insertedRows?.[0]?.id;
+          if (newBookingId) {
+            await supabase.rpc("redeem_points_for_booking", {
+              p_user_id: user.id,
+              p_booking_id: newBookingId,
+              p_points: pointsToRedeem,
+            });
+          }
+        } catch (e) { logError("Points redemption failed:", e); }
+      }
 
       try {
         const { data: emailData, error: emailErr } = await supabase.functions.invoke('send-booking-confirmation', {
