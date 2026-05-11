@@ -273,6 +273,9 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
             <span className="text-muted-foreground">Estimation</span>
             <span className="font-bold text-accent">{formatPrice(estimatedTotal)}</span>
           </div>
+          {pointsToRedeem > 0 && (
+            <p className="text-xs text-green-600 text-right">{pointsToRedeem} pts utilisés (-{formatPrice(pointsDiscount)})</p>
+          )}
         </div>
         <Button onClick={reset} className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
           Fermer
