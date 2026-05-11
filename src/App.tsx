@@ -13,6 +13,8 @@ import AdminSettings from "./pages/AdminSettings";
 import CustomerPortal from "./pages/CustomerPortal";
 import ServiceDetails from "./pages/ServiceDetails";
 import QuoteRequest from "./pages/QuoteRequest";
+import Onboarding from "./pages/Onboarding";
+import AdminVerifications from "./pages/AdminVerifications";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -39,7 +41,9 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/admin/settings" element={<AdminSettings />} />
+              <Route path="/admin/verifications" element={<AdminVerifications />} />
               <Route path="/customer-portal" element={<CustomerPortal />} />
+              <Route path="/onboarding" element={<Onboarding />} />
               <Route path="/services/:serviceId" element={<ServiceDetails />} />
               <Route path="/quote" element={<QuoteRequest />} />
               <Route path="*" element={<NotFound />} />

@@ -152,7 +152,7 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
         ? formData.customService
         : SERVICE_LABEL[formData.serviceType] || validation.data.serviceType;
 
-      const { error } = await supabase.from("bookings").insert({
+      const { data: insertedBooking, error } = await supabase.from("bookings").insert({
         user_id: user?.id || null,
         full_name: validation.data.fullName,
         email: validation.data.email,
@@ -165,27 +165,19 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
         is_recurring: formData.isRecurring,
         recurrence_type: formData.isRecurring ? formData.recurrenceType : null,
         recurrence_end_date: formData.isRecurring && formData.recurrenceEndDate ? formData.recurrenceEndDate : null
-      });
+      }).select("id").single();
 
       if (error) throw error;
 
       // Apply Pay-with-Points if any
-      if (user?.id && pointsToRedeem > 0) {
+      if (user?.id && pointsToRedeem > 0 && insertedBooking?.id) {
         try {
-          const { data: insertedRows } = await supabase
-            .from("bookings")
-            .select("id")
-            .eq("user_id", user.id)
-            .order("created_at", { ascending: false })
-            .limit(1);
-          const newBookingId = insertedRows?.[0]?.id;
-          if (newBookingId) {
-            await supabase.rpc("redeem_points_for_booking", {
-              p_user_id: user.id,
-              p_booking_id: newBookingId,
-              p_points: pointsToRedeem,
-            });
-          }
+          await supabase.rpc("redeem_points_for_booking", {
+            p_user_id: user.id,
+            p_booking_id: insertedBooking.id,
+            p_points: pointsToRedeem,
+          });
+          setLoyaltyPoints((p) => Math.max(0, p - pointsToRedeem));
         } catch (e) { logError("Points redemption failed:", e); }
       }
 
@@ -281,6 +273,9 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
             <span className="text-muted-foreground">Estimation</span>
             <span className="font-bold text-accent">{formatPrice(estimatedTotal)}</span>
           </div>
+          {pointsToRedeem > 0 && (
+            <p className="text-xs text-green-600 text-right">{pointsToRedeem} pts utilisés (-{formatPrice(pointsDiscount)})</p>
+          )}
         </div>
         <Button onClick={reset} className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
           Fermer
@@ -368,6 +363,48 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
                   <span className="text-accent text-lg">{formatPrice(estimatedTotal)}</span>
                 </div>
                 <p className="text-xs text-muted-foreground">* Estimation indicative — confirmation après visite.</p>
+              </div>
+            )}
+
+            {user?.id && loyaltyPoints > 0 && formData.serviceType && hours > 0 && (
+              <div className="bg-gradient-to-br from-primary/5 to-accent/10 border border-accent/30 rounded-lg p-4 space-y-3 animate-in fade-in slide-in-from-top-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm font-semibold">
+                    <Sparkles className="h-4 w-4 text-accent" />
+                    Payer avec mes points fidélité
+                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    Solde : <span className="font-bold text-accent">{loyaltyPoints} pts</span>
+                  </span>
+                </div>
+                {maxRedeemable > 0 ? (
+                  <>
+                    <Slider
+                      value={[Math.min(pointsToRedeem, maxRedeemable)]}
+                      onValueChange={([v]) => setPointsToRedeem(Math.floor(v / 10) * 10)}
+                      min={0}
+                      max={maxRedeemable}
+                      step={10}
+                    />
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>0 pts</span>
+                      <span>{maxRedeemable} pts max</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-sm pt-1">
+                      <div className="bg-background/60 rounded p-2">
+                        <p className="text-muted-foreground text-xs">Points utilisés</p>
+                        <p className="font-bold">{pointsToRedeem} pts</p>
+                      </div>
+                      <div className="bg-background/60 rounded p-2">
+                        <p className="text-muted-foreground text-xs">Réduction</p>
+                        <p className="font-bold text-green-600">-{formatPrice(pointsDiscount)}</p>
+                      </div>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground">1 point = 10 FCFA · paliers de 10</p>
+                  </>
+                ) : (
+                  <p className="text-xs text-muted-foreground">Sélectionnez un service pour activer la réduction.</p>
+                )}
               </div>
             )}
 
@@ -488,9 +525,31 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
             </div>
 
             {formData.serviceType && hours > 0 && (
-              <div className="bg-muted/50 p-3 rounded-lg text-sm flex justify-between items-center">
-                <span className="text-muted-foreground">Estimation total</span>
-                <span className="font-bold text-accent">{formatPrice(estimatedTotal)}</span>
+              <div className="bg-gradient-to-r from-accent/10 to-accent/5 border border-accent/30 rounded-lg p-4 space-y-2 text-sm">
+                <div className="flex items-center gap-2 font-semibold mb-1">
+                  <Calculator className="h-4 w-4 text-accent" />
+                  Récapitulatif
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Sous-total</span>
+                  <span>{formatPrice(Math.round(subtotal))}</span>
+                </div>
+                {discount > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Remise abonnement</span>
+                    <span>-{formatPrice(Math.round(discount))}</span>
+                  </div>
+                )}
+                {pointsToRedeem > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Points fidélité ({pointsToRedeem} pts)</span>
+                    <span>-{formatPrice(pointsDiscount)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between border-t border-accent/20 pt-2 font-bold">
+                  <span>Total à payer</span>
+                  <span className="text-accent text-lg">{formatPrice(estimatedTotal)}</span>
+                </div>
               </div>
             )}
 
