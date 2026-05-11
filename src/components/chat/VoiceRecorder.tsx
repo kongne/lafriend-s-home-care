@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Mic, Square, Trash2, Send, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface Props {
   onSend: (blob: Blob, durationSec: number) => Promise<void> | void;
@@ -45,12 +46,15 @@ export const VoiceRecorder = ({ onSend, maxSec = 300 }: Props) => {
       timerRef.current = window.setInterval(() => {
         setElapsed((s) => {
           const next = s + 1;
-          if (next >= maxSec) stop();
+          if (next >= maxSec) {
+            toast.error(`Limite atteinte : ${Math.floor(maxSec / 60)} min maximum par note vocale`);
+            stop();
+          }
           return next;
         });
       }, 1000);
     } catch {
-      alert("Autorisation microphone refusée");
+      toast.error("Autorisation microphone refusée");
     }
   };
 
