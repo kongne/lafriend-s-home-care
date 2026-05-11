@@ -522,9 +522,31 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
             </div>
 
             {formData.serviceType && hours > 0 && (
-              <div className="bg-muted/50 p-3 rounded-lg text-sm flex justify-between items-center">
-                <span className="text-muted-foreground">Estimation total</span>
-                <span className="font-bold text-accent">{formatPrice(estimatedTotal)}</span>
+              <div className="bg-gradient-to-r from-accent/10 to-accent/5 border border-accent/30 rounded-lg p-4 space-y-2 text-sm">
+                <div className="flex items-center gap-2 font-semibold mb-1">
+                  <Calculator className="h-4 w-4 text-accent" />
+                  Récapitulatif
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Sous-total</span>
+                  <span>{formatPrice(Math.round(subtotal))}</span>
+                </div>
+                {discount > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Remise abonnement</span>
+                    <span>-{formatPrice(Math.round(discount))}</span>
+                  </div>
+                )}
+                {pointsToRedeem > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Points fidélité ({pointsToRedeem} pts)</span>
+                    <span>-{formatPrice(pointsDiscount)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between border-t border-accent/20 pt-2 font-bold">
+                  <span>Total à payer</span>
+                  <span className="text-accent text-lg">{formatPrice(estimatedTotal)}</span>
+                </div>
               </div>
             )}
 
