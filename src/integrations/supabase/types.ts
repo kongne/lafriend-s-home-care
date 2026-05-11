@@ -490,6 +490,54 @@ export type Database = {
           },
         ]
       }
+      identity_documents: {
+        Row: {
+          back_url: string | null
+          created_at: string
+          doc_type: string
+          expires_at: string | null
+          front_url: string | null
+          id: string
+          rejection_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          selfie_url: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          back_url?: string | null
+          created_at?: string
+          doc_type: string
+          expires_at?: string | null
+          front_url?: string | null
+          id?: string
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          selfie_url?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          back_url?: string | null
+          created_at?: string
+          doc_type?: string
+          expires_at?: string | null
+          front_url?: string | null
+          id?: string
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          selfie_url?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       loyalty_rewards: {
         Row: {
           created_at: string
@@ -642,6 +690,7 @@ export type Database = {
           created_at: string
           full_name: string | null
           id: string
+          is_verified: boolean
           loyalty_points: number | null
           loyalty_tier: string | null
           phone: string | null
@@ -656,6 +705,7 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id?: string
+          is_verified?: boolean
           loyalty_points?: number | null
           loyalty_tier?: string | null
           phone?: string | null
@@ -670,6 +720,7 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id?: string
+          is_verified?: boolean
           loyalty_points?: number | null
           loyalty_tier?: string | null
           phone?: string | null
