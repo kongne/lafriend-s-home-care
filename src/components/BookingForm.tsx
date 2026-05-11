@@ -363,6 +363,48 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
               </div>
             )}
 
+            {user?.id && loyaltyPoints > 0 && formData.serviceType && hours > 0 && (
+              <div className="bg-gradient-to-br from-primary/5 to-accent/10 border border-accent/30 rounded-lg p-4 space-y-3 animate-in fade-in slide-in-from-top-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm font-semibold">
+                    <Sparkles className="h-4 w-4 text-accent" />
+                    Payer avec mes points fidélité
+                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    Solde : <span className="font-bold text-accent">{loyaltyPoints} pts</span>
+                  </span>
+                </div>
+                {maxRedeemable > 0 ? (
+                  <>
+                    <Slider
+                      value={[Math.min(pointsToRedeem, maxRedeemable)]}
+                      onValueChange={([v]) => setPointsToRedeem(Math.floor(v / 10) * 10)}
+                      min={0}
+                      max={maxRedeemable}
+                      step={10}
+                    />
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>0 pts</span>
+                      <span>{maxRedeemable} pts max</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-sm pt-1">
+                      <div className="bg-background/60 rounded p-2">
+                        <p className="text-muted-foreground text-xs">Points utilisés</p>
+                        <p className="font-bold">{pointsToRedeem} pts</p>
+                      </div>
+                      <div className="bg-background/60 rounded p-2">
+                        <p className="text-muted-foreground text-xs">Réduction</p>
+                        <p className="font-bold text-green-600">-{formatPrice(pointsDiscount)}</p>
+                      </div>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground">1 point = 10 FCFA · paliers de 10</p>
+                  </>
+                ) : (
+                  <p className="text-xs text-muted-foreground">Sélectionnez un service pour activer la réduction.</p>
+                )}
+              </div>
+            )}
+
             <div className="space-y-4 p-4 bg-muted/50 rounded-lg border border-dashed">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
