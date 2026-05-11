@@ -152,7 +152,7 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
         ? formData.customService
         : SERVICE_LABEL[formData.serviceType] || validation.data.serviceType;
 
-      const { error } = await supabase.from("bookings").insert({
+      const { data: insertedBooking, error } = await supabase.from("bookings").insert({
         user_id: user?.id || null,
         full_name: validation.data.fullName,
         email: validation.data.email,
@@ -165,27 +165,19 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
         is_recurring: formData.isRecurring,
         recurrence_type: formData.isRecurring ? formData.recurrenceType : null,
         recurrence_end_date: formData.isRecurring && formData.recurrenceEndDate ? formData.recurrenceEndDate : null
-      });
+      }).select("id").single();
 
       if (error) throw error;
 
       // Apply Pay-with-Points if any
-      if (user?.id && pointsToRedeem > 0) {
+      if (user?.id && pointsToRedeem > 0 && insertedBooking?.id) {
         try {
-          const { data: insertedRows } = await supabase
-            .from("bookings")
-            .select("id")
-            .eq("user_id", user.id)
-            .order("created_at", { ascending: false })
-            .limit(1);
-          const newBookingId = insertedRows?.[0]?.id;
-          if (newBookingId) {
-            await supabase.rpc("redeem_points_for_booking", {
-              p_user_id: user.id,
-              p_booking_id: newBookingId,
-              p_points: pointsToRedeem,
-            });
-          }
+          await supabase.rpc("redeem_points_for_booking", {
+            p_user_id: user.id,
+            p_booking_id: insertedBooking.id,
+            p_points: pointsToRedeem,
+          });
+          setLoyaltyPoints((p) => Math.max(0, p - pointsToRedeem));
         } catch (e) { logError("Points redemption failed:", e); }
       }
 
