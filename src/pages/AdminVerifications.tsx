@@ -110,8 +110,8 @@ const VerificationCard = ({ doc, onUpdated }: { doc: IdentityDocument; onUpdated
   }, [doc.id]);
 
   const decide = async (status: "approved" | "rejected") => {
-    if (status === "rejected" && !reason.trim()) {
-      toast.error("Précisez la raison du rejet");
+    if (status === "rejected" && reason.trim().length < 5) {
+      toast.error("Motif obligatoire (min. 5 caractères) pour rejeter");
       return;
     }
     setActing(status === "approved" ? "approve" : "reject");
@@ -179,9 +179,12 @@ const VerificationCard = ({ doc, onUpdated }: { doc: IdentityDocument; onUpdated
           if (!url) return null;
           return (
             <div key={label} className="space-y-1">
-              <p className="text-xs font-medium uppercase text-muted-foreground">{label === "selfie" ? "Selfie" : label === "front" ? "Recto" : "Verso"}</p>
-              <a href={url} target="_blank" rel="noreferrer">
-                <img src={url} alt={label} className="w-full h-48 object-cover rounded border hover:opacity-90 transition" />
+              <p className="text-xs font-medium uppercase text-muted-foreground">
+                {label === "selfie" ? "Selfie" : label === "front" ? "Recto" : "Verso"}
+                <span className="ml-2 normal-case opacity-70">(URL signée · 1h)</span>
+              </p>
+              <a href={url} target="_blank" rel="noopener noreferrer">
+                <img src={url} alt={label} className="w-full h-48 object-cover rounded border hover:opacity-90 transition" referrerPolicy="no-referrer" />
               </a>
             </div>
           );
@@ -191,16 +194,30 @@ const VerificationCard = ({ doc, onUpdated }: { doc: IdentityDocument; onUpdated
       {doc.status === "pending" && (
         <div className="space-y-2 pt-2 border-t">
           <Textarea
-            placeholder="Raison du rejet (obligatoire si rejet)"
+            placeholder="Motif du rejet (obligatoire pour rejeter — min. 5 caractères)"
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             rows={2}
+            aria-required
           />
+          <p className="text-xs text-muted-foreground">
+            {reason.trim().length === 0
+              ? "Le motif est obligatoire pour rejeter une vérification."
+              : reason.trim().length < 5
+                ? "Motif trop court (min. 5 caractères)."
+                : `${reason.trim().length} caractères`}
+          </p>
           <div className="flex gap-2">
             <Button onClick={() => decide("approved")} disabled={!!acting} className="flex-1 bg-green-600 hover:bg-green-700 text-white">
               {acting === "approve" ? <Loader2 className="h-4 w-4 animate-spin" /> : <><CheckCircle2 className="mr-2 h-4 w-4" /> Approuver</>}
             </Button>
-            <Button onClick={() => decide("rejected")} disabled={!!acting} variant="destructive" className="flex-1">
+            <Button
+              onClick={() => decide("rejected")}
+              disabled={!!acting || reason.trim().length < 5}
+              variant="destructive"
+              className="flex-1"
+              title={reason.trim().length < 5 ? "Saisissez un motif d'au moins 5 caractères" : undefined}
+            >
               {acting === "reject" ? <Loader2 className="h-4 w-4 animate-spin" /> : <><XCircle className="mr-2 h-4 w-4" /> Rejeter</>}
             </Button>
           </div>
