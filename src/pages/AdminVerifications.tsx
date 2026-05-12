@@ -127,6 +127,35 @@ const VerificationCard = ({ doc, onUpdated }: { doc: IdentityDocument; onUpdated
     if (error) toast.error(error.message);
     else {
       toast.success(status === "approved" ? "Identité validée" : "Identité rejetée");
+      // Fetch user profile/email to send branded notification
+      try {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("user_id", doc.user_id)
+          .maybeSingle();
+        // Get the user's email via bookings (most recent) — auth.users not directly readable
+        const { data: booking } = await supabase
+          .from("bookings")
+          .select("email, full_name")
+          .eq("user_id", doc.user_id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        const email = booking?.email;
+        const name = profile?.full_name || booking?.full_name || "Client";
+        if (email) {
+          await supabase.functions.invoke("send-kyc-decision", {
+            body: {
+              clientEmail: email,
+              clientName: name,
+              decision: status,
+              reason: status === "rejected" ? reason : undefined,
+              language: "fr",
+            },
+          });
+        }
+      } catch (_) { /* best-effort */ }
       onUpdated();
     }
     setActing(null);
