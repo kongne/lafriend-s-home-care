@@ -38,6 +38,7 @@ import { toast } from "sonner";
 import { BookingChatDialog } from "@/components/chat/BookingChatDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { KycStatusBadge } from "@/components/KycStatusBadge";
+import { useKycStatus } from "@/hooks/portal/useKycStatus";
 
 const CustomerPortal = () => {
   const { user, loading: authLoading } = useAuth();
@@ -47,6 +48,8 @@ const CustomerPortal = () => {
   const { profile, isLoading: profileLoading } = useProfile();
   const { reviews } = useReviews();
   const { unreadCount } = useNotifications();
+  const { data: kyc } = useKycStatus();
+  const [kycSending, setKycSending] = useState(false);
 
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
   const [cancelingBooking, setCancelingBooking] = useState<Booking | null>(null);
@@ -227,6 +230,45 @@ const CustomerPortal = () => {
         </Card>
 
         <KycStatusBadge variant="card" />
+        {kyc && kyc.status !== "approved" && (
+          <div className="mt-2 flex flex-wrap gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => navigate("/onboarding")}
+            >
+              {kyc.status === "rejected" ? "Recommencer la vérification" : "Aller à la vérification"} →
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={kycSending}
+              onClick={async () => {
+                if (!user?.email) return;
+                setKycSending(true);
+                try {
+                  const { data, error } = await supabase.functions.invoke("send-kyc-reminder", {
+                    body: {
+                      clientEmail: user.email,
+                      clientName: profile?.full_name || user.email.split("@")[0],
+                      status: kyc.status,
+                      language: "fr",
+                    },
+                  });
+                  if (error || !data?.ok) throw new Error(error?.message || data?.error || "Échec");
+                  toast.success("Email de relance envoyé");
+                } catch (e) {
+                  toast.error(e instanceof Error ? e.message : "Échec de l'envoi");
+                } finally {
+                  setKycSending(false);
+                }
+              }}
+            >
+              <Mail className="h-4 w-4 mr-1.5" />
+              {kycSending ? "Envoi…" : "Renvoyer l'email de relance"}
+            </Button>
+          </div>
+        )}
 
         {/* Bookings Tabs */}
         <Tabs defaultValue="upcoming" className="space-y-6">

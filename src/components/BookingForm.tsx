@@ -53,6 +53,7 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loyaltyPoints, setLoyaltyPoints] = useState(0);
   const [pointsToRedeem, setPointsToRedeem] = useState(0);
+  const [kycStatus, setKycStatus] = useState<"none" | "pending" | "approved" | "rejected">("none");
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -74,6 +75,18 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
     if (!user?.id) { setLoyaltyPoints(0); return; }
     void supabase.from("profiles").select("loyalty_points").eq("user_id", user.id).maybeSingle()
       .then(({ data }) => setLoyaltyPoints(data?.loyalty_points || 0));
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!user?.id) { setKycStatus("none"); return; }
+    void supabase
+      .from("identity_documents")
+      .select("status")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => setKycStatus((data?.status as typeof kycStatus) || "none"));
   }, [user?.id]);
 
   const hours = parseInt(formData.estimatedHours || "0", 10) || 0;
@@ -110,6 +123,20 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (user?.id && kycStatus !== "approved") {
+      toast({
+        title: "Vérification d'identité requise",
+        description:
+          kycStatus === "pending"
+            ? "Votre identité est en cours de vérification (24-48h). Vous pourrez confirmer votre réservation dès qu'elle sera validée."
+            : kycStatus === "rejected"
+              ? "Votre vérification a été rejetée. Veuillez recommencer le processus depuis votre espace."
+              : "Veuillez d'abord vérifier votre identité avant de confirmer une réservation.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     const rateLimitKey = user?.id || 'anonymous';
     if (!rateLimit(`booking:${rateLimitKey}`, 3, 60000)) {
