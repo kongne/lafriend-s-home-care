@@ -39,7 +39,6 @@ import { BookingChatDialog } from "@/components/chat/BookingChatDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { KycStatusBadge } from "@/components/KycStatusBadge";
 import { useKycStatus } from "@/hooks/portal/useKycStatus";
-import { Mail } from "lucide-react";
 
 const CustomerPortal = () => {
   const { user, loading: authLoading } = useAuth();
