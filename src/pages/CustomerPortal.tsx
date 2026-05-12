@@ -37,6 +37,7 @@ import { downloadInvoice } from "@/lib/invoice";
 import { toast } from "sonner";
 import { BookingChatDialog } from "@/components/chat/BookingChatDialog";
 import { supabase } from "@/integrations/supabase/client";
+import { KycStatusBadge } from "@/components/KycStatusBadge";
 
 const CustomerPortal = () => {
   const { user, loading: authLoading } = useAuth();
@@ -224,6 +225,8 @@ const CustomerPortal = () => {
             </div>
           </CardContent>
         </Card>
+
+        <KycStatusBadge variant="card" />
 
         {/* Bookings Tabs */}
         <Tabs defaultValue="upcoming" className="space-y-6">

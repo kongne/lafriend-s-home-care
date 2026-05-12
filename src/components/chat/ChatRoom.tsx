@@ -10,6 +10,13 @@ import { VoiceRecorder } from "@/components/chat/VoiceRecorder";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
+const formatDuration = (sec: number) => {
+  const s = Math.max(0, Math.floor(sec));
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return `${m}:${r.toString().padStart(2, "0")}`;
+};
+
 interface Props {
   roomId: string;
   title?: string;
@@ -190,7 +197,14 @@ const MessageBubble = ({
           <video src={msg.media_url} controls className="rounded max-w-full max-h-60" />
         )}
         {msg.type === "audio" && msg.media_url && (
-          <audio src={msg.media_url} controls className="max-w-full" />
+          <div className="flex flex-col gap-1">
+            <audio src={msg.media_url} controls preload="metadata" className="max-w-full" />
+            {typeof (meta as { duration?: number }).duration === "number" && (
+              <span className="text-[10px] opacity-70">
+                🎙️ Note vocale · {formatDuration((meta as { duration?: number }).duration!)}
+              </span>
+            )}
+          </div>
         )}
         {msg.type === "file" && msg.media_url && (
           <a href={msg.media_url} target="_blank" rel="noreferrer" className="flex items-center gap-2 underline">

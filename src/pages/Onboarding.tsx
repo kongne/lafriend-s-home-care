@@ -27,6 +27,8 @@ const Onboarding = () => {
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const [existing, setExisting] = useState<{ status: string } | null>(null);
+  const [cameraActive, setCameraActive] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
@@ -60,31 +62,66 @@ const Onboarding = () => {
   };
 
   const startCamera = async () => {
+    setCameraError(null);
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setCameraError("Votre navigateur ne supporte pas la caméra");
+      toast.error("Caméra non supportée");
+      return;
+    }
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } },
+      });
       streamRef.current = stream;
+      setCameraActive(true);
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
       }
-    } catch {
-      toast.error("Caméra non accessible");
+    } catch (e) {
+      const err = e as DOMException;
+      const msg = err.name === "NotAllowedError"
+        ? "Permission caméra refusée. Autorisez l'accès dans votre navigateur."
+        : err.name === "NotFoundError"
+          ? "Aucune caméra détectée sur cet appareil."
+          : err.name === "NotReadableError"
+            ? "Caméra utilisée par une autre application."
+            : "Impossible d'accéder à la caméra";
+      setCameraError(msg);
+      setCameraActive(false);
+      toast.error(msg);
     }
   };
 
   const captureSelfie = () => {
     const v = videoRef.current;
-    if (!v) return;
+    if (!v || !v.videoWidth) {
+      toast.error("Caméra non prête, réessayez");
+      return;
+    }
     const canvas = document.createElement("canvas");
     canvas.width = v.videoWidth;
     canvas.height = v.videoHeight;
     canvas.getContext("2d")?.drawImage(v, 0, 0);
     canvas.toBlob((blob) => {
-      if (!blob) return;
+      if (!blob) {
+        toast.error("Échec de la capture, réessayez");
+        return;
+      }
+      // Quality control: minimum size + minimum resolution
+      if (blob.size < 15_000) {
+        toast.error("Selfie trop flou ou trop sombre. Améliorez l'éclairage et réessayez.");
+        return;
+      }
+      if (v.videoWidth < 320 || v.videoHeight < 240) {
+        toast.error("Résolution caméra trop basse");
+        return;
+      }
       setSelfie(blob);
       setSelfiePreview(URL.createObjectURL(blob));
       streamRef.current?.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
+      setCameraActive(false);
     }, "image/jpeg", 0.9);
   };
 
@@ -228,8 +265,13 @@ const Onboarding = () => {
                 <div className="aspect-video bg-muted rounded-lg overflow-hidden">
                   <video ref={videoRef} className="w-full h-full object-cover" muted playsInline />
                 </div>
+                {cameraError && (
+                  <div className="bg-red-50 dark:bg-red-950/30 border border-red-300 rounded-lg p-3 text-sm text-red-700 dark:text-red-300">
+                    {cameraError}
+                  </div>
+                )}
                 <div className="flex gap-2">
-                  {!streamRef.current ? (
+                  {!cameraActive ? (
                     <Button onClick={startCamera} className="flex-1" type="button">
                       <Camera className="mr-2 h-4 w-4" /> Activer la caméra
                     </Button>
@@ -239,6 +281,9 @@ const Onboarding = () => {
                     </Button>
                   )}
                 </div>
+                <p className="text-xs text-muted-foreground">
+                  Astuce : placez-vous face à une lumière naturelle, sans lunettes ni casquette.
+                </p>
               </div>
             ) : (
               <div className="space-y-3">

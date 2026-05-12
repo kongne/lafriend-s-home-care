@@ -17,6 +17,7 @@ import { Switch } from "@/components/ui/switch";
 import { getRecaptchaToken, verifyRecaptchaToken } from "@/lib/recaptcha";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
+import { KycStatusBadge } from "@/components/KycStatusBadge";
 
 const SERVICE_BASE_PRICE: Record<string, number> = {
   residential: 25000,
@@ -287,6 +288,12 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
   return (
     <Card className="p-6 sm:p-8 bg-card/95 backdrop-blur-sm shadow-2xl border-dashed rounded-md">
       <h3 className="text-2xl font-bold text-center mb-4 text-foreground">Réserver un service</h3>
+
+      {user?.id && (
+        <div className="mb-4">
+          <KycStatusBadge variant="card" />
+        </div>
+      )}
 
       <div className="flex items-center justify-center gap-2 mb-3">
         <div className={`h-2 w-16 rounded-full transition-colors ${step >= 1 ? 'bg-accent' : 'bg-muted'}`} />
