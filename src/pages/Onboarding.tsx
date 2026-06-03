@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -11,13 +11,15 @@ import { ShieldCheck, Camera, Upload, CheckCircle2, ArrowLeft, ArrowRight, Loade
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { uploadIdentityFile, type IdentityDocType } from "@/lib/identity";
+import { uploadIdentityFile, getSignedIdentityUrl, type IdentityDocType } from "@/lib/identity";
 
 const MAX_FILE_BYTES = 8 * 1024 * 1024;
 
 const Onboarding = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const retake = searchParams.get("retake") === "1";
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [docType, setDocType] = useState<IdentityDocType>("cni");
   const [front, setFront] = useState<File | null>(null);
@@ -26,7 +28,12 @@ const Onboarding = () => {
   const [selfiePreview, setSelfiePreview] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
-  const [existing, setExisting] = useState<{ status: string } | null>(null);
+  const [existing, setExisting] = useState<{
+    status: string;
+    doc_type?: string;
+    rejection_reason?: string | null;
+  } | null>(null);
+  const [prevUrls, setPrevUrls] = useState<{ front?: string; back?: string; selfie?: string }>({});
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -40,13 +47,32 @@ const Onboarding = () => {
     if (!user?.id) return;
     void supabase
       .from("identity_documents")
-      .select("status")
+      .select("status, doc_type, front_url, back_url, selfie_url, rejection_reason")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle()
-      .then(({ data }) => data && setExisting(data));
-  }, [user?.id]);
+      .then(async ({ data }) => {
+        if (!data) return;
+        setExisting({
+          status: data.status,
+          doc_type: data.doc_type,
+          rejection_reason: data.rejection_reason,
+        });
+        if (retake && data.doc_type) {
+          setDocType(data.doc_type as IdentityDocType);
+        }
+        if (retake) {
+          const urls: typeof prevUrls = {};
+          try {
+            if (data.front_url) urls.front = await getSignedIdentityUrl(data.front_url, 1800);
+            if (data.back_url) urls.back = await getSignedIdentityUrl(data.back_url, 1800);
+            if (data.selfie_url) urls.selfie = await getSignedIdentityUrl(data.selfie_url, 1800);
+          } catch { /* ignore */ }
+          setPrevUrls(urls);
+        }
+      });
+  }, [user?.id, retake]);
 
   useEffect(() => () => {
     streamRef.current?.getTracks().forEach((t) => t.stop());
@@ -204,7 +230,15 @@ const Onboarding = () => {
         )}
         {existing?.status === "rejected" && (
           <div className="bg-red-50 dark:bg-red-950/30 border border-red-300 rounded-lg p-3 text-sm">
-            Votre dernière vérification a été rejetée. Veuillez resoumettre des documents valides.
+            <p className="font-semibold">Votre dernière vérification a été rejetée.</p>
+            {existing.rejection_reason && (
+              <p className="mt-1 text-xs opacity-90">Motif : {existing.rejection_reason}</p>
+            )}
+            <p className="mt-1 text-xs opacity-90">
+              {retake
+                ? "Mode retéléversement : votre type de document a été pré-rempli. Téléversez de nouvelles photos plus nettes."
+                : "Veuillez resoumettre des documents valides."}
+            </p>
           </div>
         )}
 
@@ -231,6 +265,25 @@ const Onboarding = () => {
 
         {step === 2 && (
           <div className="space-y-4">
+            {retake && (prevUrls.front || prevUrls.back) && (
+              <div className="rounded-lg border bg-muted/40 p-3 space-y-2">
+                <p className="text-xs font-medium text-muted-foreground">Documents précédents (référence)</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {prevUrls.front && (
+                    <div>
+                      <p className="text-[10px] uppercase text-muted-foreground mb-1">Recto</p>
+                      <img src={prevUrls.front} alt="Ancien recto" className="w-full h-24 object-cover rounded border opacity-80" referrerPolicy="no-referrer" />
+                    </div>
+                  )}
+                  {prevUrls.back && (
+                    <div>
+                      <p className="text-[10px] uppercase text-muted-foreground mb-1">Verso</p>
+                      <img src={prevUrls.back} alt="Ancien verso" className="w-full h-24 object-cover rounded border opacity-80" referrerPolicy="no-referrer" />
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
             <div className="space-y-2">
               <Label>Photo recto du document *</Label>
               <Input type="file" accept="image/*" onChange={onFile(setFront)} />
@@ -260,6 +313,12 @@ const Onboarding = () => {
         {step === 3 && (
           <div className="space-y-4">
             <Label className="flex items-center gap-2"><Camera className="h-4 w-4" /> Selfie en direct</Label>
+            {retake && prevUrls.selfie && !selfiePreview && (
+              <div className="rounded-lg border bg-muted/40 p-3">
+                <p className="text-xs font-medium text-muted-foreground mb-2">Selfie précédent (référence)</p>
+                <img src={prevUrls.selfie} alt="Ancien selfie" className="w-32 h-32 object-cover rounded border opacity-80" referrerPolicy="no-referrer" />
+              </div>
+            )}
             {!selfiePreview ? (
               <div className="space-y-3">
                 <div className="aspect-video bg-muted rounded-lg overflow-hidden">

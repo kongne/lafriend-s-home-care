@@ -235,7 +235,7 @@ const CustomerPortal = () => {
             <Button
               size="sm"
               variant="outline"
-              onClick={() => navigate("/onboarding")}
+              onClick={() => navigate(kyc.status === "rejected" ? "/onboarding?retake=1" : "/onboarding")}
             >
               {kyc.status === "rejected" ? "Recommencer la vérification" : "Aller à la vérification"} →
             </Button>

@@ -319,6 +319,28 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
       {user?.id && (
         <div className="mb-4">
           <KycStatusBadge variant="card" />
+          {kycStatus !== "approved" && (
+            <div className="mt-2 rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 p-3 text-sm flex items-start justify-between gap-3">
+              <div>
+                <p className="font-semibold text-amber-900 dark:text-amber-200">
+                  Vérification d'identité requise
+                </p>
+                <p className="text-xs text-amber-800/90 dark:text-amber-300/90 mt-0.5">
+                  {kycStatus === "pending"
+                    ? "Vos documents sont en cours d'examen. La confirmation sera bloquée tant que votre identité n'est pas validée."
+                    : kycStatus === "rejected"
+                      ? "Votre dernière vérification a été rejetée. Renvoyez des documents valides pour pouvoir réserver."
+                      : "Vous devez vérifier votre identité avant de pouvoir confirmer une réservation."}
+                </p>
+              </div>
+              <a
+                href={kycStatus === "rejected" ? "/onboarding?retake=1" : "/onboarding"}
+                className="text-xs font-semibold underline whitespace-nowrap text-amber-900 dark:text-amber-200"
+              >
+                {kycStatus === "rejected" ? "Recommencer →" : "Vérifier →"}
+              </a>
+            </div>
+          )}
         </div>
       )}
 
