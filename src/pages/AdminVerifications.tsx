@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { ShieldCheck, Loader2, CheckCircle2, XCircle, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { getSignedIdentityUrl, type IdentityDocument } from "@/lib/identity";
@@ -16,7 +17,9 @@ const AdminVerifications = () => {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [docs, setDocs] = useState<IdentityDocument[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<"pending" | "approved" | "rejected">("pending");
+  const [filter, setFilter] = useState<"pending" | "approved" | "rejected" | "history">("pending");
+  const [search, setSearch] = useState("");
+  const [reviewers, setReviewers] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (authLoading) return;
@@ -27,15 +30,41 @@ const AdminVerifications = () => {
 
   const load = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("identity_documents")
-      .select("*")
-      .eq("status", filter)
-      .order("created_at", { ascending: false });
+    let query = supabase.from("identity_documents").select("*");
+    if (filter === "history") {
+      query = query.in("status", ["approved", "rejected"]).order("reviewed_at", { ascending: false });
+    } else {
+      query = query.eq("status", filter).order("created_at", { ascending: false });
+    }
+    const { data, error } = await query;
     if (error) toast.error(error.message);
-    setDocs((data || []) as IdentityDocument[]);
+    const list = (data || []) as IdentityDocument[];
+    setDocs(list);
+    // Resolve reviewer names
+    const ids = Array.from(new Set(list.map((d) => d.reviewed_by).filter(Boolean))) as string[];
+    if (ids.length) {
+      const { data: profs } = await supabase.from("profiles").select("user_id, full_name").in("user_id", ids);
+      const map: Record<string, string> = {};
+      (profs || []).forEach((p: { user_id: string; full_name: string | null }) => {
+        map[p.user_id] = p.full_name || p.user_id.slice(0, 8);
+      });
+      setReviewers(map);
+    } else {
+      setReviewers({});
+    }
     setLoading(false);
   };
+
+  const filteredDocs = docs.filter((d) => {
+    if (!search.trim()) return true;
+    const q = search.trim().toLowerCase();
+    return (
+      d.id.toLowerCase().includes(q) ||
+      d.doc_type.toLowerCase().includes(q) ||
+      (d.rejection_reason || "").toLowerCase().includes(q) ||
+      (d.reviewed_by ? (reviewers[d.reviewed_by] || "").toLowerCase().includes(q) : false)
+    );
+  });
 
   useEffect(() => { if (isAdmin) void load(); }, [isAdmin, filter]);
 
@@ -69,22 +98,36 @@ const AdminVerifications = () => {
             </div>
           </div>
           <div className="flex gap-2">
-            {(["pending", "approved", "rejected"] as const).map((s) => (
+            {(["pending", "approved", "rejected", "history"] as const).map((s) => (
               <Button key={s} size="sm" variant={filter === s ? "default" : "outline"} onClick={() => setFilter(s)}>
-                {s === "pending" ? "En attente" : s === "approved" ? "Validés" : "Rejetés"}
+                {s === "pending" ? "En attente" : s === "approved" ? "Validés" : s === "rejected" ? "Rejetés" : "Historique"}
               </Button>
             ))}
           </div>
         </div>
 
+        {filter === "history" && (
+          <Input
+            placeholder="Rechercher (ID, type, motif, admin)…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="max-w-md"
+          />
+        )}
+
         {loading ? (
           <div className="flex justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" /></div>
-        ) : docs.length === 0 ? (
+        ) : filteredDocs.length === 0 ? (
           <Card className="p-12 text-center text-muted-foreground">Aucun document à afficher.</Card>
         ) : (
           <div className="grid gap-4">
-            {docs.map((doc) => (
-              <VerificationCard key={doc.id} doc={doc} onUpdated={load} />
+            {filteredDocs.map((doc) => (
+              <VerificationCard
+                key={doc.id}
+                doc={doc}
+                onUpdated={load}
+                reviewerName={doc.reviewed_by ? reviewers[doc.reviewed_by] : undefined}
+              />
             ))}
           </div>
         )}
@@ -93,7 +136,7 @@ const AdminVerifications = () => {
   );
 };
 
-const VerificationCard = ({ doc, onUpdated }: { doc: IdentityDocument; onUpdated: () => void }) => {
+const VerificationCard = ({ doc, onUpdated, reviewerName }: { doc: IdentityDocument; onUpdated: () => void; reviewerName?: string }) => {
   const [urls, setUrls] = useState<{ front?: string; back?: string; selfie?: string }>({});
   const [reason, setReason] = useState("");
   const [acting, setActing] = useState<null | "approve" | "reject">(null);
@@ -167,6 +210,12 @@ const VerificationCard = ({ doc, onUpdated }: { doc: IdentityDocument; onUpdated
         <div>
           <p className="font-semibold">{doc.doc_type === "cni" ? "CNI" : "Passeport"} · ID {doc.id.slice(0, 8)}</p>
           <p className="text-xs text-muted-foreground">Soumis le {new Date(doc.created_at).toLocaleString("fr-FR")}</p>
+          {doc.reviewed_at && (
+            <p className="text-xs text-muted-foreground">
+              Décidé le {new Date(doc.reviewed_at).toLocaleString("fr-FR")}
+              {reviewerName ? ` · par ${reviewerName}` : ""}
+            </p>
+          )}
         </div>
         <Badge variant={doc.status === "approved" ? "default" : doc.status === "rejected" ? "destructive" : "secondary"}>
           {doc.status}
