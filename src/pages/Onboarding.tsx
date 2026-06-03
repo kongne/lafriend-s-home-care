@@ -313,6 +313,12 @@ const Onboarding = () => {
         {step === 3 && (
           <div className="space-y-4">
             <Label className="flex items-center gap-2"><Camera className="h-4 w-4" /> Selfie en direct</Label>
+            {retake && prevUrls.selfie && !selfiePreview && (
+              <div className="rounded-lg border bg-muted/40 p-3">
+                <p className="text-xs font-medium text-muted-foreground mb-2">Selfie précédent (référence)</p>
+                <img src={prevUrls.selfie} alt="Ancien selfie" className="w-32 h-32 object-cover rounded border opacity-80" referrerPolicy="no-referrer" />
+              </div>
+            )}
             {!selfiePreview ? (
               <div className="space-y-3">
                 <div className="aspect-video bg-muted rounded-lg overflow-hidden">
