@@ -1,0 +1,21 @@
+# LaFriend's Services Ménagers
+
+> Services de nettoyage professionnels à Bafoussam, Cameroun — résidentiel, commercial et automobile. Devis gratuit, équipe formée, produits écologiques.
+
+LaFriend's Services Ménagers est une entreprise camerounaise basée à Bafoussam, spécialisée dans le nettoyage de maisons, bureaux et véhicules dans tout l'Ouest Cameroun. Réservation en ligne, programme de fidélité et support client bilingue (français / anglais).
+
+## Pages
+
+- [Accueil](/): Présentation de LaFriend's, services proposés et réservation.
+- [Nos services](/#services): Détail des prestations de nettoyage résidentiel, commercial et automobile.
+- [Tarifs](/#tarifs): Grille tarifaire et formules disponibles.
+- [Galerie](/#galerie): Photos de chantiers et réalisations.
+- [Témoignages](/#temoignages): Avis et retours clients.
+- [À propos](/#apropos): Notre mission, notre équipe et nos valeurs.
+- [FAQ](/#faq): Réponses aux questions fréquentes.
+- [Contact](/#contact): Coordonnées et formulaire de contact.
+- [Demande de devis](/quote): Formulaire pour obtenir un devis personnalisé gratuit.
+
+## Optional
+
+- [Connexion](/auth): Espace de connexion / inscription client.
