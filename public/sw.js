@@ -6,9 +6,8 @@ const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/favicon.png',
-  '/pwa-192x192.png',
-  '/pwa-512x512.png',
+  '/favicon.svg',
+  '/pwa-icon.svg',
 ];
 
 const CACHE_STRATEGIES = {
@@ -148,8 +147,8 @@ self.addEventListener('push', (event) => {
   let data = {
     title: 'LaFriend\'s Services',
     body: 'Vous avez une nouvelle notification',
-    icon: '/pwa-192x192.png',
-    badge: '/favicon.png',
+    icon: '/pwa-icon.svg',
+    badge: '/favicon.svg',
     tag: 'notification',
     data: { url: '/' }
   };

@@ -11,7 +11,7 @@ import { FAQ } from "@/components/FAQ";
 import { Newsletter } from "@/components/Newsletter";
 import { Contact } from "@/components/Contact";
 import { Footer } from "@/components/Footer";
-import { ChatWidget } from "@/components/ChatWidget";
+import { ChatWidgetDeferred } from "@/components/ChatWidgetDeferred";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { BackToTop } from "@/components/BackToTop";
 
@@ -33,7 +33,7 @@ const Index = () => {
         <Contact />
       </main>
       <Footer />
-      <ChatWidget />
+      <ChatWidgetDeferred />
       <WhatsAppButton />
       <BackToTop />
     </div>

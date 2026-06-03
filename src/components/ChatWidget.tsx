@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, forwardRef } from "react";
+import { useState, useRef, useEffect, forwardRef, type KeyboardEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MessageCircle, X, Send } from "lucide-react";
@@ -7,14 +7,18 @@ import { useToast } from "@/components/ui/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { error as logError } from "@/lib/logger";
 
+type ChatWidgetProps = {
+  defaultOpen?: boolean;
+};
+
 interface Message {
   role: "user" | "assistant";
   content: string;
 }
 
-export const ChatWidget = forwardRef<HTMLDivElement>((_props, ref) => {
+export const ChatWidget = forwardRef<HTMLDivElement, ChatWidgetProps>(({ defaultOpen }, ref) => {
   const { t } = useLanguage();
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(defaultOpen ?? false);
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
@@ -84,7 +88,7 @@ export const ChatWidget = forwardRef<HTMLDivElement>((_props, ref) => {
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyPress = (e: KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
