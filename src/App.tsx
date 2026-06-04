@@ -19,6 +19,7 @@ const CustomerPortal = lazy(() => import("./pages/CustomerPortal"));
 const Onboarding = lazy(() => import("./pages/Onboarding"));
 const ServiceDetails = lazy(() => import("./pages/ServiceDetails"));
 const QuoteRequest = lazy(() => import("./pages/QuoteRequest"));
+const PricingGuide = lazy(() => import("./pages/PricingGuide"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -72,6 +73,7 @@ const App = () => (
               <Route path="/onboarding" element={routeElement(Onboarding)} />
               <Route path="/services/:serviceId" element={routeElement(ServiceDetails)} />
               <Route path="/quote" element={routeElement(QuoteRequest)} />
+              <Route path="/pricing-guide" element={routeElement(PricingGuide)} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
