@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Mail, Lock, User } from "lucide-react";
+import { Seo } from "@/components/Seo";
 
 const loginSchema = z.object({
   email: z.string()
@@ -166,6 +167,13 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
+      <Seo
+        title={isLogin ? "Connexion — LaFriend's" : "Créer un compte — LaFriend's"}
+        description={isLogin
+          ? "Connectez-vous à votre espace client LaFriend's pour gérer vos réservations de nettoyage."
+          : "Créez votre compte LaFriend's pour réserver vos services de nettoyage à Bafoussam."}
+        path="/auth"
+      />
       <div className="w-full max-w-md">
         <div className="bg-card rounded-2xl shadow-xl p-8 border border-border">
           <div className="text-center mb-8">
