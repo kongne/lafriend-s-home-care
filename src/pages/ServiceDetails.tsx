@@ -11,6 +11,7 @@ import {
   Clock, Shield, Star, ArrowLeft, Phone, MessageCircle,
   Banknote, Users, Zap
 } from "lucide-react";
+import { Seo } from "@/components/Seo";
 
 const servicesData: Record<string, {
   icon: any;
@@ -195,8 +196,16 @@ const ServiceDetails = () => {
 
   const Icon = service.icon;
 
+  const serviceTitle = t(service.titleKey);
+  const serviceDesc = t(service.descKey);
+
   return (
     <div className="min-h-screen bg-background">
+      <Seo
+        title={`${serviceTitle} à Bafoussam — LaFriend's`}
+        description={`${serviceDesc} À partir de ${service.price}. Réservez votre service ${serviceTitle.toLowerCase()} avec LaFriend's.`.slice(0, 158)}
+        path={`/services/${serviceId}`}
+      />
       <Navbar />
 
       {/* Hero Banner */}
