@@ -68,6 +68,10 @@ export const HeroSlideshow = () => {
             alt="" 
             className="w-full h-full object-cover" 
             loading={index === 0 ? "eager" : "lazy"}
+            fetchPriority={index === 0 ? "high" : "low"}
+            decoding={index === 0 ? "sync" : "async"}
+            width="1920"
+            height="1080"
           />
           <div className="absolute inset-0 bg-primary/80"></div>
         </div>
