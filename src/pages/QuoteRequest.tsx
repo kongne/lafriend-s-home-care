@@ -105,6 +105,11 @@ const QuoteRequest = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Seo
+        title="Devis gratuit — LaFriend's Nettoyage Bafoussam"
+        description="Recevez un devis personnalisé sous 24h pour vos services de nettoyage à Bafoussam : résidentiel, commercial, automobile."
+        path="/quote"
+      />
       <Navbar />
       <main className="container mx-auto px-4 py-24">
         <div className="max-w-2xl mx-auto">
