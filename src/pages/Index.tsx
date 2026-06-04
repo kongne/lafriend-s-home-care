@@ -14,10 +14,16 @@ import { Footer } from "@/components/Footer";
 import { ChatWidgetDeferred } from "@/components/ChatWidgetDeferred";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { BackToTop } from "@/components/BackToTop";
+import { Seo } from "@/components/Seo";
 
 const Index = () => {
   return (
     <div className="min-h-screen w-full overflow-x-hidden">
+      <Seo
+        title="LaFriend's — Nettoyage Pro à Bafoussam"
+        description="Services de nettoyage résidentiel, commercial et automobile à Bafoussam. Devis gratuit, équipe pro, produits écologiques."
+        path="/"
+      />
       <Navbar />
       <main>
         <HeroSlideshow />

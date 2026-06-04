@@ -14,6 +14,7 @@ import { Loader2, FileText, CheckCircle } from "lucide-react";
 import { contactSchema } from "@/lib/validation";
 import { rateLimit } from "@/lib/validation";
 import { error as logError } from "@/lib/logger";
+import { Seo } from "@/components/Seo";
 
 const QuoteRequest = () => {
   const { toast } = useToast();
