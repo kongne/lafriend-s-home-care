@@ -1,5 +1,6 @@
 import { createRoot } from "react-dom/client";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { HelmetProvider } from "react-helmet-async";
 import App from "./App.tsx";
 import "./index.css";
 import { info, error as logError } from "@/lib/logger";
@@ -23,7 +24,9 @@ if (!isNativeApp() && "serviceWorker" in navigator) {
 void initNativeShell();
 
 createRoot(document.getElementById("root")!).render(
-  <LanguageProvider>
-    <App />
-  </LanguageProvider>
+  <HelmetProvider>
+    <LanguageProvider>
+      <App />
+    </LanguageProvider>
+  </HelmetProvider>
 );
