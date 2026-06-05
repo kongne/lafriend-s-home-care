@@ -243,6 +243,13 @@ export const translations: Translations = {
   'newsletter.title': { fr: 'Restez informé', en: 'Stay informed' },
   'newsletter.subtitle': { fr: 'Inscrivez-vous à notre newsletter pour recevoir nos offres exclusives et conseils de nettoyage.', en: 'Subscribe to our newsletter for exclusive offers and cleaning tips.' },
   'newsletter.subscribe': { fr: 'S\'inscrire', en: 'Subscribe' },
+
+  // Session timeout
+  'session.title': { fr: 'Session expirant bientôt', en: 'Session Expiring Soon' },
+  'session.message': { fr: 'Pour votre sécurité, vous serez déconnecté(e) en cas d\'inactivité dans', en: 'For your security, you will be logged out due to inactivity in' },
+  'session.stay': { fr: 'Rester connecté(e)', en: 'Stay Logged In' },
+  'session.logoutNow': { fr: 'Se déconnecter', en: 'Log Out Now' },
+  'session.timeoutToast': { fr: 'Vous avez été déconnecté(e) en toute sécurité pour cause d\'inactivité.', en: 'You have been logged out safely due to inactivity.' },
 };
 
 interface LanguageContextType {
