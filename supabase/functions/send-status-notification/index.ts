@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { sendEmail, sendSms, corsHeaders } from "../_shared/email-service.ts";
+import { sendEmail, sendSms, corsHeaders, escapeHtml } from "../_shared/email-service.ts";
 
 function respond(ok: boolean, payload: Record<string, unknown>): Response {
   return new Response(JSON.stringify({ ok, ...payload }), {
@@ -49,6 +49,13 @@ const handler = async (req: Request): Promise<Response> => {
     const { subject, title, message, sms: smsTemplate } = statusConfig[lang];
     const statusColor = newStatus === "confirmed" ? "#22c55e" : newStatus === "completed" ? "#3b82f6" : "#ef4444";
 
+    const safe = {
+      clientName: escapeHtml(clientName),
+      serviceType: escapeHtml(serviceType),
+      preferredDate: escapeHtml(preferredDate),
+      preferredTime: escapeHtml(preferredTime),
+      address: escapeHtml(address),
+    };
     const htmlContent = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
       <body style="font-family:Arial,sans-serif;margin:0;padding:0;background:#f4f4f4;">
         <div style="max-width:600px;margin:0 auto;background:white;">
@@ -60,12 +67,12 @@ const handler = async (req: Request): Promise<Response> => {
           </div>
           <div style="padding:20px 30px 30px;">
             <h2 style="color:#1a1a2e;">${title}</h2>
-            <p style="color:#666;line-height:1.6;">${lang === 'fr' ? 'Bonjour' : 'Hello'} <strong>${clientName}</strong>,<br><br>${message}</p>
+            <p style="color:#666;line-height:1.6;">${lang === 'fr' ? 'Bonjour' : 'Hello'} <strong>${safe.clientName}</strong>,<br><br>${message}</p>
             <div style="background:#f9f9f9;border-radius:12px;padding:20px;margin:20px 0;">
-              <p><strong>Service:</strong> ${serviceType}</p>
-              <p><strong>Date:</strong> ${preferredDate}</p>
-              <p><strong>${lang === 'fr' ? 'Heure' : 'Time'}:</strong> ${preferredTime}</p>
-              <p><strong>${lang === 'fr' ? 'Adresse' : 'Address'}:</strong> ${address}</p>
+              <p><strong>Service:</strong> ${safe.serviceType}</p>
+              <p><strong>Date:</strong> ${safe.preferredDate}</p>
+              <p><strong>${lang === 'fr' ? 'Heure' : 'Time'}:</strong> ${safe.preferredTime}</p>
+              <p><strong>${lang === 'fr' ? 'Adresse' : 'Address'}:</strong> ${safe.address}</p>
             </div>
           </div>
           <div style="background:#1a1a2e;padding:25px;text-align:center;">

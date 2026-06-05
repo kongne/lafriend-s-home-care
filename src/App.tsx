@@ -10,6 +10,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { lazy, Suspense, type ComponentType } from "react";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import { SessionTimeoutDialog } from "@/components/SessionTimeoutDialog";
 
 const Auth = lazy(() => import("./pages/Auth"));
 const Admin = lazy(() => import("./pages/Admin"));
@@ -63,6 +64,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <SessionTimeoutDialog />
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={routeElement(Auth)} />
