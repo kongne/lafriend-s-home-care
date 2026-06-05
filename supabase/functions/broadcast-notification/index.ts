@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { sendEmail, sendSms, corsHeaders } from "../_shared/email-service.ts";
+import { sendEmail, sendSms, corsHeaders, escapeHtml } from "../_shared/email-service.ts";
 
 function respond(ok: boolean, payload: Record<string, unknown>): Response {
   return new Response(JSON.stringify({ ok, ...payload }), {
@@ -24,13 +24,42 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Require an authenticated admin caller
+    const authHeader = req.headers.get("Authorization") ?? "";
+    if (!authHeader.startsWith("Bearer ")) {
+      return respond(false, { error: "Unauthorized" });
+    }
+    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims?.sub) {
+      return respond(false, { error: "Unauthorized" });
+    }
+    const callerId = claimsData.claims.sub as string;
+    const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: callerId, _role: "admin" });
+    if (!isAdmin) {
+      return respond(false, { error: "Forbidden: admin role required" });
+    }
 
     const body: BroadcastRequest = await req.json();
     const { title, message, link, recipientType, notificationType, sendEmail: doEmail = false, sendSms: doSms = false } = body;
 
     if (!title || !message) return respond(false, { error: "Title and message are required" });
+
+    // Validate link is a safe https URL if provided
+    let safeLink: string | null = null;
+    if (link) {
+      try {
+        const u = new URL(link);
+        if (u.protocol === "https:" || u.protocol === "http:") safeLink = u.toString();
+      } catch { /* invalid URL → ignore */ }
+    }
 
     let recipients: { id: string; email?: string; phone?: string }[] = [];
     const stats = { total: 0, sent: 0, failed: 0, emailsSent: 0, smsSent: 0 };
@@ -68,7 +97,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Insert notifications
     const notifications = recipients.map(r => ({
-      user_id: r.id, type: notificationType, title, message, link: link || null, is_read: false, is_archived: false
+      user_id: r.id, type: notificationType, title, message, link: safeLink, is_read: false, is_archived: false
     }));
 
     if (notifications.length > 0) {
@@ -78,20 +107,22 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send emails
     if (doEmail) {
+      const safeTitle = escapeHtml(title);
+      const safeMessage = escapeHtml(message).replace(/\n/g, "<br>");
       const emailHtml = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
         <div style="background:linear-gradient(135deg,#1a1a2e,#16213e);color:white;padding:20px;text-align:center;">
           <h1 style="margin:0;color:#f5c542;">LaFriend's Services</h1>
         </div>
         <div style="padding:30px;background:#f9f9f9;">
-          <h2 style="color:#1a1a2e;">${title}</h2>
-          <p style="color:#333;line-height:1.6;">${message}</p>
-          ${link ? `<p><a href="${link}" style="color:#f5c542;">En savoir plus</a></p>` : ''}
+          <h2 style="color:#1a1a2e;">${safeTitle}</h2>
+          <p style="color:#333;line-height:1.6;">${safeMessage}</p>
+          ${safeLink ? `<p><a href="${escapeHtml(safeLink)}" style="color:#f5c542;">En savoir plus</a></p>` : ''}
         </div>
       </div>`;
 
       for (const r of recipients.slice(0, 50)) {
         if (r.email) {
-          const sent = await sendEmail({ to: r.email, subject: title, html: emailHtml });
+          const sent = await sendEmail({ to: r.email, subject: title.slice(0, 200), html: emailHtml });
           if (sent.success) stats.emailsSent++;
         }
       }
