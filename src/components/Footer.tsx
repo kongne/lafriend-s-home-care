@@ -33,7 +33,7 @@ export const Footer = () => {
               <a href="https://www.facebook.com/profile.php?id=100090077262286" className="w-10 h-10 rounded-full bg-primary-foreground/10 hover:bg-accent flex items-center justify-center transition-colors">
                 <Facebook className="w-5 h-5" />
               </a>
-              <a href="#" className="w-10 h-10 rounded-full bg-primary-foreground/10 hover:bg-accent flex items-center justify-center transition-colors">
+              {/*<a href="#" className="w-10 h-10 rounded-full bg-primary-foreground/10 hover:bg-accent flex items-center justify-center transition-colors">
                 <Twitter className="w-5 h-5" />
               </a>
               <a href="#" className="w-10 h-10 rounded-full bg-primary-foreground/10 hover:bg-accent flex items-center justify-center transition-colors">
@@ -41,7 +41,7 @@ export const Footer = () => {
               </a>
               <a href="#" className="w-10 h-10 rounded-full bg-primary-foreground/10 hover:bg-accent flex items-center justify-center transition-colors">
                 <Linkedin className="w-5 h-5" />
-              </a>
+              </a>*/}
             </div>
           </div>
 
@@ -87,7 +87,7 @@ export const Footer = () => {
           <div className="min-w-0">
             <h4 className="text-lg font-bold mb-4">{t('nav.contact')}</h4>
             <ul className="space-y-3 text-sm text-primary-foreground/80">
-              <li>📞 +237 693 13 82 92<br /><br /></li>
+              <li>📞 +237 693 13 82 92<br />+237 6 83 40 62 90<br /></li>
               <li className="break-all">📧 lafriendsservices@gmail.com</li>
               <li>📍 Bafoussam, Cameroun</li>
               <li>🕐 Lun - Dim: 8:00 - 18:00</li>
