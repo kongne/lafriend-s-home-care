@@ -146,6 +146,9 @@ export const Slideshow = ({
                 className="absolute inset-0 w-full h-full object-cover"
                 loading={index === 0 ? "eager" : "lazy"}
                 decoding="async"
+                fetchPriority={index === 0 ? "high" : "auto"}
+                width={1920}
+                height={1080}
               />
             )}
             

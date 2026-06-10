@@ -215,6 +215,10 @@ const ServiceDetails = () => {
           alt={t(service.titleKey)}
           className="w-full h-full object-cover"
           loading="eager"
+          fetchPriority="high"
+          decoding="async"
+          width={1920}
+          height={1080}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 p-4 md:p-8 lg:p-12">

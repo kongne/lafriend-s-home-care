@@ -73,6 +73,8 @@ const BeforeAfterCard = ({ item, index, isVisible, t }: { item: GalleryItem; ind
             }`}
             loading="lazy"
             decoding="async"
+            width={1200}
+            height={800}
             onLoad={() => setImageLoaded(true)}
           />
         </picture>
@@ -87,6 +89,8 @@ const BeforeAfterCard = ({ item, index, isVisible, t }: { item: GalleryItem; ind
             }`}
             loading="lazy"
             decoding="async"
+            width={1200}
+            height={800}
           />
         </picture>
         
