@@ -167,6 +167,37 @@ export const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// Verify a Supabase JWT from the Authorization header. Returns the user id or null.
+export async function verifyJwt(req: Request): Promise<string | null> {
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) return null;
+  const token = authHeader.replace("Bearer ", "");
+  try {
+    const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } },
+    );
+    const { data, error } = await supabase.auth.getClaims(token);
+    if (error || !data?.claims?.sub) return null;
+    return data.claims.sub as string;
+  } catch {
+    return null;
+  }
+}
+
+// Verify a shared CRON_SECRET header for scheduled functions
+export function verifyCronSecret(req: Request): boolean {
+  const expected = Deno.env.get("CRON_SECRET");
+  if (!expected) return false;
+  const provided =
+    req.headers.get("x-cron-secret") ||
+    req.headers.get("X-Cron-Secret") ||
+    "";
+  return provided === expected;
+}
+
 // Send SMS via Twilio
 export async function sendSms(phone: string, message: string): Promise<{ success: boolean; error?: string }> {
   const twilioAccountSid = Deno.env.get("TWILIO_ACCOUNT_SID");

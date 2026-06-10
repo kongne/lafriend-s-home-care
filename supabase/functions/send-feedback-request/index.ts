@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 import { serve } from "https://deno.land/std@0.208.0/http/server.ts";
-import { sendEmail, escapeHtml, corsHeaders } from "../_shared/email-service.ts";
+import { sendEmail, escapeHtml, corsHeaders, verifyCronSecret, verifyJwt } from "../_shared/email-service.ts";
 
 function respond(ok: boolean, payload: Record<string, unknown>): Response {
   return new Response(JSON.stringify({ ok, ...payload }), {
@@ -19,6 +19,14 @@ const handler = async (req: Request): Promise<Response> => {
   if (req.method !== "POST") return respond(false, { error: "Method not allowed" });
 
   try {
+    const isCron = verifyCronSecret(req);
+    if (!isCron) {
+      const userId = await verifyJwt(req);
+      if (!userId) return respond(false, { error: "Unauthorized" });
+      const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
+      if (!isAdmin) return respond(false, { error: "Forbidden" });
+    }
+
     const now = new Date();
     const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
     const fourDaysAgo = new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000);

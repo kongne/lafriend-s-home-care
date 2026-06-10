@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.84.0";
-import { sendSms, corsHeaders } from "../_shared/email-service.ts";
+import { sendSms, corsHeaders, verifyJwt } from "../_shared/email-service.ts";
 
 function respond(ok: boolean, payload: Record<string, unknown>): Response {
   return new Response(JSON.stringify({ ok, ...payload }), {
@@ -25,9 +25,19 @@ const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
+    // Only authenticated admins can trigger owner SMS + admin notification inserts
+    const userId = await verifyJwt(req);
+    if (!userId) return respond(false, { error: "Unauthorized" });
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    const { data: isAdmin } = await supabase.rpc("has_role", {
+      _user_id: userId,
+      _role: "admin",
+    });
+    if (!isAdmin) return respond(false, { error: "Forbidden: admin role required" });
 
     const { booking } = await req.json() as { booking: BookingData };
     if (!booking) return respond(false, { error: "Missing booking data" });

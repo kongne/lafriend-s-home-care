@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { sendEmail, sendSms, corsHeaders, escapeHtml } from "../_shared/email-service.ts";
+import { sendEmail, sendSms, corsHeaders, escapeHtml, verifyJwt } from "../_shared/email-service.ts";
 
 function respond(ok: boolean, payload: Record<string, unknown>): Response {
   return new Response(JSON.stringify({ ok, ...payload }), {
@@ -40,6 +40,9 @@ const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
+    const userId = await verifyJwt(req);
+    if (!userId) return respond(false, { error: "Unauthorized" });
+
     const { clientEmail, clientName, clientPhone, serviceType, preferredDate, preferredTime, address, newStatus, language = "fr", sendSms: shouldSendSms = true }: StatusNotificationRequest = await req.json();
 
     const statusConfig = statusMessages[newStatus];
