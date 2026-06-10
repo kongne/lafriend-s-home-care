@@ -137,7 +137,7 @@ export const Testimonials = () => {
           <div key={activeIndex} className="flex flex-col md:flex-row items-center gap-8 animate-fade-in">
             <div className="relative">
               {testimonials[activeIndex].image ? (
-                <img src={testimonials[activeIndex].image} alt={testimonials[activeIndex].name} className="w-24 h-24 md:w-32 md:h-32 rounded-full object-cover ring-4 ring-accent/30 transition-transform duration-500" loading="lazy" decoding="async" />
+                <img src={testimonials[activeIndex].image} alt={testimonials[activeIndex].name} className="w-24 h-24 md:w-32 md:h-32 rounded-full object-cover ring-4 ring-accent/30 transition-transform duration-500" loading="lazy" decoding="async" width={128} height={128} />
               ) : (
                 <div className="w-24 h-24 md:w-32 md:h-32 rounded-full ring-4 ring-accent/30 flex items-center justify-center bg-background/50 backdrop-blur-sm">
                   <User className="w-12 h-12 md:w-16 md:h-16 text-foreground/50" />
@@ -191,6 +191,8 @@ export const Testimonials = () => {
                   className="w-12 h-12 rounded-full object-cover"
                   loading="lazy"
                   decoding="async"
+                  width={48}
+                  height={48}
                 />
                 <div>
                   <p className="font-semibold text-foreground">{testimonial.name}</p>
