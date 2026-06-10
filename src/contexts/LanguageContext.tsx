@@ -27,7 +27,7 @@ export const translations: Translations = {
   'hero.title': { fr: 'Services de nettoyage professionnels', en: 'Professional cleaning services' },
   'hero.description': { fr: 'Notre équipe d\'experts offre des services de qualité supérieure pour votre maison, bureau ou véhicule. Avec notre plateforme en ligne facile d\'utilisation, réservez en quelques clics et profitez d\'un environnement impeccable.', en: 'Our team of experts offers superior quality services for your home, office or vehicle. With our easy-to-use online platform, book in a few clicks and enjoy an impeccable environment.' },
   'hero.book': { fr: 'RÉSERVER UN SERVICE', en: 'BOOK A SERVICE' },
-  'hero.learnMore': { fr: 'EN SAVOIR PLUS', en: 'LEARN MORE' },
+ 'hero.learnMore': { fr: 'DÉCOUVRIR NOS SERVICES', en: 'DISCOVER OUR SERVICES' },
   'hero.slide2.title': { fr: 'Nettoyage Commercial Expert', en: 'Expert Commercial Cleaning' },
   'hero.slide2.subtitle': { fr: 'Solutions professionnelles pour bureaux, commerces et espaces de travail. Maintenez un environnement sain pour vos employés et clients.', en: 'Professional solutions for offices, shops and workspaces. Maintain a healthy environment for your employees and customers.' },
   'hero.slide3.title': { fr: 'Lavage Auto Premium', en: 'Premium Car Wash' },

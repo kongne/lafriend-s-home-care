@@ -203,6 +203,9 @@ export const Navbar = () => {
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             className="lg:hidden text-foreground"
+            aria-label={isMenuOpen ? (t('nav.closeMenu') || 'Fermer le menu') : (t('nav.openMenu') || 'Ouvrir le menu')}
+            aria-expanded={isMenuOpen}
+            aria-controls="mobile-menu"
           >
             {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
@@ -210,7 +213,7 @@ export const Navbar = () => {
 
         {/* Mobile menu */}
         {isMenuOpen && (
-          <div className="lg:hidden mt-4 pb-4 space-y-3 animate-in slide-in-from-top">
+          <div id="mobile-menu" className="lg:hidden mt-4 pb-4 space-y-3 animate-in slide-in-from-top">
             {[
               { href: "#services", label: t('nav.services') },
               { href: "#galerie", label: t('nav.gallery') },
