@@ -69,6 +69,14 @@ const handler = async (req: Request): Promise<Response> => {
   if (req.method !== "POST") return respond(false, { error: "Method not allowed" });
 
   try {
+    const isCron = verifyCronSecret(req);
+    if (!isCron) {
+      const userId = await verifyJwt(req);
+      if (!userId) return respond(false, { error: "Unauthorized" });
+      const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
+      if (!isAdmin) return respond(false, { error: "Forbidden" });
+    }
+
     const now = new Date();
     const checkWindow = new Date(now.getTime() + 60 * 60 * 1000);
 
