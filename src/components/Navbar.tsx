@@ -86,7 +86,7 @@ export const Navbar = () => {
           <div className="flex items-center gap-4 flex-wrap">
             <a href="tel:+237693138292" className="flex items-center gap-2 hover:text-accent transition-colors">
               <Phone className="w-4 h-4" />
-              <span className="hidden sm:inline">+237 693 13 82 92</span>
+              <span className="hidden sm:inline whitespace-pre-line">{"+237 693 13 82 92\n+237 6"}</span>
             </a>
             <a href="mailto:lafriendsservices@gmail.com" className="hidden sm:flex items-center gap-2 hover:text-accent transition-colors">
               <Mail className="w-4 h-4" />

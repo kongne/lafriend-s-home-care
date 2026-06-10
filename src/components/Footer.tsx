@@ -87,7 +87,7 @@ export const Footer = () => {
           <div className="min-w-0">
             <h4 className="text-lg font-bold mb-4">{t('nav.contact')}</h4>
             <ul className="space-y-3 text-sm text-primary-foreground/80">
-              <li>📞 +237 693 13 82 92</li>
+              <li>📞 +237 693 13 82 92<br /><br /></li>
               <li className="break-all">📧 lafriendsservices@gmail.com</li>
               <li>📍 Bafoussam, Cameroun</li>
               <li>🕐 Lun - Dim: 8:00 - 18:00</li>

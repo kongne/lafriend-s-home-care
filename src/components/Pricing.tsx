@@ -12,7 +12,7 @@ export const Pricing = () => {
   const pricingPlans = [
     {
       nameKey: 'pricing.residential',
-      price: "25,000",
+      price: "30,000",
       unitKey: 'pricing.residential.unit',
       features: [
         'pricing.residential.f1',
