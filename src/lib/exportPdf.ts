@@ -8,6 +8,15 @@ interface Column {
   label: string;
 }
 
+// Escape any string for safe HTML embedding
+const escapeHtml = (v: unknown): string =>
+  String(v ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+
 // Convert image to base64 for embedding in print window
 const getLogoBase64 = (): Promise<string> => {
   return new Promise((resolve) => {
@@ -47,21 +56,21 @@ export const exportToPDF = async <T extends object>(
     .map((item) => {
       const rowItem = item as unknown as Record<string, unknown>;
       const cells = columns
-        .map((col) => `<td style="padding: 8px; border: 1px solid #ddd;">${rowItem[col.key] ?? ""}</td>`)
+        .map((col) => `<td style="padding: 8px; border: 1px solid #ddd;">${escapeHtml(rowItem[col.key])}</td>`)
         .join("");
       return `<tr>${cells}</tr>`;
     })
     .join("");
 
   const tableHeaders = columns
-    .map((col) => `<th style="padding: 8px; border: 1px solid #ddd; background: #f5f5f5; text-align: left;">${col.label}</th>`)
+    .map((col) => `<th style="padding: 8px; border: 1px solid #ddd; background: #f5f5f5; text-align: left;">${escapeHtml(col.label)}</th>`)
     .join("");
 
   const html = `
     <!DOCTYPE html>
     <html>
     <head>
-      <title>${filename}</title>
+      <title>${escapeHtml(filename)}</title>
       <style>
         * {
           margin: 0;
@@ -231,7 +240,7 @@ export const exportToPDF = async <T extends object>(
           <div class="company-tagline">Services Ménagers Professionnels</div>
         </div>
       </div>
-      <h1>${title}</h1>
+      <h1>${escapeHtml(title)}</h1>
       <div class="meta">
         <p>Généré le: ${new Date().toLocaleDateString("fr-FR", {
           year: "numeric",
@@ -283,8 +292,8 @@ export const exportStatsToPDF = async (stats: Record<string, number | string>, t
   const statsRows = Object.entries(stats)
     .map(([key, value]) => `
       <tr>
-        <td style="padding: 12px; border-bottom: 1px solid #eee; font-weight: 500;">${key}</td>
-        <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right; font-size: 18px; font-weight: bold;">${value}</td>
+        <td style="padding: 12px; border-bottom: 1px solid #eee; font-weight: 500;">${escapeHtml(key)}</td>
+        <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right; font-size: 18px; font-weight: bold;">${escapeHtml(value)}</td>
       </tr>
     `)
     .join("");
@@ -293,7 +302,7 @@ export const exportStatsToPDF = async (stats: Record<string, number | string>, t
     <!DOCTYPE html>
     <html>
     <head>
-      <title>${title}</title>
+      <title>${escapeHtml(title)}</title>
       <style>
         * {
           margin: 0;
@@ -431,7 +440,7 @@ export const exportStatsToPDF = async (stats: Record<string, number | string>, t
         ${logoBase64 ? `<img src="${logoBase64}" alt="LaFriend's Logo" class="logo" />` : '<div class="company-name">LaFriend\'s</div>'}
         <div class="company-name">LaFriend's</div>
       </div>
-      <h1>${title}</h1>
+      <h1>${escapeHtml(title)}</h1>
       <p style="color: #666;">Généré le ${new Date().toLocaleDateString("fr-FR")}</p>
       <table>${statsRows}</table>
       <div class="footer">

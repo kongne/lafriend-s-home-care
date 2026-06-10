@@ -1,5 +1,13 @@
 import type { Booking } from "@/hooks/portal/useBookings";
 
+const escapeHtml = (v: unknown): string =>
+  String(v ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+
 const SERVICE_BASE_PRICE: Record<string, number> = {
   "Nettoyage Résidentiel": 25000,
   "Nettoyage Commercial": 50000,
@@ -20,9 +28,20 @@ export const estimateBookingPrice = (serviceType: string): number =>
 export const downloadInvoice = (booking: Booking) => {
   const total = estimateBookingPrice(booking.service_type);
   const issuedAt = new Date().toLocaleDateString("fr-FR");
+  const safe = {
+    id: escapeHtml(booking.id.slice(0, 8)),
+    idUpper: escapeHtml(booking.id.slice(0, 8).toUpperCase()),
+    fullName: escapeHtml(booking.full_name),
+    email: escapeHtml(booking.email),
+    phone: escapeHtml(booking.phone),
+    address: escapeHtml(booking.address),
+    serviceType: escapeHtml(booking.service_type),
+    preferredDate: escapeHtml(new Date(booking.preferred_date).toLocaleDateString("fr-FR")),
+    preferredTime: escapeHtml(booking.preferred_time),
+  };
   const html = `
 <!DOCTYPE html>
-<html lang="fr"><head><meta charset="utf-8"><title>Facture ${booking.id.slice(0, 8)}</title>
+<html lang="fr"><head><meta charset="utf-8"><title>Facture ${safe.id}</title>
 <style>
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 40px; color: #1a1a1a; max-width: 800px; margin: auto; }
   .header { display:flex; justify-content:space-between; border-bottom:3px solid #1e3a8a; padding-bottom:20px; }
@@ -43,26 +62,26 @@ export const downloadInvoice = (booking: Booking) => {
     </div>
     <div style="text-align:right">
       <h2 style="margin:0;color:#eab308">FACTURE</h2>
-      <p class="meta">N° ${booking.id.slice(0, 8).toUpperCase()}</p>
+      <p class="meta">N° ${safe.idUpper}</p>
       <p class="meta">Date: ${issuedAt}</p>
     </div>
   </div>
 
   <div style="margin-top:30px">
     <strong>Client :</strong><br>
-    ${booking.full_name}<br>
-    ${booking.email}<br>
-    ${booking.phone}<br>
-    ${booking.address}
+    ${safe.fullName}<br>
+    ${safe.email}<br>
+    ${safe.phone}<br>
+    ${safe.address}
   </div>
 
   <table>
     <thead><tr><th>Service</th><th>Date</th><th>Heure</th><th style="text-align:right">Montant</th></tr></thead>
     <tbody>
       <tr>
-        <td>${booking.service_type}</td>
-        <td>${new Date(booking.preferred_date).toLocaleDateString("fr-FR")}</td>
-        <td>${booking.preferred_time}</td>
+        <td>${safe.serviceType}</td>
+        <td>${safe.preferredDate}</td>
+        <td>${safe.preferredTime}</td>
         <td style="text-align:right">${total.toLocaleString("fr-FR")} FCFA</td>
       </tr>
       <tr class="total-row"><td colspan="3" style="text-align:right">TOTAL</td><td style="text-align:right">${total.toLocaleString("fr-FR")} FCFA</td></tr>
