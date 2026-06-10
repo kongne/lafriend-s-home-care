@@ -69,7 +69,13 @@ export const Services = () => {
                     {t('hero.book')}
                   </Button>
                 </BookingModal>
-                <Button variant="outline" size="icon" className="shrink-0" onClick={e => { e.stopPropagation(); service.id !== "custom" ? navigate(`/services/${service.id}`) : navigate("/quote"); }}>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="shrink-0"
+                  aria-label={`${t('services.viewDetails') || 'Voir les détails du service'}: ${t(service.titleKey)}`}
+                  onClick={e => { e.stopPropagation(); service.id !== "custom" ? navigate(`/services/${service.id}`) : navigate("/quote"); }}
+                >
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
