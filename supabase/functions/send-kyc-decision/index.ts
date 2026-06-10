@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.208.0/http/server.ts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
-import { sendEmail, corsHeaders, checkRateLimit } from "../_shared/email-service.ts";
+import { sendEmail, corsHeaders, checkRateLimit, verifyJwt } from "../_shared/email-service.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { brandedEmail } from "../_shared/email-templates.ts";
 
 function respond(ok: boolean, payload: Record<string, unknown>): Response {
@@ -23,6 +24,19 @@ const schema = z.object({
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
+    // KYC decisions can only be sent by admins
+    const userId = await verifyJwt(req);
+    if (!userId) return respond(false, { error: "Unauthorized" });
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+    const { data: isAdmin } = await supabase.rpc("has_role", {
+      _user_id: userId,
+      _role: "admin",
+    });
+    if (!isAdmin) return respond(false, { error: "Forbidden: admin role required" });
+
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
     if (!checkRateLimit(ip)) return respond(false, { error: "Too many requests" });
 

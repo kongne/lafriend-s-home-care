@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.208.0/http/server.ts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
-import { sendEmail, corsHeaders, checkRateLimit } from "../_shared/email-service.ts";
+import { sendEmail, corsHeaders, checkRateLimit, verifyJwt } from "../_shared/email-service.ts";
 import { brandedEmail } from "../_shared/email-templates.ts";
 
 function respond(ok: boolean, payload: Record<string, unknown>): Response {
@@ -26,6 +26,9 @@ const schema = z.object({
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
+    const userId = await verifyJwt(req);
+    if (!userId) return respond(false, { error: "Unauthorized" });
+
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
     if (!checkRateLimit(ip)) return respond(false, { error: "Too many requests" });
 

@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { corsHeaders } from "../_shared/email-service.ts";
+import { corsHeaders, verifyJwt } from "../_shared/email-service.ts";
 
 interface LeaderboardEntry {
   referrer_id: string;
@@ -21,22 +21,15 @@ serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
+    // Require authentication — leaderboard contains user PII (names, ids).
+    const currentUserId = await verifyJwt(req);
+    if (!currentUserId) {
+      return respond(false, { error: "Unauthorized" });
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-
     const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
-
-    let currentUserId: string | null = null;
-    const authHeader = req.headers.get("Authorization");
-
-    if (authHeader) {
-      const authClient = createClient(supabaseUrl, supabaseAnonKey, {
-        global: { headers: { Authorization: authHeader } },
-      });
-      const { data } = await authClient.auth.getUser();
-      currentUserId = data.user?.id ?? null;
-    }
 
     const { data: referrals, error } = await serviceClient
       .from("referrals")
@@ -69,12 +62,22 @@ serve(async (req: Request) => {
 
     const nameMap = new Map<string, string>();
     profiles?.forEach((profile) => {
-      nameMap.set(profile.user_id, profile.full_name || "Utilisateur");
+      // Anonymize: only show first name + last-name initial to other users
+      const raw = (profile.full_name || "Utilisateur").trim();
+      const parts = raw.split(/\s+/);
+      const display =
+        profile.user_id === currentUserId
+          ? raw
+          : parts.length > 1
+            ? `${parts[0]} ${parts[parts.length - 1][0] ?? ""}.`
+            : parts[0];
+      nameMap.set(profile.user_id, display);
     });
 
     const entries: LeaderboardEntry[] = Array.from(grouped.entries())
       .map(([referrerId, stats]) => ({
-        referrer_id: referrerId,
+        // Only expose the caller's own id; mask everyone else's
+        referrer_id: referrerId === currentUserId ? referrerId : "",
         referrer_name: nameMap.get(referrerId) || "Utilisateur anonyme",
         successful_referrals: stats.count,
         total_points_earned: stats.points,
