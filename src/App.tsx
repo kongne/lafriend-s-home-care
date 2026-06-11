@@ -16,6 +16,7 @@ const Auth = lazy(() => import("./pages/Auth"));
 const Admin = lazy(() => import("./pages/Admin"));
 const AdminSettings = lazy(() => import("./pages/AdminSettings"));
 const AdminVerifications = lazy(() => import("./pages/AdminVerifications"));
+const AdminWhoami = lazy(() => import("./pages/AdminWhoami"));
 const CustomerPortal = lazy(() => import("./pages/CustomerPortal"));
 const Onboarding = lazy(() => import("./pages/Onboarding"));
 const ServiceDetails = lazy(() => import("./pages/ServiceDetails"));
@@ -71,6 +72,7 @@ const App = () => (
               <Route path="/admin" element={routeElement(Admin)} />
               <Route path="/admin/settings" element={routeElement(AdminSettings)} />
               <Route path="/admin/verifications" element={routeElement(AdminVerifications)} />
+              <Route path="/admin/whoami" element={routeElement(AdminWhoami)} />
               <Route path="/customer-portal" element={routeElement(CustomerPortal)} />
               <Route path="/onboarding" element={routeElement(Onboarding)} />
               <Route path="/services/:serviceId" element={routeElement(ServiceDetails)} />
