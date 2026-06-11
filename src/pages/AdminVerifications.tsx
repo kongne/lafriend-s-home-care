@@ -11,6 +11,19 @@ import { ShieldCheck, Loader2, CheckCircle2, XCircle, ArrowLeft } from "lucide-r
 import { toast } from "sonner";
 import { getSignedIdentityUrl, type IdentityDocument } from "@/lib/identity";
 
+interface AuditRow {
+  id: string;
+  identity_document_id: string;
+  subject_user_id: string;
+  decided_by: string;
+  decision: "approved" | "rejected";
+  rejection_reason: string | null;
+  recipient_email: string | null;
+  email_status: "pending" | "sent" | "skipped_no_email" | "failed";
+  email_error: string | null;
+  created_at: string;
+}
+
 const AdminVerifications = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -20,6 +33,7 @@ const AdminVerifications = () => {
   const [filter, setFilter] = useState<"pending" | "approved" | "rejected" | "history">("pending");
   const [search, setSearch] = useState("");
   const [reviewers, setReviewers] = useState<Record<string, string>>({});
+  const [audits, setAudits] = useState<AuditRow[]>([]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -67,6 +81,16 @@ const AdminVerifications = () => {
   });
 
   useEffect(() => { if (isAdmin) void load(); }, [isAdmin, filter]);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    void supabase
+      .from("kyc_decision_audit")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(25)
+      .then(({ data }) => setAudits((data as AuditRow[] | null) || []));
+  }, [isAdmin, docs]);
 
   if (isAdmin === null || authLoading) {
     return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>;
@@ -131,6 +155,48 @@ const AdminVerifications = () => {
             ))}
           </div>
         )}
+
+        <Card className="p-4 sm:p-6 space-y-3 mt-8">
+          <h2 className="font-semibold text-lg">Journal des décisions KYC (25 dernières)</h2>
+          {audits.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Aucune décision enregistrée pour le moment.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead className="text-muted-foreground border-b">
+                  <tr>
+                    <th className="text-left py-2 pr-2">Date</th>
+                    <th className="text-left py-2 pr-2">Doc</th>
+                    <th className="text-left py-2 pr-2">Décision</th>
+                    <th className="text-left py-2 pr-2">Email destinataire</th>
+                    <th className="text-left py-2 pr-2">Statut email</th>
+                    <th className="text-left py-2 pr-2">Erreur</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {audits.map((a) => (
+                    <tr key={a.id} className="border-b last:border-0">
+                      <td className="py-2 pr-2 whitespace-nowrap">{new Date(a.created_at).toLocaleString("fr-FR")}</td>
+                      <td className="py-2 pr-2 font-mono">{a.identity_document_id.slice(0, 8)}</td>
+                      <td className="py-2 pr-2">
+                        <Badge variant={a.decision === "approved" ? "default" : "destructive"}>{a.decision}</Badge>
+                      </td>
+                      <td className="py-2 pr-2 break-all">{a.recipient_email || <span className="text-muted-foreground">—</span>}</td>
+                      <td className="py-2 pr-2">
+                        <Badge variant={a.email_status === "sent" ? "default" : a.email_status === "failed" ? "destructive" : "secondary"}>
+                          {a.email_status}
+                        </Badge>
+                      </td>
+                      <td className="py-2 pr-2 text-red-600 max-w-xs truncate" title={a.email_error || ""}>
+                        {a.email_error || ""}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Card>
       </div>
     </div>
   );
@@ -140,6 +206,8 @@ const VerificationCard = ({ doc, onUpdated, reviewerName }: { doc: IdentityDocum
   const [urls, setUrls] = useState<{ front?: string; back?: string; selfie?: string }>({});
   const [reason, setReason] = useState("");
   const [acting, setActing] = useState<null | "approve" | "reject">(null);
+  const [computedEmail, setComputedEmail] = useState<string | null>(null);
+  const [emailLookupErr, setEmailLookupErr] = useState<string | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -152,6 +220,20 @@ const VerificationCard = ({ doc, onUpdated, reviewerName }: { doc: IdentityDocum
     void load();
   }, [doc.id]);
 
+  // Resolve recipient email via admin-only RPC for the debug panel
+  useEffect(() => {
+    let cancelled = false;
+    const fetchEmail = async () => {
+      const { data, error } = await supabase.rpc("admin_get_user_email", { _user_id: doc.user_id });
+      if (cancelled) return;
+      if (error) { setEmailLookupErr(error.message); setComputedEmail(null); return; }
+      setEmailLookupErr(null);
+      setComputedEmail((data as string | null) || null);
+    };
+    void fetchEmail();
+    return () => { cancelled = true; };
+  }, [doc.user_id]);
+
   const decide = async (status: "approved" | "rejected") => {
     if (status === "rejected" && reason.trim().length < 5) {
       toast.error("Motif obligatoire (min. 5 caractères) pour rejeter");
@@ -159,48 +241,94 @@ const VerificationCard = ({ doc, onUpdated, reviewerName }: { doc: IdentityDocum
     }
     setActing(status === "approved" ? "approve" : "reject");
     const { data: { user } } = await supabase.auth.getUser();
-    const { error } = await supabase.from("identity_documents")
+    const { data: updatedRows, error } = await supabase.from("identity_documents")
       .update({
         status,
         reviewed_by: user?.id,
         reviewed_at: new Date().toISOString(),
         rejection_reason: status === "rejected" ? reason : null,
       })
-      .eq("id", doc.id);
-    if (error) toast.error(error.message);
-    else {
-      toast.success(status === "approved" ? "Identité validée" : "Identité rejetée");
-      // Fetch user profile/email to send branded notification
-      try {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("full_name")
-          .eq("user_id", doc.user_id)
-          .maybeSingle();
-        // Get the user's email via bookings (most recent) — auth.users not directly readable
-        const { data: booking } = await supabase
-          .from("bookings")
-          .select("email, full_name")
-          .eq("user_id", doc.user_id)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        const email = booking?.email;
-        const name = profile?.full_name || booking?.full_name || "Client";
-        if (email) {
-          await supabase.functions.invoke("send-kyc-decision", {
-            body: {
-              clientEmail: email,
-              clientName: name,
-              decision: status,
-              reason: status === "rejected" ? reason : undefined,
-              language: "fr",
-            },
-          });
-        }
-      } catch (_) { /* best-effort */ }
-      onUpdated();
+      .eq("id", doc.id)
+      .select("id");
+    if (error) {
+      toast.error(`Échec mise à jour : ${error.message}`);
+      setActing(null);
+      return;
     }
+    if (!updatedRows || updatedRows.length === 0) {
+      toast.error(
+        "Aucune ligne mise à jour — RLS a bloqué l'opération. Vérifiez votre rôle admin sur /admin/whoami.",
+        { duration: 7000 },
+      );
+      setActing(null);
+      return;
+    }
+
+    toast.success(status === "approved" ? "Identité validée" : "Identité rejetée");
+
+    // Resolve full name for the email
+    const { data: profile } = await supabase
+      .from("profiles").select("full_name").eq("user_id", doc.user_id).maybeSingle();
+    const name = profile?.full_name || "Client";
+
+    // Create audit row up-front so even a skipped/failed email is traceable
+    const { data: auditInsert, error: auditErr } = await supabase
+      .from("kyc_decision_audit")
+      .insert({
+        identity_document_id: doc.id,
+        subject_user_id: doc.user_id,
+        decided_by: user!.id,
+        decision: status,
+        rejection_reason: status === "rejected" ? reason : null,
+        recipient_email: computedEmail,
+        email_status: computedEmail ? "pending" : "skipped_no_email",
+      })
+      .select("id")
+      .maybeSingle();
+    if (auditErr) console.warn("[kyc audit] insert failed:", auditErr.message);
+    const auditId = auditInsert?.id;
+
+    if (!computedEmail) {
+      console.warn("[kyc] No recipient email resolved for user", doc.user_id, "— email skipped.");
+    } else {
+      try {
+        const { data: fnData, error: fnErr } = await supabase.functions.invoke("send-kyc-decision", {
+          body: {
+            subjectUserId: doc.user_id,
+            clientEmail: computedEmail,
+            clientName: name,
+            decision: status,
+            reason: status === "rejected" ? reason : undefined,
+            language: "fr",
+          },
+        });
+        const ok = (fnData as { ok?: boolean } | null)?.ok === true;
+        const skipped = ((fnData as { data?: { skipped?: boolean } } | null)?.data?.skipped) === true;
+        const newStatus: AuditRow["email_status"] = fnErr
+          ? "failed"
+          : skipped
+            ? "skipped_no_email"
+            : ok ? "sent" : "failed";
+        const errMsg = fnErr?.message
+          || (!ok ? ((fnData as { error?: string } | null)?.error || "unknown") : null);
+        if (auditId) {
+          await supabase.from("kyc_decision_audit").update({
+            email_status: newStatus,
+            email_error: errMsg,
+          }).eq("id", auditId);
+        }
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        console.error("[kyc] send-kyc-decision invoke failed:", msg);
+        if (auditId) {
+          await supabase.from("kyc_decision_audit").update({
+            email_status: "failed",
+            email_error: msg,
+          }).eq("id", auditId);
+        }
+      }
+    }
+    onUpdated();
     setActing(null);
   };
 
@@ -220,6 +348,22 @@ const VerificationCard = ({ doc, onUpdated, reviewerName }: { doc: IdentityDocum
         <Badge variant={doc.status === "approved" ? "default" : doc.status === "rejected" ? "destructive" : "secondary"}>
           {doc.status}
         </Badge>
+      </div>
+
+      {/* Debug panel */}
+      <div className="rounded-md border border-dashed bg-muted/30 p-3 text-xs space-y-1 font-mono">
+        <div className="font-sans font-semibold text-[11px] uppercase tracking-wide text-muted-foreground">Debug</div>
+        <div><span className="text-muted-foreground">doc.id:</span> {doc.id}</div>
+        <div><span className="text-muted-foreground">user_id:</span> {doc.user_id}</div>
+        <div><span className="text-muted-foreground">status:</span> {doc.status}</div>
+        <div>
+          <span className="text-muted-foreground">recipient_email (auth.users):</span>{" "}
+          {emailLookupErr
+            ? <span className="text-red-600">erreur — {emailLookupErr}</span>
+            : computedEmail
+              ? <span className="text-green-700">{computedEmail}</span>
+              : <span className="text-amber-600">non trouvé — l'email sera ignoré</span>}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
