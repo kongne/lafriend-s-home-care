@@ -14,11 +14,14 @@ function respond(ok: boolean, payload: Record<string, unknown>): Response {
 const sanitize = (s: string) => s.replace(/[<>]/g, "").replace(/javascript:/gi, "").trim();
 
 const schema = z.object({
-  clientEmail: z.string().email().max(255).transform((v: string) => v.toLowerCase().trim()),
+  clientEmail: z.string().email().max(255).optional().transform((v?: string) => v ? v.toLowerCase().trim() : undefined),
+  subjectUserId: z.string().uuid().optional(),
   clientName: z.string().min(1).max(100).transform(sanitize),
   decision: z.enum(["approved", "rejected"]),
   reason: z.string().max(500).optional().transform((v?: string) => v ? sanitize(v) : undefined),
   language: z.enum(["fr", "en"]).default("fr"),
+}).refine((v) => !!v.clientEmail || !!v.subjectUserId, {
+  message: "Either clientEmail or subjectUserId is required",
 });
 
 serve(async (req) => {
@@ -46,6 +49,27 @@ serve(async (req) => {
 
     const data = schema.parse(body);
     const isFr = data.language === "fr";
+
+    // Resolve recipient email — prefer explicit clientEmail, otherwise look up via subjectUserId
+    let recipient = data.clientEmail;
+    let emailSource: "client" | "auth.users" | "profiles_phone_only" | "none" = recipient ? "client" : "none";
+    if (!recipient && data.subjectUserId) {
+      try {
+        const { data: userRow, error: userErr } = await supabase.auth.admin.getUserById(data.subjectUserId);
+        if (userErr) console.warn("[send-kyc-decision] auth.admin.getUserById error:", userErr.message);
+        if (userRow?.user?.email) {
+          recipient = userRow.user.email.toLowerCase();
+          emailSource = "auth.users";
+        }
+      } catch (e) {
+        console.warn("[send-kyc-decision] auth.users lookup failed:", e instanceof Error ? e.message : String(e));
+      }
+    }
+    if (!recipient) {
+      console.warn(`[send-kyc-decision] SKIPPED — no recipient email resolved. subjectUserId=${data.subjectUserId ?? "n/a"} decision=${data.decision}`);
+      return respond(true, { data: { skipped: true, reason: "no_email", recipient: null, emailSource } });
+    }
+    console.log(`[send-kyc-decision] Resolved recipient via ${emailSource}: ${recipient}`);
     const approved = data.decision === "approved";
 
     const html = brandedEmail({
@@ -88,9 +112,13 @@ serve(async (req) => {
       ? (isFr ? "✅ Identité validée — LaFriend's Services" : "✅ Identity verified — LaFriend's Services")
       : (isFr ? "⚠️ Vérification d'identité refusée" : "⚠️ Identity verification rejected");
 
-    const result = await sendEmail({ to: data.clientEmail, subject, html });
-    if (!result.success) return respond(false, { error: result.error || "Email failed" });
-    return respond(true, { data: { messageId: result.messageId } });
+    const result = await sendEmail({ to: recipient, subject, html });
+    if (!result.success) {
+      console.error(`[send-kyc-decision] Email transport failed for ${recipient}: ${result.error}`);
+      return respond(false, { error: result.error || "Email failed", data: { recipient, emailSource } });
+    }
+    console.log(`[send-kyc-decision] ✅ Sent to ${recipient} (messageId=${result.messageId})`);
+    return respond(true, { data: { messageId: result.messageId, recipient, emailSource } });
   } catch (e) {
     if (e instanceof z.ZodError) return respond(false, { error: "Invalid input", diagnostics: e.errors });
     return respond(false, { error: e instanceof Error ? e.message : "Unknown error" });

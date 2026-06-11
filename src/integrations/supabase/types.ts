@@ -538,6 +538,56 @@ export type Database = {
         }
         Relationships: []
       }
+      kyc_decision_audit: {
+        Row: {
+          created_at: string
+          decided_by: string
+          decision: string
+          email_error: string | null
+          email_status: string
+          id: string
+          identity_document_id: string
+          recipient_email: string | null
+          rejection_reason: string | null
+          subject_user_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          decided_by: string
+          decision: string
+          email_error?: string | null
+          email_status?: string
+          id?: string
+          identity_document_id: string
+          recipient_email?: string | null
+          rejection_reason?: string | null
+          subject_user_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          decided_by?: string
+          decision?: string
+          email_error?: string | null
+          email_status?: string
+          id?: string
+          identity_document_id?: string
+          recipient_email?: string | null
+          rejection_reason?: string | null
+          subject_user_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kyc_decision_audit_identity_document_id_fkey"
+            columns: ["identity_document_id"]
+            isOneToOne: false
+            referencedRelation: "identity_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       loyalty_rewards: {
         Row: {
           created_at: string
@@ -979,6 +1029,7 @@ export type Database = {
         }
         Returns: number
       }
+      admin_get_user_email: { Args: { _user_id: string }; Returns: string }
       calculate_loyalty_tier: { Args: { points: number }; Returns: string }
       check_referral_limit: { Args: { p_user_id: string }; Returns: boolean }
       generate_referral_code: { Args: { p_user_id: string }; Returns: string }
