@@ -1,0 +1,1 @@
+ALTER PUBLICATION supabase_realtime DROP TABLE public.contact_submissions;
