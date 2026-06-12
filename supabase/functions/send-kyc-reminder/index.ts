@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.208.0/http/server.ts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
-import { sendEmail, corsHeaders, checkRateLimit } from "../_shared/email-service.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.84.0";
+import { sendEmail, corsHeaders, checkRateLimit, verifyJwt } from "../_shared/email-service.ts";
 import { brandedEmail } from "../_shared/email-templates.ts";
 
 function respond(ok: boolean, payload: Record<string, unknown>): Response {
@@ -24,6 +25,15 @@ serve(async (req) => {
   try {
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
     if (!checkRateLimit(ip)) return respond(false, { error: "Too many requests" });
+
+    const userId = await verifyJwt(req);
+    if (!userId) return respond(false, { error: "Unauthorized" });
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+    const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
+    if (!isAdmin) return respond(false, { error: "Forbidden: admin role required" });
 
     const raw = await req.text();
     let body: unknown;
