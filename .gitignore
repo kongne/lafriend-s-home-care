@@ -33,3 +33,9 @@ ios/App/build/
 DerivedData/
 *.jks
 *.keystore
+
+# Environment files - never commit secrets
+.env
+.env.*
+!.env.example
+!.env.local.example
