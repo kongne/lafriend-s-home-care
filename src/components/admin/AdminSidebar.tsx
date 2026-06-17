@@ -20,6 +20,7 @@ import {
   Share2,
   Megaphone,
   Clock,
+  ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -54,6 +55,7 @@ const menuItems = [
   { icon: Megaphone, label: "Diffusion", value: "broadcast", path: "/admin?tab=broadcast" },
   { icon: Clock, label: "Rappels", value: "reminders", path: "/admin?tab=reminders" },
   { icon: FileText, label: "Rapports", value: "reports", path: "/admin?tab=reports" },
+  { icon: ShieldCheck, label: "Vérifications KYC", value: "verifications", path: "/admin/verifications" },
 ];
 
 const SidebarContent = ({ 
@@ -105,8 +107,10 @@ const SidebarContent = ({
         </div>
 
         {menuItems.map((item) => {
-          const isActive = currentTab === item.value || 
-            (item.value === "analytics" && !searchParams.get("tab") && location.pathname === "/admin");
+          const isActive =
+            (item.value === "verifications" && location.pathname === "/admin/verifications") ||
+            (location.pathname === "/admin" && (currentTab === item.value ||
+              (item.value === "analytics" && !searchParams.get("tab"))));
           const showBadge = 
             (item.value === "bookings" && pendingCount > 0) ||
             (item.value === "contacts" && unreadMessages > 0);
