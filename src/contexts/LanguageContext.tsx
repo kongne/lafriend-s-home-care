@@ -107,6 +107,7 @@ export const translations: Translations = {
   'gallery.office': { fr: 'Bureau Commercial', en: 'Commercial Office' },
   'gallery.car': { fr: 'Véhicule Intérieur', en: 'Vehicle Interior' },
   'gallery.bathroom': { fr: 'Salle de Bain', en: 'Bathroom' },
+ 'gallery.bandjounVilla': { fr: 'Villa Bandjoun — Post-Construction', en: 'Bandjoun Villa — Post-Construction' },
   
   // Pricing section
   'pricing.tagline': { fr: 'Nos Tarifs', en: 'Our Prices' },
