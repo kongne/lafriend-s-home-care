@@ -32,6 +32,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { compressIfImage } from "@/lib/mediaUpload";
 import { slugify } from "@/lib/slug";
+import { randomUUID } from "@/lib/uuid";
 import { error as logError } from "@/lib/logger";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, LineChart, Line,
@@ -205,27 +206,31 @@ export const ServiceManagement = () => {
   const uploadFile = async (file: File): Promise<string> => {
     const optimized = await compressIfImage(file);
     const ext = optimized.name.split(".").pop() || "webp";
-    const path = `service-${Date.now()}-${crypto.randomUUID()}.${ext}`;
+    const path = `service-${Date.now()}-${randomUUID()}.${ext}`;
     const { error } = await supabase.storage.from("projects").upload(path, optimized, { contentType: optimized.type, upsert: false });
     if (error) throw error;
     const { data: pub } = supabase.storage.from("projects").getPublicUrl(path);
     return pub.publicUrl;
   };
 
-  const handleImageUpload = async (field: string) => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "image/jpeg,image/png,image/webp,image/svg+xml";
-    input.onchange = async () => {
-      if (!input.files?.[0]) return;
+  const handleImageUpload = async (field: string, file?: File) => {
+    if (file) {
       try {
-        const url = await uploadFile(input.files[0]);
+        const url = await uploadFile(file);
         if (field === "featured") setFormFeaturedImage(url);
         else if (field === "banner") setFormBannerImage(url);
         else if (field === "icon") setFormServiceIcon(url);
         else if (field === "og") setFormOgImage(url);
         toast({ title: "Image téléchargée" });
       } catch { toast({ title: "Erreur", description: "Échec du téléchargement.", variant: "destructive" }); }
+      return;
+    }
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/jpeg,image/png,image/webp,image/svg+xml";
+    input.onchange = async () => {
+      if (!input.files?.[0]) return;
+      await handleImageUpload(field, input.files[0]);
     };
     input.click();
   };
@@ -608,9 +613,9 @@ export const ServiceManagement = () => {
         <TabsContent value="media" className="space-y-4 mt-4">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[
-              { label: "Image à la une", value: formFeaturedImage, onClick: () => handleImageUpload("featured"), clear: () => setFormFeaturedImage("") },
-              { label: "Bannière", value: formBannerImage, onClick: () => handleImageUpload("banner"), clear: () => setFormBannerImage("") },
-              { label: "Icône", value: formServiceIcon, onClick: () => handleImageUpload("icon"), clear: () => setFormServiceIcon("") },
+              { label: "Image à la une", field: "featured", value: formFeaturedImage, clear: () => setFormFeaturedImage("") },
+              { label: "Bannière", field: "banner", value: formBannerImage, clear: () => setFormBannerImage("") },
+              { label: "Icône", field: "icon", value: formServiceIcon, clear: () => setFormServiceIcon("") },
             ].map((item) => (
               <div key={item.label} className="space-y-2">
                 <Label>{item.label}</Label>
@@ -620,7 +625,13 @@ export const ServiceManagement = () => {
                     <Button size="icon" variant="destructive" className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity" onClick={item.clear}><X className="h-3 w-3" /></Button>
                   </div>
                 ) : (
-                  <div className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:border-accent/50 transition-colors" onClick={item.onClick}>
+                  <div
+                    className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:border-accent/50 transition-colors"
+                    onClick={() => handleImageUpload(item.field)}
+                    onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add("border-accent", "bg-accent/5"); }}
+                    onDragLeave={(e) => { e.currentTarget.classList.remove("border-accent", "bg-accent/5"); }}
+                    onDrop={async (e) => { e.preventDefault(); e.currentTarget.classList.remove("border-accent", "bg-accent/5"); const file = e.dataTransfer.files[0]; if (file) await handleImageUpload(item.field, file); }}
+                  >
                     <Upload className="h-6 w-6 mx-auto mb-1 text-muted-foreground" />
                     <p className="text-xs text-muted-foreground">JPG, PNG, WEBP, SVG</p>
                   </div>
@@ -754,7 +765,13 @@ export const ServiceManagement = () => {
                   <Button size="icon" variant="destructive" className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100" onClick={() => setFormOgImage("")}><X className="h-3 w-3" /></Button>
                 </div>
               ) : (
-                <div className="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer hover:border-accent/50" onClick={() => handleImageUpload("og")}>
+                <div
+                  className="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer hover:border-accent/50"
+                  onClick={() => handleImageUpload("og")}
+                  onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add("border-accent", "bg-accent/5"); }}
+                  onDragLeave={(e) => { e.currentTarget.classList.remove("border-accent", "bg-accent/5"); }}
+                  onDrop={async (e) => { e.preventDefault(); e.currentTarget.classList.remove("border-accent", "bg-accent/5"); const file = e.dataTransfer.files[0]; if (file) await handleImageUpload("og", file); }}
+                >
                   <Upload className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
                 </div>
               )}

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Eye, Search, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { transformedUrl } from "@/lib/mediaUpload";
 
 interface ProjectImage {
   image_url: string;
@@ -75,10 +76,10 @@ const BeforeAfterCard = ({ project, index, isVisible, t, language }: { project: 
         )}
         {beforeImg && (
           <picture>
-            <source media="(min-width:1024px)" srcSet={`${beforeImg}&w=1200 1200w, ${beforeImg}&w=800 800w`} />
-            <source media="(min-width:640px)" srcSet={`${beforeImg}&w=800 800w, ${beforeImg}&w=600 600w`} />
+            <source media="(min-width:1024px)" srcSet={`${transformedUrl(beforeImg, 1200)} 1200w, ${transformedUrl(beforeImg, 800)} 800w`} />
+            <source media="(min-width:640px)" srcSet={`${transformedUrl(beforeImg, 800)} 800w, ${transformedUrl(beforeImg, 600)} 600w`} />
             <img
-              src={beforeImg}
+              src={transformedUrl(beforeImg, 600)}
               alt={`${project.title} - ${t('gallery.before')}`}
               className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 ${
                 showAfter ? "opacity-0 scale-110" : "opacity-100 scale-100"
@@ -93,10 +94,10 @@ const BeforeAfterCard = ({ project, index, isVisible, t, language }: { project: 
         )}
         {afterImg && (
           <picture>
-            <source media="(min-width:1024px)" srcSet={`${afterImg}&w=1200 1200w, ${afterImg}&w=800 800w`} />
-            <source media="(min-width:640px)" srcSet={`${afterImg}&w=800 800w, ${afterImg}&w=600 600w`} />
+            <source media="(min-width:1024px)" srcSet={`${transformedUrl(afterImg, 1200)} 1200w, ${transformedUrl(afterImg, 800)} 800w`} />
+            <source media="(min-width:640px)" srcSet={`${transformedUrl(afterImg, 800)} 800w, ${transformedUrl(afterImg, 600)} 600w`} />
             <img
-              src={afterImg}
+              src={transformedUrl(afterImg, 600)}
               alt={`${project.title} - ${t('gallery.after')}`}
               className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 ${
                 showAfter ? "opacity-100 scale-100" : "opacity-0 scale-90"

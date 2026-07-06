@@ -109,12 +109,12 @@ const ServiceDetails = () => {
   const trackView = async () => {
     if (!serviceId) return;
     try {
-      await supabase.rpc("increment_service_views", { service_slug: serviceId }).then();
+      const { data: svc } = await supabase.from("services").select("id, total_views").eq("slug", serviceId).maybeSingle();
+      if (svc) {
+        await supabase.from("service_analytics").insert({ service_id: svc.id, event_type: "view" }).then().catch(() => {});
+        await supabase.from("services").update({ total_views: (svc.total_views || 0) + 1 }).eq("id", svc.id).then().catch(() => {});
+      }
     } catch { /* analytics non-critical */ }
-    try {
-      const { data: svc } = await supabase.from("services").select("id").eq("slug", serviceId).maybeSingle();
-      if (svc) await supabase.from("service_analytics").insert({ service_id: svc.id, event_type: "view" });
-    } catch { /* non-critical */ }
   };
 
   const fetchService = async () => {
@@ -150,9 +150,6 @@ const ServiceDetails = () => {
       if (addonRes.data) setAddons(addonRes.data as ServiceAddon[]);
       if (locRes.data) setLocations(locRes.data as ServiceLocation[]);
 
-      if (svc.total_views !== undefined) {
-        await supabase.from("services").update({ total_views: (svc.total_views || 0) + 1 }).eq("id", svc.id);
-      }
     } catch {
       setNotFound(true);
     } finally {

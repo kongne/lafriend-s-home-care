@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { compressIfImage, transformedUrl } from "@/lib/mediaUpload";
 import { slugify } from "@/lib/slug";
+import { randomUUID } from "@/lib/uuid";
 import { error as logError } from "@/lib/logger";
 import {
   Image,
@@ -196,7 +197,7 @@ export const ProjectManagement = () => {
   const uploadImage = async (file: File): Promise<string> => {
     const optimized = await compressIfImage(file);
     const ext = optimized.name.split(".").pop() || "webp";
-    const path = `project-${Date.now()}-${crypto.randomUUID()}.${ext}`;
+    const path = `project-${Date.now()}-${randomUUID()}.${ext}`;
     const { error } = await supabase.storage
       .from("projects")
       .upload(path, optimized, { contentType: optimized.type, upsert: false });
