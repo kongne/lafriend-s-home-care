@@ -1133,6 +1133,531 @@ export type Database = {
         }
         Relationships: []
       }
+      feedback: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          message: string
+          name: string
+          phone: string | null
+          service: string | null
+          status: string
+          subject: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          message: string
+          name: string
+          phone?: string | null
+          service?: string | null
+          status?: string
+          subject?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          message?: string
+          name?: string
+          phone?: string | null
+          service?: string | null
+          status?: string
+          subject?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      project_images: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          image_type: string
+          image_url: string
+          is_featured: boolean
+          project_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          image_type: string
+          image_url: string
+          is_featured?: boolean
+          project_id: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          image_type?: string
+          image_url?: string
+          is_featured?: boolean
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_images_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          category: string
+          completion_date: string | null
+          created_at: string
+          description: string | null
+          detail_description: string | null
+          duration_or_stats: string | null
+          id: string
+          is_featured: boolean
+          location: string | null
+          slug: string
+          stats_label: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          completion_date?: string | null
+          created_at?: string
+          description?: string | null
+          detail_description?: string | null
+          duration_or_stats?: string | null
+          id?: string
+          is_featured?: boolean
+          location?: string | null
+          slug: string
+          stats_label?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          completion_date?: string | null
+          created_at?: string
+          description?: string | null
+          detail_description?: string | null
+          duration_or_stats?: string | null
+          id?: string
+          is_featured?: boolean
+          location?: string | null
+          slug?: string
+          stats_label?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      service_addons: {
+        Row: {
+          created_at: string
+          description: string | null
+          duration: string | null
+          id: string
+          name: string
+          price: number | null
+          service_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          duration?: string | null
+          id?: string
+          name: string
+          price?: number | null
+          service_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          duration?: string | null
+          id?: string
+          name?: string
+          price?: number | null
+          service_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_addons_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_analytics: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          service_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          service_id: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          service_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_analytics_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_categories: {
+        Row: {
+          banner: string | null
+          created_at: string
+          description: string | null
+          display_order: number
+          icon: string | null
+          id: string
+          name: string
+          parent_id: string | null
+          slug: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          banner?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          icon?: string | null
+          id?: string
+          name: string
+          parent_id?: string | null
+          slug: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          banner?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          icon?: string | null
+          id?: string
+          name?: string
+          parent_id?: string | null
+          slug?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "service_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_faqs: {
+        Row: {
+          answer: string
+          created_at: string
+          display_order: number
+          id: string
+          question: string
+          service_id: string
+        }
+        Insert: {
+          answer: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          question: string
+          service_id: string
+        }
+        Update: {
+          answer?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          question?: string
+          service_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_faqs_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_features: {
+        Row: {
+          created_at: string
+          display_order: number
+          feature: string
+          id: string
+          is_included: boolean
+          service_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          feature: string
+          id?: string
+          is_included?: boolean
+          service_id: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          feature?: string
+          id?: string
+          is_included?: boolean
+          service_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_features_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_images: {
+        Row: {
+          caption: string | null
+          created_at: string
+          display_order: number
+          id: string
+          image_type: string
+          image_url: string
+          service_id: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          image_type: string
+          image_url: string
+          service_id: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          image_type?: string
+          image_url?: string
+          service_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_images_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_locations: {
+        Row: {
+          created_at: string
+          id: string
+          location: string
+          location_type: string
+          service_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          location: string
+          location_type?: string
+          service_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          location?: string
+          location_type?: string
+          service_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_locations_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      services: {
+        Row: {
+          base_price: number | null
+          best_seller: boolean
+          canonical_url: string | null
+          category_id: string | null
+          created_at: string
+          currency: string
+          deposit_required: boolean
+          description: string | null
+          discount_price: number | null
+          duration: string | null
+          estimated_duration: string | null
+          featured: boolean
+          featured_image: string | null
+          banner_image: string | null
+          service_icon: string | null
+          id: string
+          instant_booking: boolean
+          is_appointment_required: boolean
+          keywords: string | null
+          limited_time_offer: boolean
+          maximum_time: string | null
+          minimum_charge: number | null
+          minimum_time: string | null
+          name: string
+          og_image: string | null
+          online_payment_enabled: boolean
+          popular: boolean
+          price_type: string
+          quote_required: boolean
+          recommended: boolean
+          seasonal_offer: boolean
+          seo_description: string | null
+          seo_title: string | null
+          service_code: string | null
+          short_description: string | null
+          slug: string
+          status: string
+          tax_included: boolean
+          total_bookings: number
+          total_views: number
+          updated_at: string
+        }
+        Insert: {
+          base_price?: number | null
+          best_seller?: boolean
+          canonical_url?: string | null
+          category_id?: string | null
+          created_at?: string
+          currency?: string
+          deposit_required?: boolean
+          description?: string | null
+          discount_price?: number | null
+          duration?: string | null
+          estimated_duration?: string | null
+          featured?: boolean
+          featured_image?: string | null
+          banner_image?: string | null
+          service_icon?: string | null
+          id?: string
+          instant_booking?: boolean
+          is_appointment_required?: boolean
+          keywords?: string | null
+          limited_time_offer?: boolean
+          maximum_time?: string | null
+          minimum_charge?: number | null
+          minimum_time?: string | null
+          name: string
+          og_image?: string | null
+          online_payment_enabled?: boolean
+          popular?: boolean
+          price_type?: string
+          quote_required?: boolean
+          recommended?: boolean
+          seasonal_offer?: boolean
+          seo_description?: string | null
+          seo_title?: string | null
+          service_code?: string | null
+          short_description?: string | null
+          slug: string
+          status?: string
+          tax_included?: boolean
+          total_bookings?: number
+          total_views?: number
+          updated_at?: string
+        }
+        Update: {
+          base_price?: number | null
+          best_seller?: boolean
+          canonical_url?: string | null
+          category_id?: string | null
+          created_at?: string
+          currency?: string
+          deposit_required?: boolean
+          description?: string | null
+          discount_price?: number | null
+          duration?: string | null
+          estimated_duration?: string | null
+          featured?: boolean
+          featured_image?: string | null
+          banner_image?: string | null
+          service_icon?: string | null
+          id?: string
+          instant_booking?: boolean
+          is_appointment_required?: boolean
+          keywords?: string | null
+          limited_time_offer?: boolean
+          maximum_time?: string | null
+          minimum_charge?: number | null
+          minimum_time?: string | null
+          name?: string
+          og_image?: string | null
+          online_payment_enabled?: boolean
+          popular?: boolean
+          price_type?: string
+          quote_required?: boolean
+          recommended?: boolean
+          seasonal_offer?: boolean
+          seo_description?: string | null
+          seo_title?: string | null
+          service_code?: string | null
+          short_description?: string | null
+          slug?: string
+          status?: string
+          tax_included?: boolean
+          total_bookings?: number
+          total_views?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "services_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "service_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -1174,6 +1699,10 @@ export type Database = {
       redeem_points_for_booking: {
         Args: { p_booking_id: string; p_points: number; p_user_id: string }
         Returns: number
+      }
+      increment_service_views: {
+        Args: { service_slug: string }
+        Returns: undefined
       }
     }
     Enums: {
