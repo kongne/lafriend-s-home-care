@@ -20,6 +20,11 @@ import {
   Share2,
   Megaphone,
   Clock,
+  Star,
+  Receipt,
+  Image as ImageIcon,
+  MessageCircle,
+  MessageSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -41,6 +46,8 @@ interface AdminSidebarProps {
 
 const menuItems = [
   { icon: BarChart3, label: "Statistiques", value: "analytics", path: "/admin" },
+  { icon: MessageCircle, label: "Reviews", value: "reviews-management", path: "/admin?tab=reviews-management" },
+  { icon: MessageSquare, label: "Customer Feedback", value: "customer-feedback", path: "/admin?tab=customer-feedback" },
   { icon: CalendarDays, label: "Réservations", value: "bookings", path: "/admin?tab=bookings" },
   { icon: Calendar, label: "Calendrier", value: "calendar", path: "/admin?tab=calendar" },
   { icon: Calendar, label: "Planning Staff", value: "staff-calendar", path: "/admin?tab=staff-calendar" },
@@ -52,6 +59,10 @@ const menuItems = [
   { icon: Share2, label: "Parrainages", value: "referrals", path: "/admin?tab=referrals" },
   { icon: Bell, label: "Notifications", value: "notifications", path: "/admin?tab=notifications" },
   { icon: Megaphone, label: "Diffusion", value: "broadcast", path: "/admin?tab=broadcast" },
+  { icon: Star, label: "Avis Clients", value: "feedback", path: "/admin?tab=feedback" },
+  { icon: Star, label: "Modération Avis", value: "reviews", path: "/admin?tab=reviews" },
+  { icon: ImageIcon, label: "Projets Galerie", value: "projects", path: "/admin?tab=projects" },
+  { icon: Receipt, label: "Reçus", value: "receipts", path: "/admin?tab=receipts" },
   { icon: Clock, label: "Rappels", value: "reminders", path: "/admin?tab=reminders" },
   { icon: FileText, label: "Rapports", value: "reports", path: "/admin?tab=reports" },
 ];

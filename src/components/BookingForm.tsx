@@ -10,7 +10,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Loader2, Repeat, Shield, MessageCircle, CheckCircle2, ArrowLeft, ArrowRight, Calculator, Sparkles } from "lucide-react";
+import { Loader2, Repeat, Shield, MessageCircle, CheckCircle2, ArrowLeft, ArrowRight, Calculator, Sparkles, MapPin, ChevronDown, ChevronUp } from "lucide-react";
 import { bookingSchema, rateLimit } from "@/lib/validation";
 import { error as logError } from "@/lib/logger";
 import { Switch } from "@/components/ui/switch";
@@ -18,6 +18,7 @@ import { getRecaptchaToken, verifyRecaptchaToken } from "@/lib/recaptcha";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { KycStatusBadge } from "@/components/KycStatusBadge";
+import { LocationPicker } from "@/components/LocationPicker";
 
 const SERVICE_BASE_PRICE: Record<string, number> = {
   residential: 25000,
@@ -25,6 +26,8 @@ const SERVICE_BASE_PRICE: Record<string, number> = {
   construction: 80000,
   windows: 15000,
   car: 8000,
+  nanny: 35000,
+  cook: 30000,
   other: 20000,
 };
 
@@ -34,13 +37,28 @@ const SERVICE_LABEL: Record<string, string> = {
   construction: "Nettoyage de Construction",
   windows: "Nettoyage de Vitres",
   car: "Lavage de Voiture",
+  nanny: "Placement de Nounou",
+  cook: "Service de Cuisinière",
   other: "Autre service",
 };
 
 const RECURRENCE_DISCOUNT: Record<string, number> = {
-  weekly: 0.15,
-  biweekly: 0.10,
+  weekly: 0.05,
+  biweekly: 0.05,
   monthly: 0.05,
+};
+
+const EXCHANGE_RATES: Record<string, number> = {
+  XAF: 1,
+  EUR: 0.0015,
+  USD: 0.0017,
+  GBP: 0.0013,
+};
+
+const EXCHANGE_FEES: Record<string, number> = {
+  EUR: 0.025,
+  USD: 0.03,
+  GBP: 0.035,
 };
 
 export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
@@ -54,6 +72,10 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
   const [loyaltyPoints, setLoyaltyPoints] = useState(0);
   const [pointsToRedeem, setPointsToRedeem] = useState(0);
   const [kycStatus, setKycStatus] = useState<"none" | "pending" | "approved" | "rejected">("none");
+  const [currency, setCurrency] = useState<string>("XAF");
+  const [latitude, setLatitude] = useState("");
+  const [longitude, setLongitude] = useState("");
+  const [showBreakdown, setShowBreakdown] = useState(false);
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -69,6 +91,7 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
     recurrenceType: "",
     recurrenceEndDate: "",
     confirmViaWhatsApp: false,
+    distance: "0",
   });
 
   useEffect(() => {
@@ -96,9 +119,27 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
     ? subtotal * (RECURRENCE_DISCOUNT[formData.recurrenceType] || 0)
     : 0;
   const pointsDiscount = pointsToRedeem * 10; // 1 pt = 10 FCFA
+  const distance = parseFloat(formData.distance || "0") || 0;
+  const distanceFee = distance > 10 ? (distance - 10) * 500 : 0;
   const estimatedTotal = Math.max(0, Math.round(subtotal - discount - pointsDiscount));
+  const totalFcfa = estimatedTotal + distanceFee;
   const maxRedeemable = Math.min(loyaltyPoints, Math.floor(Math.max(0, subtotal - discount) / 10));
+  const rate = EXCHANGE_RATES[currency] || 1;
+  const exchangeFeeRate = currency !== "XAF" ? EXCHANGE_FEES[currency] || 0 : 0;
+  const convertedSubtotal = subtotal * rate;
+  const convertedDiscount = discount * rate;
+  const convertedPointsDiscount = pointsDiscount * rate;
+  const convertedDistanceFee = distanceFee * rate;
+  const convertedTotal = totalFcfa * rate;
+  const exchangeFee = convertedTotal * exchangeFeeRate;
+  const grandTotalConverted = convertedTotal + exchangeFee;
   const formatPrice = (n: number) => n.toLocaleString("fr-FR") + " FCFA";
+  const currencySymbols: Record<string, string> = { XAF: "FCFA", EUR: "€", USD: "$", GBP: "£" };
+  const formatConverted = (n: number) => {
+    const sym = currencySymbols[currency] || currency;
+    if (currency === "XAF") return n.toLocaleString("fr-FR") + " FCFA";
+    return sym + n.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -192,7 +233,10 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
         message: validation.data.message || null,
         is_recurring: formData.isRecurring,
         recurrence_type: formData.isRecurring ? formData.recurrenceType : null,
-        recurrence_end_date: formData.isRecurring && formData.recurrenceEndDate ? formData.recurrenceEndDate : null
+        recurrence_end_date: formData.isRecurring && formData.recurrenceEndDate ? formData.recurrenceEndDate : null,
+        distance_km: distance,
+        latitude: latitude || null,
+        longitude: longitude || null,
       }).select("id").single();
 
       if (error) throw error;
@@ -269,11 +313,16 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
   const reset = () => {
     setSubmitted(false);
     setStep(1);
+    setCurrency("XAF");
+    setLatitude("");
+    setLongitude("");
+    setPointsToRedeem(0);
+    setShowBreakdown(false);
     setFormData({
       fullName: "", email: "", phone: "", address: "", serviceType: "",
       customService: "", estimatedHours: "2", preferredDate: "", preferredTime: "",
       message: "", isRecurring: false, recurrenceType: "", recurrenceEndDate: "",
-      confirmViaWhatsApp: false,
+      confirmViaWhatsApp: false, distance: "0",
     });
     onSuccess?.();
   };
@@ -404,20 +453,40 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
                   <Calculator className="h-4 w-4 text-accent" />
                   Estimation du prix
                 </div>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xs text-muted-foreground">Devise:</span>
+                  <Select value={currency} onValueChange={setCurrency}>
+                    <SelectTrigger className="w-28 h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="XAF">FCFA (XAF)</SelectItem>
+                      <SelectItem value="EUR">Euro (EUR)</SelectItem>
+                      <SelectItem value="USD">Dollar (USD)</SelectItem>
+                      <SelectItem value="GBP">Livre (GBP)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Sous-total</span>
-                  <span>{formatPrice(Math.round(subtotal))}</span>
+                  <span>{formatPrice(Math.round(subtotal))} {currency !== "XAF" && <span className="text-xs text-muted-foreground">({formatConverted(Math.round(convertedSubtotal * 100) / 100)})</span>}</span>
                 </div>
                 {discount > 0 && (
                   <div className="flex justify-between text-sm text-green-600">
                     <span>Remise abonnement</span>
-                    <span>-{formatPrice(Math.round(discount))}</span>
+                    <span>-{formatPrice(Math.round(discount))} {currency !== "XAF" && <span className="text-xs text-muted-foreground">({formatConverted(Math.round(convertedDiscount * 100) / 100)})</span>}</span>
                   </div>
                 )}
                 <div className="flex justify-between pt-2 border-t border-accent/20 font-bold">
                   <span>Total estimé</span>
-                  <span className="text-accent text-lg">{formatPrice(estimatedTotal)}</span>
+                  <span className="text-accent text-lg">{formatPrice(estimatedTotal)} {currency !== "XAF" && <span className="text-xs text-muted-foreground">({formatConverted(Math.round(convertedTotal * 100) / 100)})</span>}</span>
                 </div>
+                {currency !== "XAF" && (
+                  <div className="flex justify-between text-sm text-orange-600">
+                    <span>Frais de change ({((exchangeFeeRate) * 100).toFixed(1)}%)</span>
+                    <span>{formatConverted(Math.round(exchangeFee * 100) / 100)}</span>
+                  </div>
+                )}
                 <p className="text-xs text-muted-foreground">* Estimation indicative — confirmation après visite.</p>
               </div>
             )}
@@ -490,8 +559,8 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
                         <SelectValue placeholder="Choisir la fréquence" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="weekly">Hebdomadaire (-15%)</SelectItem>
-                        <SelectItem value="biweekly">Bi-hebdomadaire (-10%)</SelectItem>
+                        <SelectItem value="weekly">Hebdomadaire (-5%)</SelectItem>
+                        <SelectItem value="biweekly">Bi-hebdomadaire (-5%)</SelectItem>
                         <SelectItem value="monthly">Mensuel (-5%)</SelectItem>
                       </SelectContent>
                     </Select>
@@ -533,9 +602,28 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
               {errors.phone && <p className="text-sm text-destructive">{errors.phone}</p>}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="address">Adresse</Label>
-              <Input id="address" name="address" placeholder="Entrez votre adresse" value={formData.address} onChange={handleChange} required maxLength={200} className={errors.address ? "border-destructive" : ""} />
+              <div className="flex items-end gap-2">
+                <div className="flex-1">
+                  <Label htmlFor="address">Adresse</Label>
+                  <Input id="address" name="address" placeholder="Entrez votre adresse" value={formData.address} onChange={handleChange} required maxLength={200} className={errors.address ? "border-destructive" : ""} />
+                </div>
+                <LocationPicker
+                  onLocationSelect={(addr, lat, lng) => {
+                    setFormData(prev => ({ ...prev, address: addr }));
+                    setLatitude(String(lat));
+                    setLongitude(String(lng));
+                  }}
+                  latitude={latitude}
+                  longitude={longitude}
+                />
+              </div>
               {errors.address && <p className="text-sm text-destructive">{errors.address}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="distance">Distance (km)</Label>
+              <Input id="distance" name="distance" type="number" min="0" step="0.1" placeholder="0" value={formData.distance} onChange={handleChange} />
+              <p className="text-xs text-muted-foreground">Frais de déplacement : 500 FCFA/km au-delà de 10 km</p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -582,30 +670,58 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
 
             {formData.serviceType && hours > 0 && (
               <div className="bg-gradient-to-r from-accent/10 to-accent/5 border border-accent/30 rounded-lg p-4 space-y-2 text-sm">
-                <div className="flex items-center gap-2 font-semibold mb-1">
-                  <Calculator className="h-4 w-4 text-accent" />
-                  Récapitulatif
-                </div>
+                <button
+                  type="button"
+                  className="flex items-center justify-between w-full font-semibold mb-1"
+                  onClick={() => setShowBreakdown(!showBreakdown)}
+                >
+                  <span className="flex items-center gap-2">
+                    <Calculator className="h-4 w-4 text-accent" />
+                    Détail des coûts
+                  </span>
+                  {showBreakdown ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                </button>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Sous-total</span>
-                  <span>{formatPrice(Math.round(subtotal))}</span>
+                  <span className="text-muted-foreground">Prix de base</span>
+                  <span>{formatPrice(Math.round(subtotal))} {currency !== "XAF" && <span className="text-xs text-muted-foreground">({formatConverted(Math.round(convertedSubtotal * 100) / 100)})</span>}</span>
                 </div>
-                {discount > 0 && (
-                  <div className="flex justify-between text-green-600">
-                    <span>Remise abonnement</span>
-                    <span>-{formatPrice(Math.round(discount))}</span>
-                  </div>
-                )}
-                {pointsToRedeem > 0 && (
-                  <div className="flex justify-between text-green-600">
-                    <span>Points fidélité ({pointsToRedeem} pts)</span>
-                    <span>-{formatPrice(pointsDiscount)}</span>
-                  </div>
+                {showBreakdown && (
+                  <>
+                    {distanceFee > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Frais de déplacement ({distance - 10} km sup.)</span>
+                        <span>{formatPrice(distanceFee)} {currency !== "XAF" && <span className="text-xs text-muted-foreground">({formatConverted(Math.round(convertedDistanceFee * 100) / 100)})</span>}</span>
+                      </div>
+                    )}
+                    {discount > 0 && (
+                      <div className="flex justify-between text-green-600">
+                        <span>Remise abonnement</span>
+                        <span>-{formatPrice(Math.round(discount))} {currency !== "XAF" && <span className="text-xs text-muted-foreground">({formatConverted(Math.round(convertedDiscount * 100) / 100)})</span>}</span>
+                      </div>
+                    )}
+                    {pointsToRedeem > 0 && (
+                      <div className="flex justify-between text-green-600">
+                        <span>Points fidélité ({pointsToRedeem} pts)</span>
+                        <span>-{formatPrice(pointsDiscount)} {currency !== "XAF" && <span className="text-xs text-muted-foreground">({formatConverted(Math.round(convertedPointsDiscount * 100) / 100)})</span>}</span>
+                      </div>
+                    )}
+                    {currency !== "XAF" && (
+                      <div className="flex justify-between text-orange-600">
+                        <span>Frais de change ({((exchangeFeeRate) * 100).toFixed(1)}%)</span>
+                        <span>{formatConverted(Math.round(exchangeFee * 100) / 100)}</span>
+                      </div>
+                    )}
+                  </>
                 )}
                 <div className="flex justify-between border-t border-accent/20 pt-2 font-bold">
                   <span>Total à payer</span>
-                  <span className="text-accent text-lg">{formatPrice(estimatedTotal)}</span>
+                  <span className="text-accent text-lg">
+                    {currency === "XAF" ? formatPrice(totalFcfa) : formatConverted(Math.round(grandTotalConverted * 100) / 100)}
+                  </span>
                 </div>
+                {currency !== "XAF" && (
+                  <p className="text-xs text-muted-foreground">Soit {formatPrice(totalFcfa)}</p>
+                )}
               </div>
             )}
 

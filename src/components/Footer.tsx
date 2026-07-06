@@ -68,6 +68,11 @@ export const Footer = () => {
                   {t('footer.pricingGuide') || 'Guide des tarifs'}
                 </Link>
               </li>
+              <li>
+                <Link to="/join-our-team" className="text-primary-foreground/80 hover:text-accent transition-colors text-sm">
+                  Nous Rejoindre
+                </Link>
+              </li>
             </ul>
           </div>
 

@@ -90,6 +90,10 @@ export const translations: Translations = {
   'services.car.f1': { fr: 'Lavage extérieur', en: 'Exterior wash' },
   'services.car.f2': { fr: 'Nettoyage intérieur', en: 'Interior cleaning' },
   'services.car.f3': { fr: 'Traitement des tissus', en: 'Fabric treatment' },
+  'services.nanny': { fr: 'Placement de Nounou', en: 'Nanny Placement' },
+  'services.nanny.desc': { fr: "Service de garde d'enfants professionnel", en: 'Professional childcare service' },
+  'services.cook': { fr: 'Service de Cuisinière', en: 'Cook Service' },
+  'services.cook.desc': { fr: 'Cuisinière professionnelle pour votre domicile', en: 'Professional cook for your home' },
   'services.custom': { fr: 'Service Personnalisé', en: 'Custom Service' },
   'services.custom.desc': { fr: 'Besoin d\'un service spécifique? Nous créons une solution sur mesure.', en: 'Need a specific service? We create a custom solution.' },
   'services.custom.f1': { fr: 'Solutions adaptées', en: 'Tailored solutions' },
@@ -250,12 +254,59 @@ export const translations: Translations = {
   'session.stay': { fr: 'Rester connecté(e)', en: 'Stay Logged In' },
   'session.logoutNow': { fr: 'Se déconnecter', en: 'Log Out Now' },
   'session.timeoutToast': { fr: 'Vous avez été déconnecté(e) en toute sécurité pour cause d\'inactivité.', en: 'You have been logged out safely due to inactivity.' },
+
+  // Service details page
+  'details.notFound': { fr: 'Service non trouvé', en: 'Service not found' },
+  'details.backHome': { fr: "Retour à l'accueil", en: 'Back to home' },
+  'details.back': { fr: 'Retour', en: 'Back' },
+  'details.included': { fr: 'Ce qui est inclus', en: "What's included" },
+  'details.howItWorks': { fr: 'Comment ça marche', en: 'How it works' },
+  'details.step': { fr: 'Étape', en: 'Step' },
+  'details.ready': { fr: 'Prêt à réserver ?', en: 'Ready to book?' },
+  'details.readyDesc': { fr: 'Réservez en quelques clics ou demandez un devis personnalisé', en: 'Book in a few clicks or request a custom quote' },
+  'details.bookNow': { fr: 'Réserver maintenant', en: 'Book now' },
+  'details.requestQuote': { fr: 'Demander un devis', en: 'Request a quote' },
+
+  // Booking extras
+  'booking.currency': { fr: 'Devise', en: 'Currency' },
+  'booking.distance': { fr: 'Distance (km)', en: 'Distance (km)' },
+  'booking.travelFee': { fr: 'Frais de déplacement', en: 'Travel fee' },
+  'booking.exchangeFee': { fr: 'Frais de change', en: 'Exchange fee' },
+
+  // Navigation
+  'nav.recruitment': { fr: 'Recrutement', en: 'Join Us' },
+
+  // Testimonials
+  'testimonials.viewAll': { fr: 'Voir tous les avis', en: 'View all reviews' },
+
+  // Gallery enhancements
+  'gallery.search': { fr: 'Rechercher un projet...', en: 'Search projects...' },
+  'gallery.all': { fr: 'Tous', en: 'All' },
+  'gallery.noResults': { fr: 'Aucun projet trouvé', en: 'No projects found' },
+  'gallery.tryDifferent': { fr: 'Essayez un autre filtre ou terme de recherche.', en: 'Try a different filter or search term.' },
+  'gallery.back': { fr: 'Retour à la galerie', en: 'Back to gallery' },
+
+  // Project detail
+  'project.details': { fr: 'Détails du projet', en: 'Project Details' },
+  'project.comparison': { fr: 'Avant / Après', en: 'Before / After' },
+  'project.beforeGallery': { fr: 'Galerie Avant', en: 'Before Gallery' },
+  'project.afterGallery': { fr: 'Galerie Après', en: 'After Gallery' },
+  'project.ctaTitle': { fr: 'Intéressé par ce service ?', en: 'Interested in this service?' },
+  'project.ctaDesc': { fr: 'Réservez le même service pour votre espace. Notre équipe est prête à intervenir.', en: 'Book the same service for your space. Our team is ready to help.' },
+  'project.bookService': { fr: 'Réserver ce service', en: 'Book this Service' },
+  'project.relatedProjects': { fr: 'Projets similaires', en: 'Related Projects' },
+
+  // Common
+  'common.notFound': { fr: 'Projet introuvable', en: 'Project not found' },
+  'common.notFoundDesc': { fr: 'Le projet que vous cherchez n\'existe pas ou a été retiré.', en: 'The project you are looking for does not exist or has been removed.' },
+  'common.backToGallery': { fr: 'Retour à la galerie', en: 'Back to gallery' },
 };
 
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
   t: (key: string) => string;
+  withLang: <T extends Record<string, unknown>>(params?: T) => T & { lang: Language };
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -269,6 +320,7 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     localStorage.setItem('language', language);
     document.documentElement.lang = language;
+    document.cookie = `lang=${language}; path=/; max-age=${365 * 24 * 60 * 60}; SameSite=Lax`;
   }, [language]);
 
   const t = (key: string): string => {
@@ -277,8 +329,13 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
     return translation[language];
   };
 
+  const withLang = <T extends Record<string, unknown>>(params?: T) => ({
+    ...(params || {} as T),
+    lang: language,
+  });
+
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t }}>
+    <LanguageContext.Provider value={{ language, setLanguage, t, withLang }}>
       {children}
     </LanguageContext.Provider>
   );

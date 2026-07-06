@@ -1,6 +1,7 @@
 import { Star, Quote, Sparkles, ChevronLeft, ChevronRight, User } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useState, useEffect, useCallback } from "react";
@@ -49,8 +50,36 @@ export const Testimonials = () => {
   const [isAnimating, setIsAnimating] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
 
+  const { data: featuredReviews } = useQuery({
+    queryKey: ['landing_featured_reviews'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('reviews')
+        .select(`
+          id,
+          rating,
+          comment,
+          is_pinned,
+          created_at,
+          booking:bookings (
+            full_name,
+            service_type,
+            address
+          )
+        `)
+        .eq('status', 'approved')
+        .eq('is_featured', true)
+        .order('is_pinned', { ascending: false })
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data;
+    }
+  });
+
   const { data: fetchedTestimonials } = useQuery({
     queryKey: ['landing_testimonials'],
+    enabled: !featuredReviews || featuredReviews.length === 0,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('feedback_ratings' as any)
@@ -73,23 +102,35 @@ export const Testimonials = () => {
     }
   });
 
-  const testimonials = fetchedTestimonials && fetchedTestimonials.length > 0
-    ? fetchedTestimonials.map((ft: any) => ({
-        name: ft.bookings?.[0]?.full_name || ft.bookings?.full_name || "Client Anonyme",
-        role: "Client Vérifié",
-        content: ft.comment,
-        rating: ft.rating,
-        image: null,
-        location: ft.bookings?.[0]?.address || ft.bookings?.address || ""
-      }))
-    : defaultTestimonials.map(dt => ({
-        name: dt.name,
-        role: t(dt.roleKey),
-        content: t(dt.contentKey),
-        rating: dt.rating,
-        image: dt.image,
-        location: dt.location
-      }));
+  const testimonials = featuredReviews && featuredReviews.length > 0
+    ? featuredReviews.map((fr: any) => {
+        const bookingObj = Array.isArray(fr.booking) ? fr.booking[0] : fr.booking;
+        return {
+          name: bookingObj?.full_name || "Client Vérifié",
+          role: bookingObj?.service_type || "Client",
+          content: fr.comment || "",
+          rating: fr.rating,
+          image: null,
+          location: bookingObj?.address || ""
+        };
+      })
+    : fetchedTestimonials && fetchedTestimonials.length > 0
+      ? fetchedTestimonials.map((ft: any) => ({
+          name: ft.bookings?.[0]?.full_name || ft.bookings?.full_name || "Client Anonyme",
+          role: "Client Vérifié",
+          content: ft.comment,
+          rating: ft.rating,
+          image: null,
+          location: ft.bookings?.[0]?.address || ft.bookings?.address || ""
+        }))
+      : defaultTestimonials.map(dt => ({
+          name: dt.name,
+          role: t(dt.roleKey),
+          content: t(dt.contentKey),
+          rating: dt.rating,
+          image: dt.image,
+          location: dt.location
+        }));
 
   const goToSlide = useCallback((index: number) => {
     if (isAnimating) return;
@@ -174,42 +215,61 @@ export const Testimonials = () => {
         </Card>
       </div>
 
-      {/* Grid of testimonials */}
-      {/*<div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-          {testimonials.map((testimonial, index) => (
-            <Card 
-              key={index}
-              className={`bg-card/50 border-accent/10 p-6 transition-all duration-500 hover:bg-card hover:border-accent/30 ${
-                isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
-              }`}
-              style={{ transitionDelay: `${index * 100}ms` }}
-            >
-              <div className="flex items-center gap-3 mb-4">
+      {/* Grid of mini-reviews */}
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
+        {testimonials.slice(0, 4).map((testimonial, index) => (
+          <Card
+            key={index}
+            className={`bg-card/50 border-accent/10 p-4 md:p-5 transition-all duration-500 hover:bg-card hover:border-accent/30 ${
+              isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+            }`}
+            style={{ transitionDelay: `${index * 100}ms` }}
+          >
+            <div className="flex items-center gap-2 mb-3">
+              {testimonial.image ? (
                 <img
                   src={testimonial.image}
                   alt={testimonial.name}
-                  className="w-12 h-12 rounded-full object-cover"
+                  className="w-10 h-10 rounded-full object-cover"
                   loading="lazy"
                   decoding="async"
-                  width={48}
-                  height={48}
+                  width={40}
+                  height={40}
                 />
-                <div>
-                  <p className="font-semibold text-foreground">{testimonial.name}</p>
-                  <p className="text-sm text-muted-foreground">{testimonial.location}</p>
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-background/50 flex items-center justify-center">
+                  <User className="w-5 h-5 text-foreground/50" />
                 </div>
+              )}
+              <div className="min-w-0">
+                <p className="font-semibold text-foreground text-sm truncate">{testimonial.name}</p>
+                <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider text-accent font-medium">
+                  <Sparkles className="w-3 h-3" /> {t('trust.verified')}
+                </span>
               </div>
-              <div className="flex gap-0.5 mb-3">
-                {[...Array(testimonial.rating)].map((_, i) => (
-                  <Star key={i} className="w-4 h-4 fill-accent text-accent" />
-                ))}
-              </div>
-              <p className="text-sm text-muted-foreground line-clamp-3">
-                "{t(testimonial.contentKey)}"
-              </p>
-            </Card>
-          ))}
-        </div>*/}
+            </div>
+            <div className="flex gap-0.5 mb-2">
+              {[...Array(testimonial.rating)].map((_, i) => (
+                <Star key={i} className="w-3.5 h-3.5 fill-accent text-accent" />
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed">
+              "{testimonial.content}"
+            </p>
+          </Card>
+        ))}
+      </div>
+
+      {/* View all link */}
+      <div className="text-center">
+        <Link
+          to="/customer-portal#reviews"
+          className="inline-flex items-center gap-2 text-accent hover:text-accent/80 font-semibold text-sm transition-colors"
+        >
+          {t('testimonials.viewAll')}
+          <ChevronRight className="w-4 h-4" />
+        </Link>
+      </div>
     </div>
   </section>;
 };

@@ -20,6 +20,9 @@ const SERVICE_BASE_PRICE: Record<string, number> = {
   "Nettoyage de Bureau": 100000,
   "Lavage de Vitres": 40000,
   "Nettoyage de Tapis": 60000,
+  "Placement de Nounou": 35000,
+  "Service de Cuisinière": 30000,
+  "Autre service": 20000,
 };
 
 export const estimateBookingPrice = (serviceType: string): number =>

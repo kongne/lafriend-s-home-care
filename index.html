@@ -12,7 +12,10 @@
   <meta name="author" content="LaFriend's Services Ménagers" />
   <meta name="robots" content="index, follow" />
   <meta name="theme-color" content="#f5c542" />
+  <!-- Security: Content-Security-Policy (defense-in-depth; Vite handles script integrity via hashes) -->
+  <meta http-equiv="Content-Security-Policy" content="frame-ancestors 'self'; form-action 'self'; base-uri 'self'">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
   <!-- Preload LCP hero image -->
   <link rel="preload" as="image" href="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1920&q=80" fetchpriority="high" />
   <!--  SEO-->

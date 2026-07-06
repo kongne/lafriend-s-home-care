@@ -10,21 +10,21 @@ interface LeaderboardEntry {
   rank: number;
 }
 
-function respond(ok: boolean, payload: Record<string, unknown>): Response {
+function respond(ok: boolean, payload: Record<string, unknown>, req: Request): Response {
   return new Response(JSON.stringify({ ok, ...payload }), {
     status: 200,
-    headers: { "Content-Type": "application/json", ...corsHeaders },
+    headers: { "Content-Type": "application/json", ...corsHeaders(req) },
   });
 }
 
 serve(async (req: Request) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders(req) });
 
   try {
     // Require authentication — leaderboard contains user PII (names, ids).
     const currentUserId = await verifyJwt(req);
     if (!currentUserId) {
-      return respond(false, { error: "Unauthorized" });
+      return respond(false, { error: "Unauthorized" }, req);
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -37,11 +37,11 @@ serve(async (req: Request) => {
       .eq("status", "completed");
 
     if (error) {
-      return respond(false, { error: error.message });
+      return respond(false, { error: error.message }, req);
     }
 
     if (!referrals || referrals.length === 0) {
-      return respond(true, { data: { leaderboard: [], currentUserRank: null, currentUserId } });
+      return respond(true, { data: { leaderboard: [], currentUserRank: null, currentUserId } }, req);
     }
 
     const grouped = new Map<string, { count: number; points: number }>();
@@ -102,10 +102,10 @@ serve(async (req: Request) => {
         currentUserRank,
         currentUserId,
       },
-    });
+    }, req);
   } catch (error) {
     return respond(false, {
       error: error instanceof Error ? error.message : "Unknown error",
-    });
+    }, req);
   }
 });

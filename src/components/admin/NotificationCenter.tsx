@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Bell,
   Check,
@@ -44,6 +44,7 @@ interface Notification {
 
 export const NotificationCenter = () => {
   const { user } = useAuth();
+  const channelRef = useRef(`notifications-${Math.random().toString(36).slice(2, 9)}`);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -74,7 +75,7 @@ export const NotificationCenter = () => {
 
     // Subscribe to realtime notifications
     const channel = supabase
-      .channel("notifications-realtime")
+      .channel(channelRef.current)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "notifications" },

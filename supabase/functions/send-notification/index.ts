@@ -3,10 +3,10 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.84.0";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { sendEmail, corsHeaders, checkRateLimit, escapeHtml, verifyJwt } from "../_shared/email-service.ts";
 
-function respond(ok: boolean, payload: Record<string, unknown>): Response {
+function respond(ok: boolean, payload: Record<string, unknown>, req: Request): Response {
   return new Response(JSON.stringify({ ok, ...payload }), {
     status: 200,
-    headers: { "Content-Type": "application/json", ...corsHeaders },
+    headers: { "Content-Type": "application/json", ...corsHeaders(req) },
   });
 }
 
@@ -30,11 +30,11 @@ const requestSchema = z.object({
 });
 
 const handler = async (req: Request): Promise<Response> => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders(req) });
 
   try {
     const clientIP = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-    if (!checkRateLimit(clientIP)) return respond(false, { error: "Too many requests" });
+    if (!checkRateLimit(clientIP)) return respond(false, { error: "Too many requests" }, req);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -42,18 +42,18 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Require authenticated admin to dispatch staff notifications
     const userId = await verifyJwt(req);
-    if (!userId) return respond(false, { error: "Unauthorized" });
+    if (!userId) return respond(false, { error: "Unauthorized" }, req);
     const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
-    if (!isAdmin) return respond(false, { error: "Forbidden: admin role required" });
+    if (!isAdmin) return respond(false, { error: "Forbidden: admin role required" }, req);
 
     const rawBody = await req.json();
     const parseResult = requestSchema.safeParse(rawBody);
-    if (!parseResult.success) return respond(false, { error: "Invalid input", diagnostics: parseResult.error.errors });
+    if (!parseResult.success) return respond(false, { error: "Invalid input", diagnostics: parseResult.error.errors }, req);
 
     const { type, data } = parseResult.data;
 
     const { data: staffEmails, error: staffError } = await supabase.from("staff_emails").select("email, name").eq("is_active", true);
-    if (staffError || !staffEmails?.length) return respond(true, { data: { message: "No staff emails configured" } });
+    if (staffError || !staffEmails?.length) return respond(true, { data: { message: "No staff emails configured" } }, req);
 
     const recipientEmails = staffEmails.map(s => s.email);
 
@@ -93,9 +93,9 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const result = await sendEmail({ to: recipientEmails, subject, html: htmlContent });
-    return respond(true, { data: { emailSent: result.success } });
+    return respond(true, { data: { emailSent: result.success } }, req);
   } catch (error) {
-    return respond(false, { error: error instanceof Error ? error.message : "Unknown error" });
+    return respond(false, { error: error instanceof Error ? error.message : "Unknown error" }, req);
   }
 };
 

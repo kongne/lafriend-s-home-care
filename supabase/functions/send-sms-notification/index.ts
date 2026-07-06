@@ -2,10 +2,10 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.84.0";
 import { sendSms, corsHeaders, verifyJwt } from "../_shared/email-service.ts";
 
-function respond(ok: boolean, payload: Record<string, unknown>): Response {
+function respond(ok: boolean, payload: Record<string, unknown>, req: Request): Response {
   return new Response(JSON.stringify({ ok, ...payload }), {
     status: 200,
-    headers: { "Content-Type": "application/json", ...corsHeaders },
+    headers: { "Content-Type": "application/json", ...corsHeaders(req) },
   });
 }
 
@@ -22,12 +22,12 @@ interface BookingData {
 }
 
 const handler = async (req: Request): Promise<Response> => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders(req) });
 
   try {
     // Only authenticated admins can trigger owner SMS + admin notification inserts
     const userId = await verifyJwt(req);
-    if (!userId) return respond(false, { error: "Unauthorized" });
+    if (!userId) return respond(false, { error: "Unauthorized" }, req);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -37,10 +37,10 @@ const handler = async (req: Request): Promise<Response> => {
       _user_id: userId,
       _role: "admin",
     });
-    if (!isAdmin) return respond(false, { error: "Forbidden: admin role required" });
+    if (!isAdmin) return respond(false, { error: "Forbidden: admin role required" }, req);
 
     const { booking } = await req.json() as { booking: BookingData };
-    if (!booking) return respond(false, { error: "Missing booking data" });
+    if (!booking) return respond(false, { error: "Missing booking data" }, req);
 
     const smsMessage = `🗓️ Nouvelle Réservation!\nClient: ${booking.full_name}\nService: ${booking.service_type}\nDate: ${booking.preferred_date} à ${booking.preferred_time}\nTél: ${booking.phone}`;
 
@@ -54,9 +54,9 @@ const handler = async (req: Request): Promise<Response> => {
       is_read: false,
     });
 
-    return respond(true, { data: { smsSent: smsResult.success, notificationSaved: !notifError } });
+    return respond(true, { data: { smsSent: smsResult.success, notificationSaved: !notifError } }, req);
   } catch (error) {
-    return respond(false, { error: error instanceof Error ? error.message : "Unknown error" });
+    return respond(false, { error: error instanceof Error ? error.message : "Unknown error" }, req);
   }
 };
 

@@ -22,6 +22,8 @@ const Onboarding = lazy(() => import("./pages/Onboarding"));
 const ServiceDetails = lazy(() => import("./pages/ServiceDetails"));
 const QuoteRequest = lazy(() => import("./pages/QuoteRequest"));
 const PricingGuide = lazy(() => import("./pages/PricingGuide"));
+const WorkerRegistration = lazy(() => import("./pages/WorkerRegistration"));
+const ProjectDetail = lazy(() => import("./pages/ProjectDetail"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -56,35 +58,53 @@ const routeElement = (Component: ComponentType) => (
   </Suspense>
 );
 
+/**
+ * Route map for navigation:
+ *
+ * /                    → Index (Landing page)
+ * /auth                → Auth (Login/Register)
+ * /admin               → Admin Dashboard
+ * /admin/settings      → Admin Settings
+ * /admin/verifications → Admin Verifications
+ * /admin/whoami        → Admin Whoami
+ * /customer-portal     → Customer Portal
+ * /onboarding          → Onboarding
+ * /services/:serviceId → Service Details (residential, commercial, construction, windows, car)
+ * /pricing-guide       → Pricing Guide
+ * /quote               → Quote Request
+ * *                    → NotFound (404)
+ */
 const App = () => (
   <ErrorBoundary>
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <SessionTimeoutDialog />
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/auth" element={routeElement(Auth)} />
-              <Route path="/admin" element={routeElement(Admin)} />
-              <Route path="/admin/settings" element={routeElement(AdminSettings)} />
-              <Route path="/admin/verifications" element={routeElement(AdminVerifications)} />
-              <Route path="/admin/whoami" element={routeElement(AdminWhoami)} />
-              <Route path="/customer-portal" element={routeElement(CustomerPortal)} />
-              <Route path="/onboarding" element={routeElement(Onboarding)} />
-              <Route path="/services/:serviceId" element={routeElement(ServiceDetails)} />
-              <Route path="/quote" element={routeElement(QuoteRequest)} />
-              <Route path="/pricing-guide" element={routeElement(PricingGuide)} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </AuthProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <SessionTimeoutDialog />
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/auth" element={routeElement(Auth)} />
+                <Route path="/admin" element={routeElement(Admin)} />
+                <Route path="/admin/settings" element={routeElement(AdminSettings)} />
+                <Route path="/admin/verifications" element={routeElement(AdminVerifications)} />
+                <Route path="/admin/whoami" element={routeElement(AdminWhoami)} />
+                <Route path="/customer-portal" element={routeElement(CustomerPortal)} />
+                <Route path="/onboarding" element={routeElement(Onboarding)} />
+                <Route path="/services/:serviceId" element={routeElement(ServiceDetails)} />
+                <Route path="/quote" element={routeElement(QuoteRequest)} />
+                <Route path="/pricing-guide" element={routeElement(PricingGuide)} />
+                <Route path="/join-our-team" element={routeElement(WorkerRegistration)} />
+                <Route path="/projects/:slug" element={routeElement(ProjectDetail)} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
   </ErrorBoundary>
 );
 

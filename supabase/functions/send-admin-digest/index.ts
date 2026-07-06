@@ -1,22 +1,22 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { sendEmail, escapeHtml, corsHeaders, verifyCronSecret, verifyJwt } from "../_shared/email-service.ts";
 
-function respond(ok: boolean, payload: Record<string, unknown>): Response {
+function respond(ok: boolean, payload: Record<string, unknown>, req: Request): Response {
   return new Response(JSON.stringify({ ok, ...payload }), {
     status: 200,
-    headers: { "Content-Type": "application/json", ...corsHeaders },
+    headers: { "Content-Type": "application/json", ...corsHeaders(req) },
   });
 }
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders(req) });
 
   try {
     // Allow either an authenticated admin caller OR a valid CRON_SECRET header
     const isCron = verifyCronSecret(req);
     if (!isCron) {
       const userId = await verifyJwt(req);
-      if (!userId) return respond(false, { error: "Unauthorized" });
+      if (!userId) return respond(false, { error: "Unauthorized" }, req);
       const authCheck = createClient(
         Deno.env.get("SUPABASE_URL")!,
         Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
         _user_id: userId,
         _role: "admin",
       });
-      if (!isAdmin) return respond(false, { error: "Forbidden" });
+      if (!isAdmin) return respond(false, { error: "Forbidden" }, req);
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -55,7 +55,7 @@ Deno.serve(async (req) => {
     const avgRating = feedback.length > 0 ? (feedback.reduce((s, f) => s + f.rating, 0) / feedback.length).toFixed(1) : "N/A";
 
     const { data: adminRoles } = await supabase.from("user_roles").select("user_id").eq("role", "admin");
-    if (!adminRoles?.length) return respond(true, { data: { message: "No admins" } });
+    if (!adminRoles?.length) return respond(true, { data: { message: "No admins" } }, req);
 
     const adminEmails: string[] = [];
     for (const role of adminRoles) {
@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
     const { data: staffEmails } = await supabase.from("staff_emails").select("email").eq("is_active", true);
     const allRecipients = [...new Set([...adminEmails, ...(staffEmails || []).map(s => s.email)])];
 
-    if (!allRecipients.length) return respond(true, { data: { message: "No recipients" } });
+    if (!allRecipients.length) return respond(true, { data: { message: "No recipients" } }, req);
 
     const formatDate = (d: Date) => d.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
 
@@ -115,8 +115,8 @@ Deno.serve(async (req) => {
 
     const result = await sendEmail({ to: allRecipients, subject: `📊 Résumé Hebdomadaire — ${formatDate(weekAgo)} au ${formatDate(now)}`, html });
 
-    return respond(true, { data: { recipients: allRecipients.length, emailSent: result.success } });
+    return respond(true, { data: { recipients: allRecipients.length, emailSent: result.success } }, req);
   } catch (error) {
-    return respond(false, { error: error instanceof Error ? error.message : "Unknown error" });
+    return respond(false, { error: error instanceof Error ? error.message : "Unknown error" }, req);
   }
 });

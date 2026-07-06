@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Loader2 } from "lucide-react";
+import { Loader2, MessageCircle } from "lucide-react";
 import { ChatRoom } from "./ChatRoom";
 import { useChatRooms } from "@/hooks/chat/useChatRooms";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Props {
   open: boolean;
@@ -15,6 +16,7 @@ interface Props {
 }
 
 export const BookingChatDialog = ({ open, onOpenChange, bookingId, bookingTitle, assignedStaffId }: Props) => {
+  const { t } = useLanguage();
   const { ensureBookingRoom } = useChatRooms();
   const [roomId, setRoomId] = useState<string | null>(null);
 
@@ -39,7 +41,7 @@ export const BookingChatDialog = ({ open, onOpenChange, bookingId, bookingTitle,
         });
         setRoomId(id);
       } catch (e) {
-        toast.error("Impossible d'ouvrir la conversation");
+        toast.error(t('chat.errorDesc'));
         onOpenChange(false);
       }
     })();
@@ -50,7 +52,9 @@ export const BookingChatDialog = ({ open, onOpenChange, bookingId, bookingTitle,
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl p-0 h-[80vh] flex flex-col">
         <DialogHeader className="px-4 py-3 border-b">
-          <DialogTitle className="text-base truncate">💬 {bookingTitle}</DialogTitle>
+          <DialogTitle className="text-base truncate flex items-center gap-2">
+            <MessageCircle className="h-4 w-4" /> {bookingTitle}
+          </DialogTitle>
         </DialogHeader>
         <div className="flex-1 min-h-0">
           {roomId

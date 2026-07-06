@@ -1,15 +1,26 @@
 import { serve } from "https://deno.land/std@0.208.0/http/server.ts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+const ALLOWED_ORIGINS = [
+  "https://lafriendsservices.lovable.app",
+  "capacitor://localhost",
+  "http://localhost:8080",
+  "http://127.0.0.1:8080",
+];
 
-function respond(ok: boolean, payload: Record<string, unknown>): Response {
+function corsHeaders(req: Request): Record<string, string> {
+  const origin = req.headers.get("origin") || "";
+  const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    "Access-Control-Allow-Origin": allowed,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  };
+}
+
+function respond(ok: boolean, payload: Record<string, unknown>, req: Request): Response {
   return new Response(JSON.stringify({ ok, ...payload }), {
     status: 200,
-    headers: { "Content-Type": "application/json", ...corsHeaders },
+    headers: { "Content-Type": "application/json", ...corsHeaders(req) },
   });
 }
 
@@ -23,19 +34,19 @@ const requestSchema = z.object({
 });
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders(req) });
 
   try {
     const body = await req.json();
     const parseResult = requestSchema.safeParse(body);
     if (!parseResult.success) {
-      return respond(false, { error: "Format de requête invalide." });
+      return respond(false, { error: "Format de requête invalide." }, req);
     }
 
     const { messages } = parseResult.data;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
-      return respond(false, { error: "Service non configuré" });
+      return respond(false, { error: "Service non configuré" }, req);
     }
 
     const userMessages = messages.filter((m) => m.role === "user").map((m) => m.content).join(" ");
@@ -80,15 +91,15 @@ IMPORTANT: Respond in ${language}. Be helpful, friendly, and professional. Guide
     if (!response.ok) {
       const errorText = await response.text();
       console.error("AI Gateway error:", response.status, errorText);
-      return respond(false, { error: "Service temporairement indisponible. Veuillez réessayer." });
+      return respond(false, { error: "Service temporairement indisponible. Veuillez réessayer." }, req);
     }
 
     const data = await response.json();
     const assistantMessage = data.choices[0].message.content;
 
-    return respond(true, { data: { message: assistantMessage } });
+    return respond(true, { data: { message: assistantMessage } }, req);
   } catch (error) {
     console.error("Error in chat-support:", error);
-    return respond(false, { error: "Une erreur est survenue. Veuillez réessayer." });
+    return respond(false, { error: "Une erreur est survenue. Veuillez réessayer." }, req);
   }
 });

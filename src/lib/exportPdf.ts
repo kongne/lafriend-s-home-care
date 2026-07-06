@@ -234,10 +234,10 @@ export const exportToPDF = async <T extends object>(
       ${logoBase64 ? `<div class="watermark"><img src="${logoBase64}" alt="Watermark" /></div>` : ''}
       
       <div class="header">
-        ${logoBase64 ? `<img src="${logoBase64}" alt="LaFriend's Logo" class="logo" />` : '<div class="company-name">LaFriend\'s</div>'}
+        ${logoBase64 ? `<img src="${logoBase64}" alt="LaFriend's Logo" class="logo" />` : '<div class="company-name">LaFriend\'s Services Ménagers</div>'}
         <div class="company-info">
-          <div class="company-name">LaFriend's</div>
-          <div class="company-tagline">Services Ménagers Professionnels</div>
+          <div class="company-name">LaFriend's Services Ménagers</div>
+          <div class="company-tagline">Services de nettoyage professionnels</div>
         </div>
       </div>
       <h1>${escapeHtml(title)}</h1>
@@ -437,8 +437,8 @@ export const exportStatsToPDF = async (stats: Record<string, number | string>, t
       ${logoBase64 ? `<div class="watermark"><img src="${logoBase64}" alt="Watermark" /></div>` : ''}
       
       <div class="header">
-        ${logoBase64 ? `<img src="${logoBase64}" alt="LaFriend's Logo" class="logo" />` : '<div class="company-name">LaFriend\'s</div>'}
-        <div class="company-name">LaFriend's</div>
+        ${logoBase64 ? `<img src="${logoBase64}" alt="LaFriend's Logo" class="logo" />` : '<div class="company-name">LaFriend\'s Services Ménagers</div>'}
+        <div class="company-name">LaFriend's Services Ménagers</div>
       </div>
       <h1>${escapeHtml(title)}</h1>
       <p style="color: #666;">Généré le ${new Date().toLocaleDateString("fr-FR")}</p>

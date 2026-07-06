@@ -1,114 +1,126 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { Link } from "react-router-dom";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Badge } from "@/components/ui/badge";
-import { Eye } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Eye, Search, X } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
-interface GalleryItem {
-  before: string;
-  after: string;
-  titleKey: string;
-  category: string;
-  stats?: { label: string; value: string };
+interface ProjectImage {
+  image_url: string;
+  image_type: "before" | "after";
 }
 
-const galleryItems: GalleryItem[] = [
-  {
-    before: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=400&h=300&fit=crop&auto=format&q=80",
-    after: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=300&fit=crop&auto=format&q=80",
-    titleKey: "gallery.kitchen",
-    category: "residential",
-    stats: { label: "Temps", value: "3h" }
-  },
-  {
-    before: "https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=400&h=300&fit=crop&auto=format&q=80",
-    after: "https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=400&h=300&fit=crop&auto=format&q=80",
-    titleKey: "gallery.office",
-    category: "commercial",
-    stats: { label: "Surface", value: "200m²" }
-  },
-  {
-    before: "https://images.unsplash.com/photo-1520340356584-f9917d1eea6f?w=400&h=300&fit=crop&auto=format&q=80",
-    after: "https://images.unsplash.com/photo-1507136566006-cfc505b114fc?w=400&h=300&fit=crop&auto=format&q=80",
-    titleKey: "gallery.car",
-    category: "car",
-    stats: { label: "Durée", value: "1h30" }
-  },
-  {
-    before: "https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?w=400&h=300&fit=crop&auto=format&q=80",
-    after: "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=400&h=300&fit=crop&auto=format&q=80",
-    titleKey: "gallery.bathroom",
-    category: "residential",
-    stats: { label: "Temps", value: "2h" }
-  }
+interface Project {
+  id: string;
+  title: string;
+  slug: string;
+  category: string;
+  location: string | null;
+  description: string | null;
+  is_featured: boolean;
+  duration_or_stats: string | null;
+  stats_label: string | null;
+  images: ProjectImage[];
+}
+
+const FILTER_CATEGORIES = [
+  "Deep Cleaning",
+  "Office Cleaning",
+  "Move In",
+  "Move Out",
+  "Carpet Cleaning",
+  "Window Cleaning",
+  "Industrial Cleaning",
 ];
 
-const BeforeAfterCard = ({ item, index, isVisible, t }: { item: GalleryItem; index: number; isVisible: boolean; t: (key: string) => string }) => {
+const CATEGORY_LABELS: Record<string, { fr: string; en: string }> = {
+  "Deep Cleaning": { fr: "Nettoyage en Profondeur", en: "Deep Cleaning" },
+  "Office Cleaning": { fr: "Nettoyage de Bureau", en: "Office Cleaning" },
+  "Move In": { fr: "Nettoyage d'Entrée", en: "Move In Cleaning" },
+  "Move Out": { fr: "Nettoyage de Sortie", en: "Move Out Cleaning" },
+  "Carpet Cleaning": { fr: "Nettoyage de Tapis", en: "Carpet Cleaning" },
+  "Window Cleaning": { fr: "Nettoyage de Vitres", en: "Window Cleaning" },
+  "Industrial Cleaning": { fr: "Nettoyage Industriel", en: "Industrial Cleaning" },
+  residential: { fr: "Résidentiel", en: "Residential" },
+  commercial: { fr: "Commercial", en: "Commercial" },
+  car: { fr: "Véhicule", en: "Vehicle" },
+  other: { fr: "Autre", en: "Other" },
+};
+
+const BeforeAfterCard = ({ project, index, isVisible, t, language }: { project: Project; index: number; isVisible: boolean; t: (key: string) => string; language: string }) => {
   const [showAfter, setShowAfter] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
 
+  const beforeImg = project.images.find((i) => i.image_type === "before")?.image_url;
+  const afterImg = project.images.find((i) => i.image_type === "after")?.image_url;
+  const categoryLabel = CATEGORY_LABELS[project.category]?.[language as "fr" | "en"] || project.category;
+
   return (
-    <div
-      className={`relative overflow-hidden rounded-xl shadow-lg cursor-pointer group transition-all duration-700 hover:shadow-2xl hover:scale-[1.02] ${
+    <Link
+      to={`/projects/${project.slug}`}
+      className={`block relative overflow-hidden rounded-xl shadow-lg cursor-pointer group transition-all duration-700 hover:shadow-2xl hover:scale-[1.02] ${
         isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
       }`}
       style={{ transitionDelay: `${index * 150}ms` }}
       onMouseEnter={() => setShowAfter(true)}
       onMouseLeave={() => setShowAfter(false)}
-      onTouchStart={() => setShowAfter(!showAfter)}
     >
       <div className="relative h-40 sm:h-56 md:h-64 overflow-hidden bg-muted">
-        {/* Loading skeleton */}
         {!imageLoaded && (
           <div className="absolute inset-0 bg-muted animate-pulse" />
         )}
-        <picture>
-          <source media="(min-width:1024px)" srcSet={`${item.before}&w=1200 1200w, ${item.before}&w=800 800w`} />
-          <source media="(min-width:640px)" srcSet={`${item.before}&w=800 800w, ${item.before}&w=600 600w`} />
-          <img
-            src={item.before}
-            alt={`${t(item.titleKey)} - ${t('gallery.before')}`}
-            className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 ${
-              showAfter ? "opacity-0 scale-110" : "opacity-100 scale-100"
-            }`}
-            loading="lazy"
-            decoding="async"
-            width={1200}
-            height={800}
-            onLoad={() => setImageLoaded(true)}
-          />
-        </picture>
-        <picture>
-          <source media="(min-width:1024px)" srcSet={`${item.after}&w=1200 1200w, ${item.after}&w=800 800w`} />
-          <source media="(min-width:640px)" srcSet={`${item.after}&w=800 800w, ${item.after}&w=600 600w`} />
-          <img
-            src={item.after}
-            alt={`${t(item.titleKey)} - ${t('gallery.after')}`}
-            className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 ${
-              showAfter ? "opacity-100 scale-100" : "opacity-0 scale-90"
-            }`}
-            loading="lazy"
-            decoding="async"
-            width={1200}
-            height={800}
-          />
-        </picture>
-        
-        {/* Category badge */}
-        <Badge className="absolute top-4 right-4 bg-background/80 text-foreground backdrop-blur-sm">
-          {item.category}
+        {beforeImg && (
+          <picture>
+            <source media="(min-width:1024px)" srcSet={`${beforeImg}&w=1200 1200w, ${beforeImg}&w=800 800w`} />
+            <source media="(min-width:640px)" srcSet={`${beforeImg}&w=800 800w, ${beforeImg}&w=600 600w`} />
+            <img
+              src={beforeImg}
+              alt={`${project.title} - ${t('gallery.before')}`}
+              className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 ${
+                showAfter ? "opacity-0 scale-110" : "opacity-100 scale-100"
+              }`}
+              loading="lazy"
+              decoding="async"
+              width={1200}
+              height={800}
+              onLoad={() => setImageLoaded(true)}
+            />
+          </picture>
+        )}
+        {afterImg && (
+          <picture>
+            <source media="(min-width:1024px)" srcSet={`${afterImg}&w=1200 1200w, ${afterImg}&w=800 800w`} />
+            <source media="(min-width:640px)" srcSet={`${afterImg}&w=800 800w, ${afterImg}&w=600 600w`} />
+            <img
+              src={afterImg}
+              alt={`${project.title} - ${t('gallery.after')}`}
+              className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 ${
+                showAfter ? "opacity-100 scale-100" : "opacity-0 scale-90"
+              }`}
+              loading="lazy"
+              decoding="async"
+              width={1200}
+              height={800}
+            />
+          </picture>
+        )}
+
+        <Badge className="absolute top-3 right-3 bg-background/80 text-foreground backdrop-blur-sm text-xs">
+          {categoryLabel}
         </Badge>
-        
-        {/* Status label */}
-        <div className={`absolute top-4 left-4 px-3 py-1 rounded-full text-sm font-semibold transition-all duration-300 ${
-          showAfter 
-            ? "bg-accent text-accent-foreground" 
+
+        <div className={`absolute top-3 left-3 px-2.5 py-1 rounded-full text-xs font-semibold transition-all duration-300 ${
+          showAfter
+            ? "bg-accent text-accent-foreground"
             : "bg-primary text-primary-foreground"
         }`}>
           {showAfter ? t('gallery.after') : t('gallery.before')}
         </div>
-        
-        {/* View icon on hover */}
+
         <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-300 ${
           showAfter ? 'opacity-100' : 'opacity-0'
         }`}>
@@ -116,37 +128,119 @@ const BeforeAfterCard = ({ item, index, isVisible, t }: { item: GalleryItem; ind
             <Eye className="w-6 h-6 text-accent-foreground" />
           </div>
         </div>
-        
-        {/* Bottom info */}
+
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent p-4">
           <div className="flex items-end justify-between">
-            <div>
-              <p className="text-white font-semibold text-sm sm:text-base">{t(item.titleKey)}</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-white font-semibold text-sm sm:text-base truncate">{project.title}</p>
               <p className="text-white/70 text-xs sm:text-sm">{t('gallery.hover')}</p>
             </div>
-            {item.stats && (
-              <div className="text-right">
-                <p className="text-accent font-bold text-lg">{item.stats.value}</p>
-                <p className="text-white/60 text-xs">{item.stats.label}</p>
+            {project.duration_or_stats && (
+              <div className="text-right flex-shrink-0 ml-2">
+                <p className="text-accent font-bold text-lg">{project.duration_or_stats}</p>
+                {project.stats_label && <p className="text-white/60 text-xs">{project.stats_label}</p>}
               </div>
             )}
           </div>
         </div>
       </div>
-    </div>
+    </Link>
   );
 };
 
 export const Gallery = () => {
   const { ref, isVisible } = useScrollReveal();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      setLoading(true);
+      try {
+        const { data: projs, error } = await supabase
+          .from("projects")
+          .select("*")
+          .eq("status", "published")
+          .order("is_featured", { ascending: false })
+          .order("created_at", { ascending: false });
+
+        if (error || !projs) {
+          setProjects([]);
+          return;
+        }
+
+        const projectIds = projs.map((p) => p.id);
+        const { data: imgs } = await supabase
+          .from("project_images")
+          .select("*")
+          .in("project_id", projectIds)
+          .order("display_order", { ascending: true });
+
+        const imgMap = new Map<string, ProjectImage[]>();
+        (imgs || []).forEach((img) => {
+          const existing = imgMap.get(img.project_id) || [];
+          existing.push({ image_url: img.image_url, image_type: img.image_type as "before" | "after" });
+          imgMap.set(img.project_id, existing);
+        });
+
+        const mapped: Project[] = projs.map((p) => ({
+          id: p.id,
+          title: p.title,
+          slug: p.slug,
+          category: p.category,
+          location: p.location,
+          description: p.description,
+          is_featured: p.is_featured,
+          duration_or_stats: p.duration_or_stats,
+          stats_label: p.stats_label,
+          images: imgMap.get(p.id) || [],
+        }));
+
+        setProjects(mapped);
+      } catch {
+        setProjects([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, []);
+
+  const filtered = useMemo(() => {
+    let result = projects;
+    if (activeCategory) {
+      result = result.filter((p) => p.category === activeCategory);
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(
+        (p) =>
+          p.title.toLowerCase().includes(q) ||
+          (p.description || "").toLowerCase().includes(q) ||
+          p.category.toLowerCase().includes(q) ||
+          (p.location || "").toLowerCase().includes(q)
+      );
+    }
+    return result;
+  }, [projects, activeCategory, searchQuery]);
+
+  const availableCategories = useMemo(() => {
+    const cats = new Set(projects.map((p) => p.category));
+    return FILTER_CATEGORIES.filter((c) => cats.has(c));
+  }, [projects]);
+
+  const showFilters = projects.length > 0;
 
   return (
     <section id="galerie" className="py-20 bg-background">
       <div className="container mx-auto px-4">
-        <div 
+        <div
           ref={ref}
-          className={`text-center mb-16 space-y-4 transition-all duration-700 ${
+          className={`text-center mb-12 space-y-4 transition-all duration-700 ${
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
           }`}
         >
@@ -159,12 +253,71 @@ export const Gallery = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-          {galleryItems.map((item, index) => (
-            <BeforeAfterCard key={index} item={item} index={index} isVisible={isVisible} t={t} />
-          ))}
-        </div>
+        {showFilters && (
+          <div className={`mb-8 space-y-4 transition-all duration-700 delay-200 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}>
+            <div className="relative max-w-md mx-auto">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder={t("gallery.search") || "Rechercher un projet..."}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 pr-9"
+              />
+              {searchQuery && (
+                <button onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+
+            <div className="flex flex-wrap justify-center gap-2">
+              <Button
+                size="sm"
+                variant={activeCategory === null ? "default" : "outline"}
+                onClick={() => setActiveCategory(null)}
+                className="text-xs sm:text-sm"
+              >
+                {t("gallery.all") || "Tous"}
+              </Button>
+              {availableCategories.map((cat) => (
+                <Button
+                  key={cat}
+                  size="sm"
+                  variant={activeCategory === cat ? "default" : "outline"}
+                  onClick={() => setActiveCategory(cat)}
+                  className="text-xs sm:text-sm"
+                >
+                  {CATEGORY_LABELS[cat]?.[language as "fr" | "en"] || cat}
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="rounded-xl overflow-hidden">
+                <Skeleton className="h-40 sm:h-56 md:h-64 w-full" />
+              </div>
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-16 text-muted-foreground">
+            <Search className="h-12 w-12 mx-auto mb-3 opacity-50" />
+            <p className="font-semibold">{t("gallery.noResults") || "Aucun projet trouvé"}</p>
+            <p className="text-sm mt-1">{t("gallery.tryDifferent") || "Essayez un autre filtre ou terme de recherche."}</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+            {filtered.map((project, index) => (
+              <BeforeAfterCard key={project.id} project={project} index={index} isVisible={isVisible} t={t} language={language} />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
 };
+
+export default Gallery;

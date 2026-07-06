@@ -184,9 +184,9 @@ const ServiceDetails = () => {
       <div className="min-h-screen bg-background">
         <Navbar />
         <main className="container mx-auto px-4 py-24 text-center">
-          <h1 className="text-2xl font-bold mb-4">Service non trouvé</h1>
+          <h1 className="text-2xl font-bold mb-4">{t('details.notFound')}</h1>
           <Button onClick={() => navigate("/")} variant="outline">
-            <ArrowLeft className="h-4 w-4 mr-2" /> Retour à l'accueil
+            <ArrowLeft className="h-4 w-4 mr-2" /> {t('details.backHome')}
           </Button>
         </main>
         <Footer />
@@ -229,7 +229,7 @@ const ServiceDetails = () => {
               onClick={() => navigate("/")}
               className="mb-4 text-foreground/80 hover:text-foreground"
             >
-              <ArrowLeft className="h-4 w-4 mr-2" /> Retour
+              <ArrowLeft className="h-4 w-4 mr-2" /> {t('details.back')}
             </Button>
             <div className="flex items-center gap-3 mb-3">
               <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-accent flex items-center justify-center">
@@ -261,7 +261,7 @@ const ServiceDetails = () => {
         {/* What's Included */}
         <section>
           <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6 text-foreground">
-            Ce qui est inclus
+            {t('details.included')}
           </h2>
           <div className="grid sm:grid-cols-2 gap-3">
             {service.included.map((item, i) => (
@@ -276,7 +276,7 @@ const ServiceDetails = () => {
         {/* Process */}
         <section>
           <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6 text-foreground">
-            Comment ça marche
+            {t('details.howItWorks')}
           </h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {service.process.map((step) => (
@@ -285,7 +285,7 @@ const ServiceDetails = () => {
                   {step.step}
                 </div>
                 <Badge className="bg-accent text-accent-foreground mb-3 text-xs">
-                  Étape {step.step}
+                  {t('details.step')} {step.step}
                 </Badge>
                 <h3 className="font-bold text-foreground mb-1">{step.title}</h3>
                 <p className="text-sm text-muted-foreground">{step.desc}</p>
@@ -297,15 +297,15 @@ const ServiceDetails = () => {
         {/* CTA */}
         <section className="text-center py-8 md:py-12 bg-gradient-to-r from-accent/10 to-accent/5 rounded-2xl px-4">
           <h2 className="text-xl md:text-2xl font-bold mb-3 text-foreground">
-            Prêt à réserver ?
+            {t('details.ready')}
           </h2>
           <p className="text-muted-foreground mb-6 max-w-md mx-auto text-sm md:text-base">
-            Réservez en quelques clics ou demandez un devis personnalisé
+            {t('details.readyDesc')}
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <BookingModal>
               <Button size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90 font-semibold px-8">
-                <Zap className="h-4 w-4 mr-2" /> Réserver maintenant
+                <Zap className="h-4 w-4 mr-2" /> {t('details.bookNow')}
               </Button>
             </BookingModal>
             <Button
@@ -314,7 +314,7 @@ const ServiceDetails = () => {
               onClick={() => navigate("/#contact")}
               className="font-semibold px-8"
             >
-              <MessageCircle className="h-4 w-4 mr-2" /> Demander un devis
+              <MessageCircle className="h-4 w-4 mr-2" /> {t('details.requestQuote')}
             </Button>
             <Button
               size="lg"

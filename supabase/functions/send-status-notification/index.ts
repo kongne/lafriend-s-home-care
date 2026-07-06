@@ -1,10 +1,10 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { sendEmail, sendSms, corsHeaders, escapeHtml, verifyJwt } from "../_shared/email-service.ts";
 
-function respond(ok: boolean, payload: Record<string, unknown>): Response {
+function respond(ok: boolean, payload: Record<string, unknown>, req: Request): Response {
   return new Response(JSON.stringify({ ok, ...payload }), {
     status: 200,
-    headers: { "Content-Type": "application/json", ...corsHeaders },
+    headers: { "Content-Type": "application/json", ...corsHeaders(req) },
   });
 }
 
@@ -37,16 +37,16 @@ const statusMessages: Record<string, { fr: { subject: string; title: string; mes
 };
 
 const handler = async (req: Request): Promise<Response> => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders(req) });
 
   try {
     const userId = await verifyJwt(req);
-    if (!userId) return respond(false, { error: "Unauthorized" });
+    if (!userId) return respond(false, { error: "Unauthorized" }, req);
 
     const { clientEmail, clientName, clientPhone, serviceType, preferredDate, preferredTime, address, newStatus, language = "fr", sendSms: shouldSendSms = true }: StatusNotificationRequest = await req.json();
 
     const statusConfig = statusMessages[newStatus];
-    if (!statusConfig) return respond(false, { error: "Invalid status" });
+    if (!statusConfig) return respond(false, { error: "Invalid status" }, req);
 
     const lang = language === "en" ? "en" : "fr";
     const { subject, title, message, sms: smsTemplate } = statusConfig[lang];
@@ -92,9 +92,9 @@ const handler = async (req: Request): Promise<Response> => {
       smsResult = await sendSms(clientPhone, smsMessage);
     }
 
-    return respond(true, { data: { emailSent: emailResult.success, smsSent: smsResult.success } });
+    return respond(true, { data: { emailSent: emailResult.success, smsSent: smsResult.success } }, req);
   } catch (error) {
-    return respond(false, { error: error instanceof Error ? error.message : "Unknown error" });
+    return respond(false, { error: error instanceof Error ? error.message : "Unknown error" }, req);
   }
 };
 

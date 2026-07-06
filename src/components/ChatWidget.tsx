@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, forwardRef, type KeyboardEvent } from "react";
+import { useState, useRef, useEffect, forwardRef, useCallback, type KeyboardEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MessageCircle, X, Send } from "lucide-react";
@@ -16,46 +16,66 @@ interface Message {
   content: string;
 }
 
+const STORAGE_KEY = "chat_messages";
+
+const loadMessages = (fallback: string): Message[] => {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved) as Message[];
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch {
+    localStorage.removeItem(STORAGE_KEY);
+  }
+  return [{ role: "assistant", content: fallback }];
+};
+
 export const ChatWidget = forwardRef<HTMLDivElement, ChatWidgetProps>(({ defaultOpen }, ref) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [isOpen, setIsOpen] = useState(defaultOpen ?? false);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: "assistant",
-      content: t('chat.welcome'),
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>(() => loadMessages(t('chat.welcome')));
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  const scrollToBottom = () => {
+  const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  }, []);
 
   useEffect(() => {
     scrollToBottom();
+  }, [messages, scrollToBottom]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
   }, [messages]);
 
-  // Update welcome message when language changes
   useEffect(() => {
     if (messages.length === 1 && messages[0].role === "assistant") {
       setMessages([{ role: "assistant", content: t('chat.welcome') }]);
     }
   }, [t]);
 
+  const addMessage = (msg: Message) => {
+    setMessages((prev) => [...prev, msg]);
+  };
+
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
 
-    const userMessage: Message = { role: "user", content: input };
-    setMessages((prev) => [...prev, userMessage]);
+    const userMessage: Message = { role: "user", content: input.trim() };
+    addMessage(userMessage);
     setInput("");
     setIsLoading(true);
 
     try {
       const { data, error } = await supabase.functions.invoke("chat-support", {
-        body: { messages: [...messages, userMessage] },
+        body: {
+          messages: [...messages, userMessage],
+          lang: language,
+        },
       });
 
       if (error) throw error;
@@ -65,19 +85,15 @@ export const ChatWidget = forwardRef<HTMLDivElement, ChatWidgetProps>(({ default
       if (!response.ok || !response.data?.message) {
         toast({
           title: t('chat.error'),
-          description: response.error || t('chat.errorDesc'),
+          description: response?.error || t('chat.errorDesc'),
           variant: "destructive",
         });
         return;
       }
 
-      const assistantMessage: Message = {
-        role: "assistant",
-        content: response.data.message,
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
+      addMessage({ role: "assistant", content: response.data.message });
     } catch (err) {
-      logError("Error sending message:", err);
+      logError("ChatWidget send error:", err);
       toast({
         title: t('chat.error'),
         description: t('chat.errorDesc'),
@@ -95,30 +111,32 @@ export const ChatWidget = forwardRef<HTMLDivElement, ChatWidgetProps>(({ default
     }
   };
 
+  const handleClose = () => {
+    setIsOpen(false);
+  };
+
   return (
     <div ref={ref}>
-      {/* Chat Button */}
       {!isOpen && (
         <Button
           onClick={() => setIsOpen(true)}
           className="fixed bottom-6 right-6 h-14 w-14 rounded-full bg-accent text-accent-foreground shadow-lg hover:bg-accent/90 z-50"
           size="icon"
+          aria-label="Ouvrir le chat"
         >
           <MessageCircle className="h-6 w-6" />
         </Button>
       )}
 
-      {/* Chat Window */}
       {isOpen && (
         <div className="fixed bottom-6 right-6 w-[calc(100vw-3rem)] sm:w-96 h-[70vh] sm:h-[500px] max-h-[500px] bg-background border-2 border-border rounded-lg shadow-2xl flex flex-col z-50 animate-in slide-in-from-bottom-5">
-          {/* Header */}
           <div className="bg-primary text-primary-foreground p-4 rounded-t-lg flex justify-between items-center">
             <div className="flex items-center gap-2">
               <MessageCircle className="h-5 w-5" />
               <span className="font-semibold">{t('chat.title')}</span>
             </div>
             <Button
-              onClick={() => setIsOpen(false)}
+              onClick={handleClose}
               variant="ghost"
               size="icon"
               className="text-primary-foreground hover:bg-primary/80"
@@ -127,14 +145,11 @@ export const ChatWidget = forwardRef<HTMLDivElement, ChatWidgetProps>(({ default
             </Button>
           </div>
 
-          {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {messages.map((message, index) => (
               <div
                 key={index}
-                className={`flex ${
-                  message.role === "user" ? "justify-end" : "justify-start"
-                }`}
+                className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
               >
                 <div
                   className={`max-w-[80%] rounded-lg p-3 ${
@@ -161,7 +176,6 @@ export const ChatWidget = forwardRef<HTMLDivElement, ChatWidgetProps>(({ default
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input */}
           <div className="p-4 border-t border-border">
             <div className="flex gap-2">
               <Input

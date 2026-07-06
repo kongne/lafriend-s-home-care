@@ -2,10 +2,10 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { sendEmail, sendSms, corsHeaders, escapeHtml } from "../_shared/email-service.ts";
 
-function respond(ok: boolean, payload: Record<string, unknown>): Response {
+function respond(ok: boolean, payload: Record<string, unknown>, req: Request): Response {
   return new Response(JSON.stringify({ ok, ...payload }), {
     status: 200,
-    headers: { "Content-Type": "application/json", ...corsHeaders },
+    headers: { "Content-Type": "application/json", ...corsHeaders(req) },
   });
 }
 
@@ -20,7 +20,7 @@ interface BroadcastRequest {
 }
 
 const handler = async (req: Request): Promise<Response> => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders(req) });
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -31,7 +31,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Require an authenticated admin caller
     const authHeader = req.headers.get("Authorization") ?? "";
     if (!authHeader.startsWith("Bearer ")) {
-      return respond(false, { error: "Unauthorized" });
+      return respond(false, { error: "Unauthorized" }, req);
     }
     const userClient = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
@@ -39,18 +39,18 @@ const handler = async (req: Request): Promise<Response> => {
     const token = authHeader.replace("Bearer ", "");
     const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(token);
     if (claimsError || !claimsData?.claims?.sub) {
-      return respond(false, { error: "Unauthorized" });
+      return respond(false, { error: "Unauthorized" }, req);
     }
     const callerId = claimsData.claims.sub as string;
     const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: callerId, _role: "admin" });
     if (!isAdmin) {
-      return respond(false, { error: "Forbidden: admin role required" });
+      return respond(false, { error: "Forbidden: admin role required" }, req);
     }
 
     const body: BroadcastRequest = await req.json();
     const { title, message, link, recipientType, notificationType, sendEmail: doEmail = false, sendSms: doSms = false } = body;
 
-    if (!title || !message) return respond(false, { error: "Title and message are required" });
+    if (!title || !message) return respond(false, { error: "Title and message are required" }, req);
 
     // Validate link is a safe https URL if provided
     let safeLink: string | null = null;
@@ -138,9 +138,9 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    return respond(true, { data: { stats, message: `Notification sent to ${stats.sent} recipient(s)` } });
+    return respond(true, { data: { stats, message: `Notification sent to ${stats.sent} recipient(s)` } }, req);
   } catch (error) {
-    return respond(false, { error: error instanceof Error ? error.message : "Unknown error" });
+    return respond(false, { error: error instanceof Error ? error.message : "Unknown error" }, req);
   }
 };
 

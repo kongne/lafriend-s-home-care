@@ -4,10 +4,10 @@ import { sendEmail, corsHeaders, checkRateLimit, verifyJwt } from "../_shared/em
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { brandedEmail } from "../_shared/email-templates.ts";
 
-function respond(ok: boolean, payload: Record<string, unknown>): Response {
+function respond(ok: boolean, payload: Record<string, unknown>, req: Request): Response {
   return new Response(JSON.stringify({ ok, ...payload }), {
     status: 200,
-    headers: { "Content-Type": "application/json", ...corsHeaders },
+    headers: { "Content-Type": "application/json", ...corsHeaders(req) },
   });
 }
 
@@ -25,11 +25,11 @@ const schema = z.object({
 });
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders(req) });
   try {
     // KYC decisions can only be sent by admins
     const userId = await verifyJwt(req);
-    if (!userId) return respond(false, { error: "Unauthorized" });
+    if (!userId) return respond(false, { error: "Unauthorized" }, req);
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
@@ -38,14 +38,14 @@ serve(async (req) => {
       _user_id: userId,
       _role: "admin",
     });
-    if (!isAdmin) return respond(false, { error: "Forbidden: admin role required" });
+    if (!isAdmin) return respond(false, { error: "Forbidden: admin role required" }, req);
 
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-    if (!checkRateLimit(ip)) return respond(false, { error: "Too many requests" });
+    if (!checkRateLimit(ip)) return respond(false, { error: "Too many requests" }, req);
 
     const raw = await req.text();
     let body: unknown;
-    try { body = raw ? JSON.parse(raw) : {}; } catch { return respond(false, { error: "Invalid JSON" }); }
+    try { body = raw ? JSON.parse(raw) : {}; } catch { return respond(false, { error: "Invalid JSON" }, req); }
 
     const data = schema.parse(body);
     const isFr = data.language === "fr";
@@ -67,7 +67,7 @@ serve(async (req) => {
     }
     if (!recipient) {
       console.warn(`[send-kyc-decision] SKIPPED — no recipient email resolved. subjectUserId=${data.subjectUserId ?? "n/a"} decision=${data.decision}`);
-      return respond(true, { data: { skipped: true, reason: "no_email", recipient: null, emailSource } });
+      return respond(true, { data: { skipped: true, reason: "no_email", recipient: null, emailSource } }, req);
     }
     console.log(`[send-kyc-decision] Resolved recipient via ${emailSource}: ${recipient}`);
     const approved = data.decision === "approved";
@@ -115,12 +115,12 @@ serve(async (req) => {
     const result = await sendEmail({ to: recipient, subject, html });
     if (!result.success) {
       console.error(`[send-kyc-decision] Email transport failed for ${recipient}: ${result.error}`);
-      return respond(false, { error: result.error || "Email failed", data: { recipient, emailSource } });
+      return respond(false, { error: result.error || "Email failed", data: { recipient, emailSource } }, req);
     }
     console.log(`[send-kyc-decision] ✅ Sent to ${recipient} (messageId=${result.messageId})`);
-    return respond(true, { data: { messageId: result.messageId, recipient, emailSource } });
+    return respond(true, { data: { messageId: result.messageId, recipient, emailSource } }, req);
   } catch (e) {
-    if (e instanceof z.ZodError) return respond(false, { error: "Invalid input", diagnostics: e.errors });
-    return respond(false, { error: e instanceof Error ? e.message : "Unknown error" });
+    if (e instanceof z.ZodError) return respond(false, { error: "Invalid input", diagnostics: e.errors }, req);
+    return respond(false, { error: e instanceof Error ? e.message : "Unknown error" }, req);
   }
 });

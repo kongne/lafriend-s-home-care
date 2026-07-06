@@ -2,10 +2,10 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 import { serve } from "https://deno.land/std@0.208.0/http/server.ts";
 import { sendEmail, escapeHtml, corsHeaders, verifyCronSecret, verifyJwt } from "../_shared/email-service.ts";
 
-function respond(ok: boolean, payload: Record<string, unknown>): Response {
+function respond(ok: boolean, payload: Record<string, unknown>, req: Request): Response {
   return new Response(JSON.stringify({ ok, ...payload }), {
     status: 200,
-    headers: { "Content-Type": "application/json", ...corsHeaders },
+    headers: { "Content-Type": "application/json", ...corsHeaders(req) },
   });
 }
 
@@ -15,16 +15,16 @@ if (!supabaseUrl || !supabaseKey) throw new Error("Missing env vars");
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const handler = async (req: Request): Promise<Response> => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
-  if (req.method !== "POST") return respond(false, { error: "Method not allowed" });
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders(req) });
+  if (req.method !== "POST") return respond(false, { error: "Method not allowed" }, req);
 
   try {
     const isCron = verifyCronSecret(req);
     if (!isCron) {
       const userId = await verifyJwt(req);
-      if (!userId) return respond(false, { error: "Unauthorized" });
+      if (!userId) return respond(false, { error: "Unauthorized" }, req);
       const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
-      if (!isAdmin) return respond(false, { error: "Forbidden" });
+      if (!isAdmin) return respond(false, { error: "Forbidden" }, req);
     }
 
     const now = new Date();
@@ -40,7 +40,7 @@ const handler = async (req: Request): Promise<Response> => {
       .limit(20);
 
     if (fetchError) throw fetchError;
-    if (!completedBookings?.length) return respond(true, { data: { message: "No feedback requests", processed: 0 } });
+    if (!completedBookings?.length) return respond(true, { data: { message: "No feedback requests", processed: 0 } }, req);
 
     let sent = 0, failed = 0;
 
@@ -82,9 +82,9 @@ const handler = async (req: Request): Promise<Response> => {
       } catch (error) { failed++; }
     }
 
-    return respond(true, { data: { processed: completedBookings.length, sent, failed } });
+    return respond(true, { data: { processed: completedBookings.length, sent, failed } }, req);
   } catch (error) {
-    return respond(false, { error: error instanceof Error ? error.message : "Unknown error" });
+    return respond(false, { error: error instanceof Error ? error.message : "Unknown error" }, req);
   }
 };
 

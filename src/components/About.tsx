@@ -3,6 +3,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { BookingModal } from "./BookingModal";
 import { Button } from "./ui/button";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
+import DOMPurify from "dompurify";
 
 export const About = () => {
   const { t } = useLanguage();
@@ -31,7 +32,7 @@ export const About = () => {
               {t('about.title')}
             </h2>
             <div className="space-y-4 text-muted-foreground text-sm md:text-base lg:text-lg leading-relaxed">
-              <p dangerouslySetInnerHTML={{ __html: t('about.p1') }} />
+              <p dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(t('about.p1'), { ALLOWED_TAGS: ['strong', 'em', 'br'], ALLOWED_ATTR: [] }) }} />
               <p>{t('about.p2')}</p>
               <p>{t('about.p3')}</p>
               <p>{t('about.p4')}</p>

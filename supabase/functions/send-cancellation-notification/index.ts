@@ -3,10 +3,10 @@ import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { sendEmail, corsHeaders, checkRateLimit, verifyJwt } from "../_shared/email-service.ts";
 import { brandedEmail } from "../_shared/email-templates.ts";
 
-function respond(ok: boolean, payload: Record<string, unknown>): Response {
+function respond(ok: boolean, payload: Record<string, unknown>, req: Request): Response {
   return new Response(JSON.stringify({ ok, ...payload }), {
     status: 200,
-    headers: { "Content-Type": "application/json", ...corsHeaders },
+    headers: { "Content-Type": "application/json", ...corsHeaders(req) },
   });
 }
 
@@ -24,17 +24,17 @@ const schema = z.object({
 });
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders(req) });
   try {
     const userId = await verifyJwt(req);
-    if (!userId) return respond(false, { error: "Unauthorized" });
+    if (!userId) return respond(false, { error: "Unauthorized" }, req);
 
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-    if (!checkRateLimit(ip)) return respond(false, { error: "Too many requests" });
+    if (!checkRateLimit(ip)) return respond(false, { error: "Too many requests" }, req);
 
     const raw = await req.text();
     let body: unknown;
-    try { body = raw ? JSON.parse(raw) : {}; } catch { return respond(false, { error: "Invalid JSON" }); }
+    try { body = raw ? JSON.parse(raw) : {}; } catch { return respond(false, { error: "Invalid JSON" }, req); }
 
     const data = schema.parse(body);
     const isFr = data.language === "fr";
@@ -67,10 +67,10 @@ serve(async (req) => {
 
     const subject = isFr ? `❌ Réservation annulée - ${data.serviceType}` : `❌ Booking cancelled - ${data.serviceType}`;
     const result = await sendEmail({ to: data.clientEmail, subject, html });
-    if (!result.success) return respond(false, { error: result.error || "Email failed" });
-    return respond(true, { data: { messageId: result.messageId } });
+    if (!result.success) return respond(false, { error: result.error || "Email failed" }, req);
+    return respond(true, { data: { messageId: result.messageId } }, req);
   } catch (e) {
-    if (e instanceof z.ZodError) return respond(false, { error: "Invalid input", diagnostics: e.errors });
-    return respond(false, { error: e instanceof Error ? e.message : "Unknown error" });
+    if (e instanceof z.ZodError) return respond(false, { error: "Invalid input", diagnostics: e.errors }, req);
+    return respond(false, { error: e instanceof Error ? e.message : "Unknown error" }, req);
   }
 });

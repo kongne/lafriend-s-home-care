@@ -1,7 +1,7 @@
 project_id = "ggsvvtzviwxpbjsnpzdv"
 
 [functions.send-booking-confirmation]
-verify_jwt = false
+verify_jwt = true
 
 [functions.chat-support]
 verify_jwt = true
@@ -10,34 +10,37 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.send-appointment-reminder]
+# Cron-triggered - uses CRON_SECRET header verification instead of JWT
 verify_jwt = false
 
 [functions.send-status-notification]
-verify_jwt = false
+verify_jwt = true
 
 [functions.send-sms-notification]
 verify_jwt = true
 
 [functions.send-referral-notification]
-verify_jwt = false
+verify_jwt = true
 
 [functions.send-feedback-request]
-verify_jwt = false
+verify_jwt = true
 
 [functions.verify-recaptcha]
+# Must remain false - called without auth header during form submissions
 verify_jwt = false
 
 [functions.broadcast-notification]
-verify_jwt = false
+verify_jwt = true
 
 [functions.send-admin-digest]
+# Cron-triggered - uses CRON_SECRET header verification instead of JWT
 verify_jwt = false
 
 [functions.export-reports]
 verify_jwt = true
 
 [functions.send-reschedule-notification]
-verify_jwt = false
+verify_jwt = true
 
 [functions.send-cancellation-notification]
-verify_jwt = false
+verify_jwt = true

@@ -26,6 +26,13 @@ import { StaffCalendar } from "@/components/admin/StaffCalendar";
 import { NotificationCenter } from "@/components/admin/NotificationCenter";
 import { LoyaltyRewardsManagement } from "@/components/admin/LoyaltyRewardsManagement";
 import { ReferralManagement } from "@/components/admin/ReferralManagement";
+import { FeedbackManagement } from "@/components/admin/FeedbackManagement";
+import { ReceiptGenerator } from "@/components/admin/ReceiptGenerator";
+import { ReviewManagement } from "@/components/admin/ReviewManagement";
+import { ProjectManagement } from "@/components/admin/ProjectManagement";
+import { CustomerFeedbackManagement } from "@/components/admin/CustomerFeedbackManagement";
+import { DashboardAnalytics } from "@/components/admin/DashboardAnalytics";
+
 import { BroadcastNotification } from "@/components/admin/BroadcastNotification";
 import { EmailRemindersManagement } from "@/components/admin/EmailRemindersManagement";
 import { exportToCSV, bookingColumns, contactColumns, subscriberColumns } from "@/lib/exportCsv";
@@ -524,6 +531,9 @@ const Admin = () => {
       case "analytics":
         return (
           <div className="space-y-6">
+            {/* Dashboard Analytics */}
+            <DashboardAnalytics />
+
             {/* Quick Actions */}
             <QuickActions 
               onRefresh={fetchAllData}
@@ -788,6 +798,21 @@ const Admin = () => {
 
       case "loyalty":
         return <LoyaltyRewardsManagement />;
+
+      case "feedback":
+        return <FeedbackManagement />;
+
+      case "customer-feedback":
+        return <CustomerFeedbackManagement />;
+
+      case "reviews-management":
+        return <ReviewManagement />;
+
+      case "reviews":
+        return <ReviewManagement />;
+
+      case "projects":
+        return <ProjectManagement />;
 
       case "referrals":
         return <ReferralManagement />;

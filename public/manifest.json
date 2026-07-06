@@ -15,6 +15,18 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["business", "lifestyle"],
-  "lang": "fr"
+  "categories": [
+    "business",
+    "lifestyle"
+  ],
+  "lang": "fr",
+  "prefer_related_applications": false,
+  "display_override": [
+    "window-controls-overlay",
+    "standalone"
+  ],
+  "screenshots": [],
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  }
 }

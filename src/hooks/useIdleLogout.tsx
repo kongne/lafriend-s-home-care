@@ -18,7 +18,7 @@ export interface UseIdleLogoutOptions {
  * `warningMs` countdown. If the user does not interact, `onTimeout` fires.
  */
 export function useIdleLogout({
-  idleMs = 10 * 60 * 1000,
+  idleMs = 5 * 60 * 1000,
   warningMs = 60 * 1000,
   onTimeout,
   enabled = true,

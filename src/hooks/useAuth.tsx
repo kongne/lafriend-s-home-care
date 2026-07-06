@@ -9,6 +9,10 @@ interface AuthContextType {
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
+  signInWithOAuth: (provider: 'google' | 'facebook') => Promise<{ error: Error | null }>;
+  signInWithOTP: (email: string) => Promise<{ error: Error | null }>;
+  verifyOTP: (email: string, token: string) => Promise<{ error: Error | null }>;
+  sendPasswordReset: (email: string) => Promise<{ error: Error | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -92,8 +96,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await supabase.auth.signOut();
   };
 
+  const signInWithOAuth = async (provider: 'google' | 'facebook') => {
+    const { error } = await supabase.auth.signInWithOAuth({ provider });
+    return { error };
+  };
+
+  const signInWithOTP = async (email: string) => {
+    const { error } = await supabase.auth.signInWithOtp({ email });
+    return { error };
+  };
+
+  const verifyOTP = async (email: string, token: string) => {
+    const { error } = await supabase.auth.verifyOtp({ email, token, type: 'email' });
+    return { error };
+  };
+
+  const sendPasswordReset = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email);
+    return { error };
+  };
+
   return (
-    <AuthContext.Provider value={{ user, session, loading, signUp, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, signUp, signIn, signOut, signInWithOAuth, signInWithOTP, verifyOTP, sendPasswordReset }}>
       {children}
     </AuthContext.Provider>
   );

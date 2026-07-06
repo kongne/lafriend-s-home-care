@@ -1,10 +1,10 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { sendEmail, corsHeaders, escapeHtml, verifyJwt } from "../_shared/email-service.ts";
 
-function respond(ok: boolean, payload: Record<string, unknown>): Response {
+function respond(ok: boolean, payload: Record<string, unknown>, req: Request): Response {
   return new Response(JSON.stringify({ ok, ...payload }), {
     status: 200,
-    headers: { "Content-Type": "application/json", ...corsHeaders },
+    headers: { "Content-Type": "application/json", ...corsHeaders(req) },
   });
 }
 
@@ -18,11 +18,11 @@ interface ReferralNotificationRequest {
 }
 
 const handler = async (req: Request): Promise<Response> => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders(req) });
 
   try {
     const userId = await verifyJwt(req);
-    if (!userId) return respond(false, { error: "Unauthorized" });
+    if (!userId) return respond(false, { error: "Unauthorized" }, req);
 
     const { referrerEmail, referrerName, referredEmail, referredName, bonusPoints, language = "fr" }: ReferralNotificationRequest = await req.json();
 
@@ -74,9 +74,9 @@ const handler = async (req: Request): Promise<Response> => {
     const r1 = await sendEmail({ to: referrerEmail, subject: "🎉 Parrainage Réussi - Vous avez gagné des points!", html: referrerHtml });
     const r2 = await sendEmail({ to: referredEmail, subject: "🎁 Bienvenue chez LaFriend's - Bonus de parrainage!", html: referredHtml });
 
-    return respond(true, { data: { referrerEmailSent: r1.success, referredEmailSent: r2.success } });
+    return respond(true, { data: { referrerEmailSent: r1.success, referredEmailSent: r2.success } }, req);
   } catch (error) {
-    return respond(false, { error: error instanceof Error ? error.message : "Unknown error" });
+    return respond(false, { error: error instanceof Error ? error.message : "Unknown error" }, req);
   }
 };
 

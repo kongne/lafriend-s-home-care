@@ -818,6 +818,42 @@ export type Database = {
         }
         Relationships: []
       }
+      before_after_projects: {
+        Row: {
+          id: string
+          title: string
+          category: string
+          before_image_url: string
+          after_image_url: string
+          duration_or_stats: string | null
+          stats_label: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          category: string
+          before_image_url: string
+          after_image_url: string
+          duration_or_stats?: string | null
+          stats_label?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          category?: string
+          before_image_url?: string
+          after_image_url?: string
+          duration_or_stats?: string | null
+          stats_label?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       reviews: {
         Row: {
           booking_id: string
@@ -829,6 +865,9 @@ export type Database = {
           staff_id: string | null
           updated_at: string
           user_id: string
+          status: string
+          is_pinned: boolean
+          is_featured: boolean
         }
         Insert: {
           booking_id: string
@@ -840,6 +879,9 @@ export type Database = {
           staff_id?: string | null
           updated_at?: string
           user_id: string
+          status?: string
+          is_pinned?: boolean
+          is_featured?: boolean
         }
         Update: {
           booking_id?: string
@@ -851,8 +893,19 @@ export type Database = {
           staff_id?: string | null
           updated_at?: string
           user_id?: string
+          status?: string
+          is_pinned?: boolean
+          is_featured?: boolean
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_reviews_booking"
+            columns: ["booking_id"]
+            isOneToOne: true
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       staff_availability: {
         Row: {

@@ -161,11 +161,22 @@ export const checkRateLimit = (ip: string, maxRequests: number = 10, windowMs: n
   return true;
 };
 
+const ALLOWED_ORIGINS = [
+  "https://lafriendsservices.lovable.app",
+  "capacitor://localhost",
+  "http://localhost:8080",
+  "http://127.0.0.1:8080",
+];
+
 // CORS headers
-export const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+export function corsHeaders(req: Request): Record<string, string> {
+  const origin = req.headers.get("origin") || "";
+  const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    "Access-Control-Allow-Origin": allowed,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  };
+}
 
 // Verify a Supabase JWT from the Authorization header. Returns the user id or null.
 export async function verifyJwt(req: Request): Promise<string | null> {

@@ -1,15 +1,26 @@
 import { serve } from "https://deno.land/std@0.208.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+const ALLOWED_ORIGINS = [
+  "https://lafriendsservices.lovable.app",
+  "capacitor://localhost",
+  "http://localhost:8080",
+  "http://127.0.0.1:8080",
+];
 
-function respond(ok: boolean, payload: Record<string, unknown>): Response {
+function corsHeaders(req: Request): Record<string, string> {
+  const origin = req.headers.get("origin") || "";
+  const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    "Access-Control-Allow-Origin": allowed,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  };
+}
+
+function respond(ok: boolean, payload: Record<string, unknown>, req: Request): Response {
   return new Response(JSON.stringify({ ok, ...payload }), {
     status: 200,
-    headers: { "Content-Type": "application/json", ...corsHeaders },
+    headers: { "Content-Type": "application/json", ...corsHeaders(req) },
   });
 }
 
@@ -94,25 +105,25 @@ const SERVICE_PRICE: Record<string, number> = {
 const priceFor = (s: string) => SERVICE_PRICE[s] ?? 50000;
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders(req) });
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const anon = Deno.env.get("SUPABASE_ANON_KEY")!;
     const service = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
     const auth = req.headers.get("Authorization") ?? "";
-    if (!auth) return respond(false, { error: "Unauthorized" });
+    if (!auth) return respond(false, { error: "Unauthorized" }, req);
 
     const userClient = createClient(supabaseUrl, anon, {
       global: { headers: { Authorization: auth } },
     });
     const { data: userData, error: userErr } = await userClient.auth.getUser();
-    if (userErr || !userData.user) return respond(false, { error: "Unauthorized" });
+    if (userErr || !userData.user) return respond(false, { error: "Unauthorized" }, req);
 
     const admin = createClient(supabaseUrl, service);
     const { data: roleRow } = await admin
       .from("user_roles").select("role").eq("user_id", userData.user.id).eq("role", "admin").maybeSingle();
-    if (!roleRow) return respond(false, { error: "Forbidden" });
+    if (!roleRow) return respond(false, { error: "Forbidden" }, req);
 
     const url = new URL(req.url);
     const type = (url.searchParams.get("type") || "bookings").toLowerCase();
@@ -157,7 +168,7 @@ serve(async (req) => {
           discounts: v.discounts,
         }));
     } else {
-      return respond(false, { error: "Unknown report type" });
+      return respond(false, { error: "Unknown report type" }, req);
     }
 
     const csv = toCsv(rows, REPORT_COLUMNS[type]);
@@ -172,8 +183,8 @@ serve(async (req) => {
       ip_address: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null,
     });
 
-    return respond(true, { data: { csv, filename, rows: rows.length } });
+    return respond(true, { data: { csv, filename, rows: rows.length } }, req);
   } catch (e) {
-    return respond(false, { error: e instanceof Error ? e.message : "Server error" });
+    return respond(false, { error: e instanceof Error ? e.message : "Server error" }, req);
   }
 });

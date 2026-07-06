@@ -1,24 +1,12 @@
 import { z } from "zod";
-
-// Known valid email domains (allow all gmail.com regardless of source)
-const ALLOWED_DOMAINS = [
-  'gmail.com', 'yahoo.com', 'yahoo.fr', 'hotmail.com', 'hotmail.fr',
-  'outlook.com', 'outlook.fr', 'live.com', 'icloud.com', 'aol.com',
-  'mail.com', 'protonmail.com', 'zoho.com', 'gmx.com', 'yandex.com',
-];
+import DOMPurify from "dompurify";
 
 /**
  * Validates that an email domain is legitimate.
- * Always accepts gmail.com and other major providers.
- * For unknown domains, checks basic format.
+ * Accepts any valid email format.
  */
-export const isValidEmailDomain = (email: string): boolean => {
-  const domain = email.split('@')[1]?.toLowerCase();
-  if (!domain) return false;
-  // Always accept known providers (including gmail.com from any source)
-  if (ALLOWED_DOMAINS.includes(domain)) return true;
-  // Accept any domain with at least one dot and 2+ char TLD
-  return /^[a-z0-9.-]+\.[a-z]{2,}$/.test(domain);
+export const isValidEmailDomain = (_email: string): boolean => {
+  return true;
 };
 
 // Rate limiting store
@@ -41,24 +29,12 @@ export const rateLimit = (key: string, maxAttempts: number = 5, windowMs: number
   return true;
 };
 
-// Sanitize input to prevent XSS attacks using HTML entity encoding
+// Sanitize input to prevent XSS attacks using DOMPurify
 export const sanitizeInput = (input: string): string => {
   if (!input || typeof input !== 'string') {
     return '';
   }
-  
-  // Create a temporary element to safely encode HTML
-  const div = document.createElement('div');
-  div.textContent = input;
-  const encoded = div.innerHTML;
-  
-  // Additional protection against specific XSS vectors
-  return encoded
-    .replace(/javascript:/gi, '')
-    .replace(/on\w+=/gi, '')
-    .replace(/vbscript:/gi, '')
-    .replace(/data:text\/html/gi, '')
-    .trim();
+  return DOMPurify.sanitize(input, { ALLOWED_TAGS: [] }).trim();
 };
 
 // Booking form validation schema with enhanced security
@@ -70,7 +46,6 @@ export const bookingSchema = z.object({
   email: z.string()
     .email("Adresse email invalide")
     .max(254, "L'email ne peut pas dépasser 254 caractères")
-    .refine(isValidEmailDomain, "Domaine email non valide")
     .transform(val => val.toLowerCase().trim()),
   phone: z.string()
     .min(8, "Numéro de téléphone invalide")
@@ -81,7 +56,7 @@ export const bookingSchema = z.object({
     .min(5, "Adresse trop courte")
     .max(500, "Adresse trop longue")
     .transform(sanitizeInput),
-  serviceType: z.enum(["residential", "commercial", "construction", "windows", "car", "other"] as const, {
+  serviceType: z.enum(["residential", "commercial", "construction", "windows", "car", "nanny", "cook", "other"] as const, {
     message: "Veuillez sélectionner un service"
   }),
   preferredDate: z.string()
@@ -129,7 +104,6 @@ export const newsletterSchema = z.object({
   email: z.string()
     .email("Adresse email invalide")
     .max(254, "L'email ne peut pas dépasser 254 caractères")
-    .refine(isValidEmailDomain, "Domaine email non valide")
     .transform(val => val.toLowerCase().trim()),
 });
 
