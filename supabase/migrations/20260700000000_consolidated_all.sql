@@ -6,32 +6,38 @@
 
 -- =============================================================
 -- PART 1: 20260707000000 - Enhance before_after_projects
+-- (only runs if the table exists — skip on fresh databases)
 -- =============================================================
-ALTER TABLE public.before_after_projects
-  ADD COLUMN IF NOT EXISTS description text,
-  ADD COLUMN IF NOT EXISTS detail_description text,
-  ADD COLUMN IF NOT EXISTS location text,
-  ADD COLUMN IF NOT EXISTS completion_date date,
-  ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'draft'
-    CHECK (status IN ('draft', 'published', 'archived')),
-  ADD COLUMN IF NOT EXISTS is_featured boolean NOT NULL DEFAULT false,
-  ADD COLUMN IF NOT EXISTS featured_image_index integer NOT NULL DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS sort_order integer NOT NULL DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS images jsonb DEFAULT '[]'::jsonb;
+DO $$
+BEGIN
+  IF EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'before_after_projects') THEN
+    ALTER TABLE public.before_after_projects
+      ADD COLUMN IF NOT EXISTS description text,
+      ADD COLUMN IF NOT EXISTS detail_description text,
+      ADD COLUMN IF NOT EXISTS location text,
+      ADD COLUMN IF NOT EXISTS completion_date date,
+      ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'draft'
+        CHECK (status IN ('draft', 'published', 'archived')),
+      ADD COLUMN IF NOT EXISTS is_featured boolean NOT NULL DEFAULT false,
+      ADD COLUMN IF NOT EXISTS featured_image_index integer NOT NULL DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS sort_order integer NOT NULL DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS images jsonb DEFAULT '[]'::jsonb;
 
-DROP POLICY IF EXISTS "Anyone can view before_after_projects" ON public.before_after_projects;
-CREATE POLICY "Anyone can view published projects"
-  ON public.before_after_projects FOR SELECT
-  USING (
-    status = 'published' OR
-    public.has_role(auth.uid(), 'admin'::app_role)
-  );
+    DROP POLICY IF EXISTS "Anyone can view before_after_projects" ON public.before_after_projects;
+    CREATE POLICY "Anyone can view published projects"
+      ON public.before_after_projects FOR SELECT
+      USING (status = 'published' OR public.has_role(auth.uid(), 'admin'::app_role));
 
-CREATE INDEX IF NOT EXISTS idx_before_after_projects_featured
-  ON public.before_after_projects(is_featured, sort_order)
-  WHERE status = 'published' AND is_featured = true;
+    CREATE INDEX IF NOT EXISTS idx_before_after_projects_featured
+      ON public.before_after_projects(is_featured, sort_order)
+      WHERE status = 'published' AND is_featured = true;
 
-ALTER PUBLICATION supabase_realtime ADD TABLE public.before_after_projects;
+    BEGIN
+      ALTER PUBLICATION supabase_realtime ADD TABLE public.before_after_projects;
+    EXCEPTION WHEN duplicate_object THEN NULL;
+    END;
+  END IF;
+END $$;
 
 -- =============================================================
 -- PART 2: 20260708000000 - Normalize projects tables
@@ -136,40 +142,45 @@ BEGIN
   BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE public.feedback; EXCEPTION WHEN duplicate_object THEN NULL; END;
 END $$;
 
--- Migrate data from before_after_projects to projects
-INSERT INTO public.projects (id, title, slug, category, location, description, detail_description, duration_or_stats, stats_label, status, is_featured, completion_date, created_at, updated_at)
-SELECT
-  id, title,
-  LOWER(REGEXP_REPLACE(REGEXP_REPLACE(title, '[^a-zA-Z0-9\s-]', '', 'g'), '\s+', '-', 'g')) || '-' || SUBSTRING(gen_random_uuid()::text, 1, 8),
-  category, location, description, detail_description, duration_or_stats, stats_label,
-  COALESCE(status, 'draft'), COALESCE(is_featured, false), completion_date, created_at, updated_at
-FROM public.before_after_projects
-ON CONFLICT (id) DO NOTHING;
+-- Migrate data from before_after_projects to projects (skip if table doesn't exist)
+DO $$
+BEGIN
+  IF EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'before_after_projects') THEN
+    INSERT INTO public.projects (id, title, slug, category, location, description, detail_description, duration_or_stats, stats_label, status, is_featured, completion_date, created_at, updated_at)
+    SELECT
+      id, title,
+      LOWER(REGEXP_REPLACE(REGEXP_REPLACE(title, '[^a-zA-Z0-9\s-]', '', 'g'), '\s+', '-', 'g')) || '-' || SUBSTRING(gen_random_uuid()::text, 1, 8),
+      category, location, description, detail_description, duration_or_stats, stats_label,
+      COALESCE(status, 'draft'), COALESCE(is_featured, false), completion_date, created_at, updated_at
+    FROM public.before_after_projects
+    ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO public.project_images (project_id, image_url, image_type, display_order, is_featured)
-SELECT p.id, img->>'url', img->>'type', COALESCE((img->>'sort_order')::integer, 0), false
-FROM public.projects p
-CROSS JOIN LATERAL jsonb_array_elements(
-  COALESCE((SELECT images FROM public.before_after_projects WHERE id = p.id)::jsonb, '[]'::jsonb)
-) AS img
-WHERE img->>'url' IS NOT NULL AND img->>'type' IN ('before', 'after')
-ON CONFLICT DO NOTHING;
+    INSERT INTO public.project_images (project_id, image_url, image_type, display_order, is_featured)
+    SELECT p.id, img->>'url', img->>'type', COALESCE((img->>'sort_order')::integer, 0), false
+    FROM public.projects p
+    CROSS JOIN LATERAL jsonb_array_elements(
+      COALESCE((SELECT images FROM public.before_after_projects WHERE id = p.id)::jsonb, '[]'::jsonb)
+    ) AS img
+    WHERE img->>'url' IS NOT NULL AND img->>'type' IN ('before', 'after')
+    ON CONFLICT DO NOTHING;
 
-INSERT INTO public.project_images (project_id, image_url, image_type, display_order, is_featured)
-SELECT p.id, b.before_image_url, 'before', 0, true
-FROM public.projects p
-JOIN public.before_after_projects b ON b.id = p.id
-WHERE b.before_image_url IS NOT NULL
-  AND NOT EXISTS (SELECT 1 FROM public.project_images pi WHERE pi.project_id = p.id AND pi.image_type = 'before')
-ON CONFLICT DO NOTHING;
+    INSERT INTO public.project_images (project_id, image_url, image_type, display_order, is_featured)
+    SELECT p.id, b.before_image_url, 'before', 0, true
+    FROM public.projects p
+    JOIN public.before_after_projects b ON b.id = p.id
+    WHERE b.before_image_url IS NOT NULL
+      AND NOT EXISTS (SELECT 1 FROM public.project_images pi WHERE pi.project_id = p.id AND pi.image_type = 'before')
+    ON CONFLICT DO NOTHING;
 
-INSERT INTO public.project_images (project_id, image_url, image_type, display_order, is_featured)
-SELECT p.id, b.after_image_url, 'after', 0, true
-FROM public.projects p
-JOIN public.before_after_projects b ON b.id = p.id
-WHERE b.after_image_url IS NOT NULL
-  AND NOT EXISTS (SELECT 1 FROM public.project_images pi WHERE pi.project_id = p.id AND pi.image_type = 'after')
-ON CONFLICT DO NOTHING;
+    INSERT INTO public.project_images (project_id, image_url, image_type, display_order, is_featured)
+    SELECT p.id, b.after_image_url, 'after', 0, true
+    FROM public.projects p
+    JOIN public.before_after_projects b ON b.id = p.id
+    WHERE b.after_image_url IS NOT NULL
+      AND NOT EXISTS (SELECT 1 FROM public.project_images pi WHERE pi.project_id = p.id AND pi.image_type = 'after')
+    ON CONFLICT DO NOTHING;
+  END IF;
+END $$;
 
 CREATE OR REPLACE TRIGGER projects_updated_at
   BEFORE UPDATE ON public.projects
