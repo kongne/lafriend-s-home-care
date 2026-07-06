@@ -179,7 +179,18 @@ export const ServiceManagement = () => {
   const [formStatus, setFormStatus] = useState("draft");
   const [confirmDialog, setConfirmDialog] = useState<{ isOpen: boolean; title: string; description: string; onConfirm: () => Promise<void> }>({ isOpen: false, title: "", description: "", onConfirm: async () => {} });
 
+  const [catList, setCatList] = useState<ServiceCategory[]>([]);
+  const [catName, setCatName] = useState("");
+  const [catSlug, setCatSlug] = useState("");
+  const [catDesc, setCatDesc] = useState("");
+  const [catParent, setCatParent] = useState("");
+  const [catOrder, setCatOrder] = useState(0);
+  const [catStatus, setCatStatus] = useState("active");
+  const [editCatId, setEditCatId] = useState<string | null>(null);
+  const [catLoading, setCatLoading] = useState(false);
+
   useEffect(() => { fetchData(); }, []);
+  useEffect(() => { setCatList(categories); }, [categories]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -1052,18 +1063,6 @@ export const ServiceManagement = () => {
   );
 
   const renderCategories = () => {
-    const [catList, setCatList] = useState<ServiceCategory[]>(categories);
-    const [catName, setCatName] = useState("");
-    const [catSlug, setCatSlug] = useState("");
-    const [catDesc, setCatDesc] = useState("");
-    const [catParent, setCatParent] = useState("");
-    const [catOrder, setCatOrder] = useState(0);
-    const [catStatus, setCatStatus] = useState("active");
-    const [editCatId, setEditCatId] = useState<string | null>(null);
-    const [catLoading, setCatLoading] = useState(false);
-
-    useEffect(() => { setCatList(categories); }, [categories]);
-
     const resetCatForm = () => {
       setCatName(""); setCatSlug(""); setCatDesc(""); setCatParent(""); setCatOrder(0); setCatStatus("active"); setEditCatId(null);
     };

@@ -828,6 +828,33 @@ const Admin = () => {
           </div>
         );
 
+      case "receipts":
+        return (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold">Reçus</h2>
+              <p className="text-sm text-muted-foreground">{bookings.length} réservation(s)</p>
+            </div>
+            <div className="grid gap-3">
+              {filteredBookings.length === 0 ? (
+                <Card><CardContent className="py-8 text-center text-muted-foreground">Aucune réservation</CardContent></Card>
+              ) : (
+                filteredBookings.map((booking) => (
+                  <Card key={booking.id}>
+                    <CardContent className="p-4 flex items-center justify-between">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium truncate">{booking.full_name}</p>
+                        <p className="text-sm text-muted-foreground">{booking.service_type} — {new Date(booking.preferred_date).toLocaleDateString("fr-FR")}</p>
+                      </div>
+                      <ReceiptGenerator booking={booking} />
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
+          </div>
+        );
+
       default:
         return <div className="text-center py-12 text-muted-foreground">Section en construction</div>;
     }
