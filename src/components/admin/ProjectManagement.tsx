@@ -215,7 +215,7 @@ export const ProjectManagement = () => {
         newImages.push({
           id: genImageId(),
           image_url: url,
-          type,
+          image_type: type,
           display_order: formImages.filter((i) => i.image_type === type).length + newImages.length,
           is_featured: false,
         });
