@@ -49,7 +49,9 @@ export const useChatMessages = (roomId: string | null) => {
   // realtime + presence
   useEffect(() => {
     if (!roomId || !user?.id) return;
-    const ch = supabase.channel(`room:${roomId}`, { config: { presence: { key: user.id } } });
+    const ch = supabase.channel(`room:${roomId}`, {
+      config: { presence: { key: user.id }, private: true },
+    });
     channelRef.current = ch;
 
     ch.on("postgres_changes",

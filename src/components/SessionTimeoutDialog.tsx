@@ -35,8 +35,9 @@ export const SessionTimeoutDialog = () => {
   };
 
   const { warningOpen, remaining, dismissWarningAndReset } = useIdleLogout({
-    idleMs: 10 * 60 * 1000,
-    warningMs: 60 * 1000,
+    // Auto-logout after ~1 minute of inactivity (30s idle + 30s warning countdown).
+    idleMs: 30 * 1000,
+    warningMs: 30 * 1000,
     onTimeout: handleTimeout,
     enabled: !!user,
   });

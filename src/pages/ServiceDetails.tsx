@@ -1,334 +1,402 @@
-import { useParams, useNavigate } from "react-router-dom";
-import { Navbar } from "@/components/Navbar";
-import { Footer } from "@/components/Footer";
-import { BookingModal } from "@/components/BookingModal";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { useState, useEffect } from "react";
+import { useParams, Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { 
-  Home, Building2, HardHat, Sparkles, Car, CheckCircle, 
-  Clock, Shield, Star, ArrowLeft, Phone, MessageCircle,
-  Banknote, Users, Zap
-} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent } from "@/components/ui/card";
+import { BookingModal } from "@/components/BookingModal";
 import { Seo } from "@/components/Seo";
+import {
+  CheckCircle, Clock, Users, ShieldCheck, DollarSign, ChevronRight, MapPin,
+  HelpCircle, Star, Image as ImageIcon, ChevronDown, Phone, Calendar,
+} from "lucide-react";
 
-const servicesData: Record<string, {
-  icon: any;
-  titleKey: string;
-  descKey: string;
-  features: string[];
-  price: string;
-  duration: string;
-  image: string;
-  highlights: { icon: any; label: string; value: string }[];
-  included: string[];
-  process: { step: number; title: string; desc: string }[];
-}> = {
+interface FullService {
+  id: string; name: string; slug: string; category_id: string | null;
+  short_description: string | null; description: string | null;
+  featured_image: string | null; banner_image: string | null; service_icon: string | null;
+  price_type: string; base_price: number | null; discount_price: number | null;
+  currency: string; duration: string | null; estimated_duration: string | null;
+  featured: boolean; popular: boolean; best_seller: boolean; recommended: boolean;
+  is_appointment_required: boolean; instant_booking: boolean; quote_required: boolean;
+  online_payment_enabled: boolean;
+  seo_title: string | null; seo_description: string | null; keywords: string | null;
+  status: string; total_views: number;
+}
+
+interface ServiceFeature { id: string; feature: string; is_included: boolean; }
+interface ServiceFAQ { id: string; question: string; answer: string; }
+interface ServiceAddon { id: string; name: string; description: string | null; price: number | null; duration: string | null; }
+interface ServiceLocation { id: string; location: string; location_type: string; }
+
+const fallbackData: Record<string, { icon: string; titleKey: string; descKey: string; features: string[]; highlights: { labelKey: string; icon: string; value: string }[]; included: string[] }> = {
   residential: {
-    icon: Home,
-    titleKey: "services.residential",
-    descKey: "services.residential.desc",
+    icon: "Home", titleKey: "services.residential", descKey: "services.residential.desc",
     features: ["services.residential.f1", "services.residential.f2", "services.residential.f3"],
-    price: "25,000 FCFA",
-    duration: "2-4 heures",
-    image: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=1200&h=600&fit=crop",
     highlights: [
-      { icon: Clock, label: "Durée", value: "2-4h" },
-      { icon: Users, label: "Équipe", value: "2-3 personnes" },
-      { icon: Shield, label: "Garantie", value: "100% satisfait" },
-      { icon: Banknote, label: "À partir de", value: "25,000 FCFA" },
+      { labelKey: "Durée", icon: "Clock", value: "2-3 heures" },
+      { labelKey: "Équipe", icon: "Users", value: "1-2 personnes" },
+      { labelKey: "Garantie", icon: "ShieldCheck", value: "100% satisfait" },
+      { labelKey: "À partir de", icon: "DollarSign", value: "25 000 XAF" },
     ],
-    included: [
-      "Nettoyage complet de toutes les pièces",
-      "Dépoussiérage meubles et surfaces",
-      "Lavage et désinfection des sols",
-      "Nettoyage cuisine et salle de bain",
-      "Aspirateur tapis et moquettes",
-      "Vidage des poubelles",
-    ],
-    process: [
-      { step: 1, title: "Réservation", desc: "Choisissez votre date et heure en ligne" },
-      { step: 2, title: "Confirmation", desc: "Recevez la confirmation par email ou WhatsApp" },
-      { step: 3, title: "Intervention", desc: "Notre équipe arrive à l'heure convenue" },
-      { step: 4, title: "Satisfaction", desc: "Vérification finale et feedback" },
-    ],
+    included: ["Nettoyage des sols", "Nettoyage des vitres", "Désinfection cuisine", "Nettoyage salle de bain", "Enlèvement des déchets"],
   },
   commercial: {
-    icon: Building2,
-    titleKey: "services.commercial",
-    descKey: "services.commercial.desc",
+    icon: "Building2", titleKey: "services.commercial", descKey: "services.commercial.desc",
     features: ["services.commercial.f1", "services.commercial.f2", "services.commercial.f3"],
-    price: "50,000 FCFA",
-    duration: "3-6 heures",
-    image: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&h=600&fit=crop",
     highlights: [
-      { icon: Clock, label: "Durée", value: "3-6h" },
-      { icon: Users, label: "Équipe", value: "3-5 personnes" },
-      { icon: Shield, label: "Garantie", value: "100% satisfait" },
-      { icon: Banknote, label: "À partir de", value: "50,000 FCFA" },
+      { labelKey: "Durée", icon: "Clock", value: "3-5 heures" },
+      { labelKey: "Équipe", icon: "Users", value: "2-3 personnes" },
+      { labelKey: "Garantie", icon: "ShieldCheck", value: "100% satisfait" },
+      { labelKey: "À partir de", icon: "DollarSign", value: "50 000 XAF" },
     ],
-    included: [
-      "Nettoyage bureaux et espaces de travail",
-      "Désinfection postes de travail",
-      "Nettoyage sanitaires et cuisines communes",
-      "Lavage des vitres intérieures",
-      "Entretien des sols (carrelage, moquette)",
-      "Gestion des déchets et recyclage",
-    ],
-    process: [
-      { step: 1, title: "Devis gratuit", desc: "Évaluation de vos locaux et besoins" },
-      { step: 2, title: "Planification", desc: "Horaires adaptés à votre activité" },
-      { step: 3, title: "Intervention", desc: "Équipe dédiée et équipement pro" },
-      { step: 4, title: "Suivi qualité", desc: "Rapport d'intervention et feedback" },
-    ],
+    included: ["Nettoyage des bureaux", "Nettoyage des vitres", "Désinfection complète", "Nettoyage sanitaires", "Enlèvement des déchets"],
   },
   construction: {
-    icon: HardHat,
-    titleKey: "services.construction",
-    descKey: "services.construction.desc",
+    icon: "HardHat", titleKey: "services.construction", descKey: "services.construction.desc",
     features: ["services.construction.f1", "services.construction.f2", "services.construction.f3"],
-    price: "80,000 FCFA",
-    duration: "4-8 heures",
-    image: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=1200&h=600&fit=crop",
     highlights: [
-      { icon: Clock, label: "Durée", value: "4-8h" },
-      { icon: Users, label: "Équipe", value: "4-6 personnes" },
-      { icon: Shield, label: "Garantie", value: "100% satisfait" },
-      { icon: Banknote, label: "À partir de", value: "80,000 FCFA" },
+      { labelKey: "Durée", icon: "Clock", value: "4-8 heures" },
+      { labelKey: "Équipe", icon: "Users", value: "2-4 personnes" },
+      { labelKey: "Garantie", icon: "ShieldCheck", value: "100% satisfait" },
+      { labelKey: "À partir de", icon: "DollarSign", value: "80 000 XAF" },
     ],
-    included: [
-      "Évacuation gravats et débris",
-      "Nettoyage poussière de construction",
-      "Lavage vitrerie intérieure/extérieure",
-      "Décapage et nettoyage des sols",
-      "Nettoyage des sanitaires neufs",
-      "Désinfection complète des lieux",
-    ],
-    process: [
-      { step: 1, title: "Visite technique", desc: "Évaluation du chantier et devis" },
-      { step: 2, title: "Planification", desc: "Coordination avec le maître d'œuvre" },
-      { step: 3, title: "Nettoyage", desc: "Intervention en plusieurs phases" },
-      { step: 4, title: "Livraison", desc: "Remise de locaux propres et prêts" },
-    ],
+    included: ["Enlèvement des débris", "Nettoyage poussière", "Nettoyage des sols", "Nettoyage des vitres", "Désinfection complète"],
   },
   windows: {
-    icon: Sparkles,
-    titleKey: "services.windows",
-    descKey: "services.windows.desc",
+    icon: "Sparkles", titleKey: "services.windows", descKey: "services.windows.desc",
     features: ["services.windows.f1", "services.windows.f2", "services.windows.f3"],
-    price: "15,000 FCFA",
-    duration: "1-3 heures",
-    image: "https://images.unsplash.com/photo-1527515637462-cff94eecc1ac?w=1200&h=600&fit=crop",
     highlights: [
-      { icon: Clock, label: "Durée", value: "1-3h" },
-      { icon: Users, label: "Équipe", value: "1-2 personnes" },
-      { icon: Shield, label: "Garantie", value: "Sans traces" },
-      { icon: Banknote, label: "À partir de", value: "15,000 FCFA" },
+      { labelKey: "Durée", icon: "Clock", value: "1-2 heures" },
+      { labelKey: "Équipe", icon: "Users", value: "1 personne" },
+      { labelKey: "Garantie", icon: "ShieldCheck", value: "Sans traces" },
+      { labelKey: "À partir de", icon: "DollarSign", value: "15 000 XAF" },
     ],
-    included: [
-      "Nettoyage vitres intérieures et extérieures",
-      "Lavage des cadres et rebords",
-      "Nettoyage des volets et stores",
-      "Traitement anti-traces",
-      "Nettoyage des miroirs",
-      "Séchage sans traces",
-    ],
-    process: [
-      { step: 1, title: "Estimation", desc: "Nombre et taille des vitres" },
-      { step: 2, title: "Préparation", desc: "Protection des sols et meubles" },
-      { step: 3, title: "Nettoyage", desc: "Technique professionnelle sans traces" },
-      { step: 4, title: "Inspection", desc: "Vérification de chaque vitre" },
-    ],
+    included: ["Nettoyage vitres intérieures", "Nettoyage vitres extérieures", "Cadres et rebords", "Rampes et balustrades"],
   },
   car: {
-    icon: Car,
-    titleKey: "services.car",
-    descKey: "services.car.desc",
+    icon: "Car", titleKey: "services.car", descKey: "services.car.desc",
     features: ["services.car.f1", "services.car.f2", "services.car.f3"],
-    price: "8,000 FCFA",
-    duration: "1-2 heures",
-    image: "https://images.unsplash.com/photo-1520340356584-f9917d1eea6f?w=1200&h=600&fit=crop",
     highlights: [
-      { icon: Clock, label: "Durée", value: "1-2h" },
-      { icon: Users, label: "Équipe", value: "1-2 personnes" },
-      { icon: Shield, label: "Garantie", value: "Éclat garanti" },
-      { icon: Banknote, label: "À partir de", value: "8,000 FCFA" },
+      { labelKey: "Durée", icon: "Clock", value: "1-2 heures" },
+      { labelKey: "Équipe", icon: "Users", value: "1 personne" },
+      { labelKey: "Garantie", icon: "ShieldCheck", value: "100% satisfait" },
+      { labelKey: "À partir de", icon: "DollarSign", value: "8 000 XAF" },
     ],
-    included: [
-      "Lavage extérieur complet",
-      "Aspiration intérieur",
-      "Nettoyage tableau de bord",
-      "Lavage des vitres",
-      "Nettoyage jantes et pneus",
-      "Parfum d'ambiance offert",
-    ],
-    process: [
-      { step: 1, title: "Accueil", desc: "Réception et inspection du véhicule" },
-      { step: 2, title: "Lavage", desc: "Nettoyage extérieur et intérieur" },
-      { step: 3, title: "Finitions", desc: "Détails et touches finales" },
-      { step: 4, title: "Remise", desc: "Véhicule propre et parfumé" },
-    ],
+    included: ["Lavage extérieur", "Aspiration intérieure", "Nettoyage sièges", "Tableau de bord", "Vitres intérieures"],
   },
 };
 
 const ServiceDetails = () => {
   const { serviceId } = useParams<{ serviceId: string }>();
-  const navigate = useNavigate();
-  const { t } = useLanguage();
-  
-  const service = serviceId ? servicesData[serviceId] : null;
+  const { t, language } = useLanguage();
+  const [service, setService] = useState<FullService | null>(null);
+  const [features, setFeatures] = useState<ServiceFeature[]>([]);
+  const [faqs, setFaqs] = useState<ServiceFAQ[]>([]);
+  const [addons, setAddons] = useState<ServiceAddon[]>([]);
+  const [locations, setLocations] = useState<ServiceLocation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
 
-  if (!service) {
+  useEffect(() => {
+    if (!serviceId) { setNotFound(true); setLoading(false); return; }
+    fetchService();
+    trackView();
+  }, [serviceId]);
+
+  const trackView = async () => {
+    if (!serviceId) return;
+    try {
+      await supabase.rpc("increment_service_views", { service_slug: serviceId }).then();
+    } catch { /* analytics non-critical */ }
+    try {
+      const { data: svc } = await supabase.from("services").select("id").eq("slug", serviceId).maybeSingle();
+      if (svc) await supabase.from("service_analytics").insert({ service_id: svc.id, event_type: "view" });
+    } catch { /* non-critical */ }
+  };
+
+  const fetchService = async () => {
+    setLoading(true);
+    try {
+      const { data: svc } = await supabase
+        .from("services")
+        .select("*")
+        .eq("slug", serviceId)
+        .maybeSingle();
+
+      if (!svc) {
+        setNotFound(true);
+        return;
+      }
+
+      if (svc.status !== "published") {
+        const { data: roleCheck } = await supabase.rpc("has_role", { _user_id: (await supabase.auth.getUser()).data.user?.id, _role: "admin" });
+        if (!roleCheck) { setNotFound(true); return; }
+      }
+
+      setService(svc as FullService);
+
+      const [featRes, faqRes, addonRes, locRes] = await Promise.all([
+        supabase.from("service_features").select("*").eq("service_id", svc.id).order("display_order"),
+        supabase.from("service_faqs").select("*").eq("service_id", svc.id).order("display_order"),
+        supabase.from("service_addons").select("*").eq("service_id", svc.id),
+        supabase.from("service_locations").select("*").eq("service_id", svc.id),
+      ]);
+
+      if (featRes.data) setFeatures(featRes.data as ServiceFeature[]);
+      if (faqRes.data) setFaqs(faqRes.data as ServiceFAQ[]);
+      if (addonRes.data) setAddons(addonRes.data as ServiceAddon[]);
+      if (locRes.data) setLocations(locRes.data as ServiceLocation[]);
+
+      if (svc.total_views !== undefined) {
+        await supabase.from("services").update({ total_views: (svc.total_views || 0) + 1 }).eq("id", svc.id);
+      }
+    } catch {
+      setNotFound(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fallback = !loading && !service && !notFound ? fallbackData[serviceId || ""] : null;
+
+  if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
-        <main className="container mx-auto px-4 py-24 text-center">
-          <h1 className="text-2xl font-bold mb-4">{t('details.notFound')}</h1>
-          <Button onClick={() => navigate("/")} variant="outline">
-            <ArrowLeft className="h-4 w-4 mr-2" /> {t('details.backHome')}
-          </Button>
-        </main>
-        <Footer />
+        <div className="container mx-auto px-4 py-8 space-y-6">
+          <Skeleton className="h-64 w-full rounded-xl" />
+          <Skeleton className="h-8 w-1/3" />
+          <Skeleton className="h-4 w-2/3" />
+          <Skeleton className="h-48 w-full rounded-xl" />
+        </div>
       </div>
     );
   }
 
-  const Icon = service.icon;
+  if (notFound && !fallback) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <h1 className="text-3xl font-bold">{t("common.notFound") || "Service introuvable"}</h1>
+          <p className="text-muted-foreground">Le service demandé n'existe pas.</p>
+          <Link to="/#services"><Button variant="outline"><ChevronRight className="h-4 w-4 mr-1" />{t("nav.services")}</Button></Link>
+        </div>
+      </div>
+    );
+  }
 
-  const serviceTitle = t(service.titleKey);
-  const serviceDesc = t(service.descKey);
+  const getIcon = (iconName: string) => {
+    const icons: Record<string, any> = { Clock, Users, ShieldCheck, DollarSign };
+    return icons[iconName] || Clock;
+  };
+
+  const displayName = service?.name || (fallback ? t(fallback.titleKey) : "");
+  const displayDesc = service?.description || (fallback ? t(fallback.descKey) : "");
+  const displayShortDesc = service?.short_description || "";
+  const displayImage = service?.banner_image || service?.featured_image || "";
+  const displayPrice = service?.base_price ? `${service.base_price.toLocaleString()} ${service.currency}` : "";
+  const displayHighlights = service
+    ? [
+        { label: "Durée", value: service.estimated_duration || service.duration || "-", icon: Clock },
+        service.base_price ? { label: service.price_type === "hourly" ? "Taux horaire" : "À partir de", value: `${service.base_price.toLocaleString()} ${service.currency}`, icon: DollarSign } : null,
+        service.instant_booking ? { label: "Réservation", value: "Instantanée", icon: Calendar } : null,
+        service.is_appointment_required ? { label: "Rendez-vous", value: "Requis", icon: Users } : null,
+      ].filter(Boolean)
+    : (fallback?.highlights || []).map(h => ({ label: h.labelKey, value: h.value, icon: getIcon(h.icon) }));
+
+  const displayFaqs = service ? faqs : [];
+  const displayFeatures = service ? features.filter(f => f.is_included) : [];
+  const displayIncluded = service
+    ? displayFeatures.map(f => f.feature)
+    : (fallback?.included || []).map(i => t(i.replace("services.", "services.")).includes("services.") ? i : i);
+  const displayAddons = service ? addons : [];
+
+  const schemaData = service ? {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    name: service.name,
+    description: service.short_description || service.description || "",
+    provider: { "@type": "LocalBusiness", name: "L'Africaine Home Care" },
+    offers: service.base_price ? {
+      "@type": "Offer",
+      price: service.base_price,
+      priceCurrency: service.currency,
+      availability: "https://schema.org/InStock",
+    } : undefined,
+    areaServed: locations.length > 0
+      ? locations.map(l => ({ "@type": "City", name: l.location }))
+      : { "@type": "Country", name: "Cameroun" },
+  } : null;
 
   return (
     <div className="min-h-screen bg-background">
-      <Seo
-        title={`${serviceTitle} à Bafoussam — LaFriend's`}
-        description={`${serviceDesc} À partir de ${service.price}. Réservez votre service ${serviceTitle.toLowerCase()} avec LaFriend's.`.slice(0, 158)}
-        path={`/services/${serviceId}`}
-      />
-      <Navbar />
+      {schemaData && <Seo
+        title={service?.seo_title || displayName}
+        description={service?.seo_description || displayShortDesc || displayName}
+        keywords={service?.keywords || undefined}
+        image={service?.featured_image || undefined}
+      />}
+      {schemaData && (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaData) }} />
+      )}
 
-      {/* Hero Banner */}
-      <section className="relative h-[50vh] min-h-[300px] md:h-[60vh]">
-        <img
-          src={service.image}
-          alt={t(service.titleKey)}
-          className="w-full h-full object-cover"
-          loading="eager"
-          fetchPriority="high"
-          decoding="async"
-          width={1920}
-          height={1080}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 p-4 md:p-8 lg:p-12">
-          <div className="container mx-auto">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate("/")}
-              className="mb-4 text-foreground/80 hover:text-foreground"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" /> {t('details.back')}
-            </Button>
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-accent flex items-center justify-center">
-                <Icon className="w-6 h-6 md:w-7 md:h-7 text-accent-foreground" />
-              </div>
-              <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold text-foreground">
-                {t(service.titleKey)}
-              </h1>
+      {displayImage && (
+        <div className="relative h-48 sm:h-64 md:h-80 lg:h-96 overflow-hidden bg-muted">
+          <img src={displayImage} alt={displayName} className="w-full h-full object-cover" loading="lazy" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10">
+            <div className="container mx-auto">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white">{displayName}</h1>
+              {displayShortDesc && <p className="text-white/80 mt-2 max-w-2xl">{displayShortDesc}</p>}
             </div>
-            <p className="text-base md:text-lg text-muted-foreground max-w-2xl">
-              {t(service.descKey)}
-            </p>
           </div>
         </div>
-      </section>
+      )}
 
-      <main className="container mx-auto px-4 py-8 md:py-12 space-y-10 md:space-y-16">
-        {/* Highlights */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-          {service.highlights.map((h, i) => (
-            <Card key={i} className="text-center p-4 md:p-6 hover:shadow-lg transition-shadow">
-              <h.icon className="h-6 w-6 md:h-8 md:w-8 mx-auto mb-2 text-accent" />
-              <p className="text-xs md:text-sm text-muted-foreground">{h.label}</p>
-              <p className="font-bold text-sm md:text-lg text-foreground">{h.value}</p>
-            </Card>
-          ))}
-        </div>
+      <div className="container mx-auto px-4 py-8">
+        {!displayImage && (
+          <h1 className="text-3xl md:text-4xl font-bold mb-6">{displayName}</h1>
+        )}
 
-        {/* What's Included */}
-        <section>
-          <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6 text-foreground">
-            {t('details.included')}
-          </h2>
-          <div className="grid sm:grid-cols-2 gap-3">
-            {service.included.map((item, i) => (
-              <div key={i} className="flex items-start gap-3 p-3 md:p-4 rounded-lg bg-secondary">
-                <CheckCircle className="h-5 w-5 text-accent flex-shrink-0 mt-0.5" />
-                <span className="text-sm md:text-base text-foreground">{item}</span>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Process */}
-        <section>
-          <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6 text-foreground">
-            {t('details.howItWorks')}
-          </h2>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {service.process.map((step) => (
-              <Card key={step.step} className="p-4 md:p-6 relative overflow-hidden">
-                <div className="absolute top-2 right-3 text-5xl md:text-6xl font-bold text-accent/10">
-                  {step.step}
-                </div>
-                <Badge className="bg-accent text-accent-foreground mb-3 text-xs">
-                  {t('details.step')} {step.step}
-                </Badge>
-                <h3 className="font-bold text-foreground mb-1">{step.title}</h3>
-                <p className="text-sm text-muted-foreground">{step.desc}</p>
+        {displayHighlights.length > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+            {displayHighlights.map((h: any, i: number) => h && (
+              <Card key={i} className="bg-muted/50">
+                <CardContent className="p-4 flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-accent/10">
+                    <h.icon className="h-5 w-5 text-accent" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">{h.label}</p>
+                    <p className="font-semibold text-sm">{h.value}</p>
+                  </div>
+                </CardContent>
               </Card>
             ))}
           </div>
-        </section>
+        )}
 
-        {/* CTA */}
-        <section className="text-center py-8 md:py-12 bg-gradient-to-r from-accent/10 to-accent/5 rounded-2xl px-4">
-          <h2 className="text-xl md:text-2xl font-bold mb-3 text-foreground">
-            {t('details.ready')}
-          </h2>
-          <p className="text-muted-foreground mb-6 max-w-md mx-auto text-sm md:text-base">
-            {t('details.readyDesc')}
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <BookingModal>
-              <Button size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90 font-semibold px-8">
-                <Zap className="h-4 w-4 mr-2" /> {t('details.bookNow')}
-              </Button>
-            </BookingModal>
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={() => navigate("/#contact")}
-              className="font-semibold px-8"
-            >
-              <MessageCircle className="h-4 w-4 mr-2" /> {t('details.requestQuote')}
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={() => window.open(`https://wa.me/237693138292?text=${encodeURIComponent(`Bonjour, je suis intéressé par le service: ${t(service.titleKey)}. Pouvez-vous me donner plus d'informations ?`)}`, "_blank")}
-              className="font-semibold px-8 text-green-600 border-green-600 hover:bg-green-50"
-            >
-              <Phone className="h-4 w-4 mr-2" /> WhatsApp
-            </Button>
+        <div className="grid lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-8">
+            {(displayDesc || features.length > 0 || displayFaqs.length > 0) && (
+              <div className="space-y-4">
+                {displayDesc && (
+                  <div>
+                    <h2 className="text-xl font-semibold mb-3">{t("project.details") || "Description"}</h2>
+                    <p className="text-muted-foreground leading-relaxed whitespace-pre-line">{displayDesc}</p>
+                  </div>
+                )}
+
+                {displayFeatures.length > 0 && (
+                  <div>
+                    <h2 className="text-xl font-semibold mb-3">Ce qui est inclus</h2>
+                    <div className="grid sm:grid-cols-2 gap-2">
+                      {displayFeatures.map(f => (
+                        <div key={f.id} className="flex items-center gap-2 text-sm">
+                          <CheckCircle className="h-4 w-4 text-accent flex-shrink-0" />
+                          <span>{f.feature}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {displayIncluded.length > 0 && !service && (
+                  <div>
+                    <h2 className="text-xl font-semibold mb-3">Ce qui est inclus</h2>
+                    <div className="grid sm:grid-cols-2 gap-2">
+                      {displayIncluded.map((item: string, i: number) => (
+                        <div key={i} className="flex items-center gap-2 text-sm">
+                          <CheckCircle className="h-4 w-4 text-accent flex-shrink-0" />
+                          <span>{item}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {displayAddons.length > 0 && (
+              <div>
+                <h2 className="text-xl font-semibold mb-3">Options complémentaires</h2>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  {displayAddons.map(addon => (
+                    <Card key={addon.id} className="hover:shadow-md transition-shadow">
+                      <CardContent className="p-4">
+                        <div className="flex justify-between items-start">
+                          <h3 className="font-semibold text-sm">{addon.name}</h3>
+                          {addon.price && <span className="font-bold text-accent text-sm">{addon.price.toLocaleString()} XAF</span>}
+                        </div>
+                        {addon.description && <p className="text-xs text-muted-foreground mt-1">{addon.description}</p>}
+                        {addon.duration && <p className="text-xs text-muted-foreground mt-1">{addon.duration}</p>}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {displayFaqs.length > 0 && (
+              <div>
+                <h2 className="text-xl font-semibold mb-3">Questions fréquentes</h2>
+                <div className="space-y-3">
+                  {displayFaqs.map(faq => (
+                    <details key={faq.id} className="group border rounded-lg">
+                      <summary className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/50 transition-colors">
+                        <span className="font-medium text-sm">{faq.question}</span>
+                        <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
+                      </summary>
+                      <div className="px-4 pb-4 text-sm text-muted-foreground">{faq.answer}</div>
+                    </details>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-        </section>
-      </main>
 
-      <Footer />
+          <div className="space-y-4">
+            <div className="bg-accent/5 rounded-xl p-6 space-y-4 border border-accent/20">
+              <h3 className="font-semibold text-lg">{displayName}</h3>
+              {displayPrice && <p className="text-2xl font-bold text-accent">{displayPrice}</p>}
+              <div className="space-y-2">
+                <BookingModal>
+                  <Button className="w-full">{t("project.bookService") || "Réserver"}</Button>
+                </BookingModal>
+                {service?.quote_required && (
+                  <Link to="/quote">
+                    <Button variant="outline" className="w-full">Demander un devis</Button>
+                  </Link>
+                )}
+              </div>
+              {service?.online_payment_enabled && (
+                <p className="text-xs text-muted-foreground text-center">Paiement en ligne sécurisé</p>
+              )}
+            </div>
+
+            {locations.length > 0 && (
+              <Card>
+                <CardContent className="p-4 space-y-2">
+                  <h4 className="font-semibold text-sm flex items-center gap-2"><MapPin className="h-4 w-4 text-accent" /> Zones desservies</h4>
+                  {locations.map(l => (
+                    <p key={l.id} className="text-sm text-muted-foreground">{l.location}</p>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+
+            <div className="flex gap-2">
+              <a href="https://wa.me/237670000000" target="_blank" rel="noopener noreferrer" className="flex-1">
+                <Button variant="outline" className="w-full text-green-600 border-green-600">
+                  <Phone className="h-4 w-4 mr-2" />WhatsApp
+                </Button>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

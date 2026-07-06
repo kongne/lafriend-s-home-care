@@ -32,6 +32,7 @@ import { ReviewManagement } from "@/components/admin/ReviewManagement";
 import { ProjectManagement } from "@/components/admin/ProjectManagement";
 import { CustomerFeedbackManagement } from "@/components/admin/CustomerFeedbackManagement";
 import { DashboardAnalytics } from "@/components/admin/DashboardAnalytics";
+import { ServiceManagement } from "@/components/admin/ServiceManagement";
 
 import { BroadcastNotification } from "@/components/admin/BroadcastNotification";
 import { EmailRemindersManagement } from "@/components/admin/EmailRemindersManagement";
@@ -810,6 +811,9 @@ const Admin = () => {
 
       case "reviews":
         return <ReviewManagement />;
+
+      case "services-management":
+        return <ServiceManagement />;
 
       case "projects":
         return <ProjectManagement />;

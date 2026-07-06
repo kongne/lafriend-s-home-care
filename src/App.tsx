@@ -24,6 +24,7 @@ const QuoteRequest = lazy(() => import("./pages/QuoteRequest"));
 const PricingGuide = lazy(() => import("./pages/PricingGuide"));
 const WorkerRegistration = lazy(() => import("./pages/WorkerRegistration"));
 const ProjectDetail = lazy(() => import("./pages/ProjectDetail"));
+const OAuthConsent = lazy(() => import("./pages/OAuthConsent"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -98,6 +99,7 @@ const App = () => (
                 <Route path="/pricing-guide" element={routeElement(PricingGuide)} />
                 <Route path="/join-our-team" element={routeElement(WorkerRegistration)} />
                 <Route path="/projects/:slug" element={routeElement(ProjectDetail)} />
+                <Route path="/.lovable/oauth/consent" element={routeElement(OAuthConsent)} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>

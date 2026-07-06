@@ -25,6 +25,8 @@ import {
   Image as ImageIcon,
   MessageCircle,
   MessageSquare,
+  ShieldCheck,
+  Wrench,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -46,6 +48,7 @@ interface AdminSidebarProps {
 
 const menuItems = [
   { icon: BarChart3, label: "Statistiques", value: "analytics", path: "/admin" },
+  { icon: Wrench, label: "Services", value: "services-management", path: "/admin?tab=services-management" },
   { icon: MessageCircle, label: "Reviews", value: "reviews-management", path: "/admin?tab=reviews-management" },
   { icon: MessageSquare, label: "Customer Feedback", value: "customer-feedback", path: "/admin?tab=customer-feedback" },
   { icon: CalendarDays, label: "Réservations", value: "bookings", path: "/admin?tab=bookings" },
@@ -65,6 +68,7 @@ const menuItems = [
   { icon: Receipt, label: "Reçus", value: "receipts", path: "/admin?tab=receipts" },
   { icon: Clock, label: "Rappels", value: "reminders", path: "/admin?tab=reminders" },
   { icon: FileText, label: "Rapports", value: "reports", path: "/admin?tab=reports" },
+  { icon: ShieldCheck, label: "Vérifications KYC", value: "verifications", path: "/admin/verifications" },
 ];
 
 const SidebarContent = ({ 
@@ -116,8 +120,10 @@ const SidebarContent = ({
         </div>
 
         {menuItems.map((item) => {
-          const isActive = currentTab === item.value || 
-            (item.value === "analytics" && !searchParams.get("tab") && location.pathname === "/admin");
+          const isActive =
+            (item.value === "verifications" && location.pathname === "/admin/verifications") ||
+            (location.pathname === "/admin" && (currentTab === item.value ||
+              (item.value === "analytics" && !searchParams.get("tab"))));
           const showBadge = 
             (item.value === "bookings" && pendingCount > 0) ||
             (item.value === "contacts" && unreadMessages > 0);
