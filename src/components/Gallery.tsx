@@ -3,6 +3,10 @@ import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Badge } from "@/components/ui/badge";
 import { Eye } from "lucide-react";
+import before1 from "@/assets/before-after/before-1.webp";
+import before2 from "@/assets/before-after/before-2.webp";
+import after1 from "@/assets/before-after/after-1.webp";
+import after2 from "@/assets/before-after/after-2.webp";
 
 interface GalleryItem {
   before: string;
@@ -10,9 +14,44 @@ interface GalleryItem {
   titleKey: string;
   category: string;
   stats?: { label: string; value: string };
+  local?: boolean;
+  overlay?: {
+    client: string;
+    location: string;
+    propertyFr: string;
+    propertyEn: string;
+  };
 }
 
 const galleryItems: GalleryItem[] = [
+  {
+    before: before1,
+    after: after1,
+    titleKey: "gallery.bandjounVilla",
+    category: "post-construction",
+    local: true,
+    stats: { label: "Bandjoun", value: "R+1" },
+    overlay: {
+      client: "Alexis",
+      location: "Centre Climatique de Bandjoun",
+      propertyFr: "Villa R+1 — 6 chambres, 5 SDB",
+      propertyEn: "Two-storey villa — 6 bedrooms, 5 baths",
+    },
+  },
+  {
+    before: before2,
+    after: after2,
+    titleKey: "gallery.bandjounVilla",
+    category: "post-construction",
+    local: true,
+    stats: { label: "Bandjoun", value: "R+1" },
+    overlay: {
+      client: "Alexis",
+      location: "Centre Climatique de Bandjoun",
+      propertyFr: "Villa R+1 — 6 chambres, 5 SDB",
+      propertyEn: "Two-storey villa — 6 bedrooms, 5 baths",
+    },
+  },
   {
     before: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=400&h=300&fit=crop&auto=format&q=80",
     after: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=300&fit=crop&auto=format&q=80",
@@ -46,6 +85,7 @@ const galleryItems: GalleryItem[] = [
 const BeforeAfterCard = ({ item, index, isVisible, t }: { item: GalleryItem; index: number; isVisible: boolean; t: (key: string) => string }) => {
   const [showAfter, setShowAfter] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const { language } = useLanguage();
 
   return (
     <div
@@ -62,6 +102,33 @@ const BeforeAfterCard = ({ item, index, isVisible, t }: { item: GalleryItem; ind
         {!imageLoaded && (
           <div className="absolute inset-0 bg-muted animate-pulse" />
         )}
+        {item.local ? (
+          <>
+            <img
+              src={item.before}
+              alt={`${t(item.titleKey)} - ${t('gallery.before')}`}
+              className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 ${
+                showAfter ? "opacity-0 scale-110" : "opacity-100 scale-100"
+              }`}
+              loading="lazy"
+              decoding="async"
+              width={1200}
+              height={800}
+              onLoad={() => setImageLoaded(true)}
+            />
+            <img
+              src={item.after}
+              alt={`${t(item.titleKey)} - ${t('gallery.after')}`}
+              className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 ${
+                showAfter ? "opacity-100 scale-100" : "opacity-0 scale-90"
+              }`}
+              loading="lazy"
+              decoding="async"
+              width={1200}
+              height={800}
+            />
+          </>
+        ) : (
         <picture>
           <source media="(min-width:1024px)" srcSet={`${item.before}&w=1200 1200w, ${item.before}&w=800 800w`} />
           <source media="(min-width:640px)" srcSet={`${item.before}&w=800 800w, ${item.before}&w=600 600w`} />
@@ -78,6 +145,8 @@ const BeforeAfterCard = ({ item, index, isVisible, t }: { item: GalleryItem; ind
             onLoad={() => setImageLoaded(true)}
           />
         </picture>
+        )}
+        {!item.local && (
         <picture>
           <source media="(min-width:1024px)" srcSet={`${item.after}&w=1200 1200w, ${item.after}&w=800 800w`} />
           <source media="(min-width:640px)" srcSet={`${item.after}&w=800 800w, ${item.after}&w=600 600w`} />
@@ -93,12 +162,25 @@ const BeforeAfterCard = ({ item, index, isVisible, t }: { item: GalleryItem; ind
             height={800}
           />
         </picture>
+        )}
         
         {/* Category badge */}
         <Badge className="absolute top-4 right-4 bg-background/80 text-foreground backdrop-blur-sm">
           {item.category}
         </Badge>
         
+        {/* Service info overlay (top) */}
+        {item.overlay && (
+          <div className="absolute top-14 left-4 right-4 rounded-md bg-background/85 backdrop-blur-sm px-3 py-2 shadow-sm text-xs text-foreground">
+            <p className="font-semibold">
+              {language === "fr" ? "Client" : "Client"}: {item.overlay.client} · {item.overlay.location}
+            </p>
+            <p className="text-muted-foreground mt-0.5">
+              {language === "fr" ? item.overlay.propertyFr : item.overlay.propertyEn}
+            </p>
+          </div>
+        )}
+
         {/* Status label */}
         <div className={`absolute top-4 left-4 px-3 py-1 rounded-full text-sm font-semibold transition-all duration-300 ${
           showAfter 
