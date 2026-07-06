@@ -22,6 +22,7 @@ const Onboarding = lazy(() => import("./pages/Onboarding"));
 const ServiceDetails = lazy(() => import("./pages/ServiceDetails"));
 const QuoteRequest = lazy(() => import("./pages/QuoteRequest"));
 const PricingGuide = lazy(() => import("./pages/PricingGuide"));
+const OAuthConsent = lazy(() => import("./pages/OAuthConsent"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -78,6 +79,7 @@ const App = () => (
               <Route path="/services/:serviceId" element={routeElement(ServiceDetails)} />
               <Route path="/quote" element={routeElement(QuoteRequest)} />
               <Route path="/pricing-guide" element={routeElement(PricingGuide)} />
+              <Route path="/.lovable/oauth/consent" element={routeElement(OAuthConsent)} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

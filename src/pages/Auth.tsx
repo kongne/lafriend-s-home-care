@@ -67,9 +67,12 @@ const Auth = () => {
 
   useEffect(() => {
     if (user) {
-      navigate("/");
+      const nextRaw = searchParams.get("next");
+      const safeNext =
+        nextRaw && nextRaw.startsWith("/") && !nextRaw.startsWith("//") ? nextRaw : "/";
+      navigate(safeNext);
     }
-  }, [user, navigate]);
+  }, [user, navigate, searchParams]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
