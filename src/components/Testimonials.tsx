@@ -56,7 +56,7 @@ export const Testimonials = () => {
     queryKey: ['landing_featured_reviews'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('reviews')
+        .from('reviews' as any)
         .select(`
           id,
           rating,
@@ -75,7 +75,7 @@ export const Testimonials = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data;
+      return data as any;
     }
   });
 

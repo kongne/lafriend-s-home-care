@@ -106,10 +106,10 @@ const ProjectDetail = () => {
         .eq("project_id", proj.id)
         .order("display_order", { ascending: true });
 
-      setImages(imgs || []);
+      setImages((imgs as ProjectImage[]) || []);
 
       const { data: reviews } = await supabase
-        .from("reviews")
+        .from("reviews" as any)
         .select("*")
         .eq("status", "approved")
         .eq("is_featured", true)
@@ -117,7 +117,7 @@ const ProjectDetail = () => {
         .limit(1);
 
       if (reviews && reviews.length > 0) {
-        setTestimonial(reviews[0]);
+        setTestimonial(reviews[0] as unknown as Review);
       }
 
       const { data: related } = await supabase
@@ -139,7 +139,7 @@ const ProjectDetail = () => {
             .select("*")
             .eq("project_id", r.id)
             .order("display_order", { ascending: true });
-          if (rImgs) imgMap.set(r.id, rImgs);
+          if (rImgs) imgMap.set(r.id, rImgs as ProjectImage[]);
         }
         setRelatedImages(imgMap);
       }

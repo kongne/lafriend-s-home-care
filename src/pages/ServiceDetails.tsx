@@ -111,8 +111,8 @@ const ServiceDetails = () => {
     try {
       const { data: svc } = await supabase.from("services").select("id, total_views").eq("slug", serviceId).maybeSingle();
       if (svc) {
-        await supabase.from("service_analytics").insert({ service_id: svc.id, event_type: "view" }).then().catch(() => {});
-        await supabase.from("services").update({ total_views: (svc.total_views || 0) + 1 }).eq("id", svc.id).then().catch(() => {});
+        try { await supabase.from("service_analytics").insert({ service_id: svc.id, event_type: "view" }); } catch { /* noop */ }
+        try { await supabase.from("services").update({ total_views: (svc.total_views || 0) + 1 }).eq("id", svc.id); } catch { /* noop */ }
       }
     } catch { /* analytics non-critical */ }
   };

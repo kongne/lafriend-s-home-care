@@ -237,7 +237,7 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
         distance_km: distance,
         latitude: latitude || null,
         longitude: longitude || null,
-      }).select("id").single();
+      } as any).select("id").single();
 
       if (error) throw error;
 

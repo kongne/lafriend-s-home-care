@@ -51,7 +51,7 @@ export const FeedbackManagement = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setFeedbacks((data as Feedback[]) || []);
+      setFeedbacks(((data as unknown) as Feedback[]) || []);
     } catch (err) {
       logError("Error fetching feedbacks:", err);
       toast({
