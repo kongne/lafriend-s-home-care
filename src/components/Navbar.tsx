@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Phone, Mail, Clock, User, LogOut, Shield, LayoutDashboard, ChevronDown } from "lucide-react";
+import { Menu, X, Phone, Mail, Clock, User, LogOut, Shield, LayoutDashboard, ChevronDown, Calculator, Table, Map } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -132,6 +132,22 @@ export const Navbar = () => {
             <a href="#galerie" className="text-foreground hover:text-accent transition-colors font-medium">
               {t('nav.gallery')}
             </a>
+            <div className="relative group">
+              <button className="flex items-center gap-1 text-foreground hover:text-accent transition-colors font-medium">
+                Outils <ChevronDown className="w-3 h-3" />
+              </button>
+              <div className="absolute top-full left-0 mt-2 w-52 bg-background border border-border rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                <Link to="/estimate" className="flex items-center gap-2 px-4 py-2.5 hover:bg-accent/10 transition-colors text-sm border-b border-border">
+                  <Calculator className="w-4 h-4 text-accent" /> Devis en ligne
+                </Link>
+                <Link to="/compare" className="flex items-center gap-2 px-4 py-2.5 hover:bg-accent/10 transition-colors text-sm border-b border-border">
+                  <Table className="w-4 h-4 text-accent" /> Comparer nos offres
+                </Link>
+                <Link to="/coverage" className="flex items-center gap-2 px-4 py-2.5 hover:bg-accent/10 transition-colors text-sm">
+                  <Map className="w-4 h-4 text-accent" /> Zones couvertes
+                </Link>
+              </div>
+            </div>
             <a href="#tarifs" className="text-foreground hover:text-accent transition-colors font-medium">
               {t('nav.pricing')}
             </a>
@@ -241,6 +257,30 @@ export const Navbar = () => {
                 {item.label}
               </a>
             ))}
+            <div className="border-t border-border pt-3 mt-3">
+              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2 px-2">Outils</p>
+              <Link
+                to="/estimate"
+                className="flex items-center gap-2 text-foreground hover:text-accent transition-colors font-medium py-2 px-2"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <Calculator className="w-4 h-4 text-accent" /> Devis en ligne
+              </Link>
+              <Link
+                to="/compare"
+                className="flex items-center gap-2 text-foreground hover:text-accent transition-colors font-medium py-2 px-2"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <Table className="w-4 h-4 text-accent" /> Comparer
+              </Link>
+              <Link
+                to="/coverage"
+                className="flex items-center gap-2 text-foreground hover:text-accent transition-colors font-medium py-2 px-2"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <Map className="w-4 h-4 text-accent" /> Zones couvertes
+              </Link>
+            </div>
             
             {!loading && (
               user ? (

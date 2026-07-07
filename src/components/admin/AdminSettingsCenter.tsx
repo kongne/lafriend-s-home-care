@@ -9,7 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Globe, Settings2, FileImage, MessageSquare, Search, Shield, Zap,
   BarChart3, Link, Database, RefreshCw, Save, Mail, Phone, MapPin,
-  Clock, Palette, Upload, Eye, Lock, Bell, ChevronRight,
+  Clock, Palette, Upload, Eye, Lock, Bell, ChevronRight, Calculator,
+  Table, Map, Wrench, LayoutDashboard,
 } from "lucide-react";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -28,6 +29,11 @@ interface SettingsState {
   analytics: { googleId: string; facebookPixel: string; enableTracking: boolean };
   integrations: { googleOAuth: string; facebookOAuth: string; webhookUrl: string };
   backups: { autoBackup: boolean; retentionDays: string; lastBackup: string };
+  features: {
+    enableEstimatePage: boolean; enableComparePage: boolean; enableCoveragePage: boolean;
+    showPriceEstimator: boolean; showServiceComparison: boolean; showCoverageMap: boolean;
+    showPricingSection: boolean; showGallerySection: boolean;
+  };
 }
 
 const DEFAULTS: SettingsState = {
@@ -42,6 +48,11 @@ const DEFAULTS: SettingsState = {
   analytics: { googleId: "", facebookPixel: "", enableTracking: false },
   integrations: { googleOAuth: "", facebookOAuth: "", webhookUrl: "" },
   backups: { autoBackup: false, retentionDays: "30", lastBackup: "Jamais" },
+  features: {
+    enableEstimatePage: true, enableComparePage: true, enableCoveragePage: true,
+    showPriceEstimator: false, showServiceComparison: false, showCoverageMap: false,
+    showPricingSection: true, showGallerySection: true,
+  },
 };
 
 const STORAGE_KEY = "lafriends_settings";
@@ -51,7 +62,7 @@ const loadSettings = (): SettingsState => {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
-      return { ...DEFAULTS, ...parsed, general: { ...DEFAULTS.general, ...parsed.general }, website: { ...DEFAULTS.website, ...parsed.website }, content: { ...DEFAULTS.content, ...parsed.content }, media: { ...DEFAULTS.media, ...parsed.media }, communication: { ...DEFAULTS.communication, ...parsed.communication }, seo: { ...DEFAULTS.seo, ...parsed.seo }, security: { ...DEFAULTS.security, ...parsed.security }, performance: { ...DEFAULTS.performance, ...parsed.performance }, analytics: { ...DEFAULTS.analytics, ...parsed.analytics }, integrations: { ...DEFAULTS.integrations, ...parsed.integrations }, backups: { ...DEFAULTS.backups, ...parsed.backups } };
+      return { ...DEFAULTS, ...parsed, general: { ...DEFAULTS.general, ...parsed.general }, website: { ...DEFAULTS.website, ...parsed.website }, content: { ...DEFAULTS.content, ...parsed.content }, media: { ...DEFAULTS.media, ...parsed.media }, communication: { ...DEFAULTS.communication, ...parsed.communication }, seo: { ...DEFAULTS.seo, ...parsed.seo }, security: { ...DEFAULTS.security, ...parsed.security }, performance: { ...DEFAULTS.performance, ...parsed.performance }, analytics: { ...DEFAULTS.analytics, ...parsed.analytics }, integrations: { ...DEFAULTS.integrations, ...parsed.integrations }, backups: { ...DEFAULTS.backups, ...parsed.backups }, features: { ...DEFAULTS.features, ...parsed.features } };
     }
   } catch { }
   return DEFAULTS;
@@ -107,6 +118,7 @@ export const AdminSettingsCenter = () => {
   const tabs = [
     { value: "general", label: "Général", icon: Settings2 },
     { value: "website", label: "Site Web", icon: Globe },
+    { value: "features", label: "Fonctionnalités", icon: LayoutDashboard },
     { value: "content", label: "Contenu", icon: FileImage },
     { value: "media", label: "Médias", icon: Upload },
     { value: "communication", label: "Communication", icon: MessageSquare },
@@ -183,6 +195,53 @@ export const AdminSettingsCenter = () => {
             </SectionCard>
             <div className="flex justify-end">
               <Button variant="ghost" size="sm" onClick={() => resetSection("website")}>Réinitialiser cette section</Button>
+            </div>
+          </TabsContent>
+
+          {/* Features */}
+          <TabsContent value="features" className="space-y-6">
+            <SectionCard title="Pages interactives" description="Pages dédiées accessibles depuis le site public">
+              <Field label="Page Devis en ligne (/estimate)">
+                <div className="flex items-center gap-2">
+                  <Switch checked={settings.features.enableEstimatePage} onCheckedChange={(v) => update("features", "enableEstimatePage", v)} />
+                  <span className="text-sm text-muted-foreground">{settings.features.enableEstimatePage ? "Activée" : "Désactivée"}</span>
+                </div>
+              </Field>
+              <Field label="Page Comparaison (/compare)">
+                <div className="flex items-center gap-2">
+                  <Switch checked={settings.features.enableComparePage} onCheckedChange={(v) => update("features", "enableComparePage", v)} />
+                  <span className="text-sm text-muted-foreground">{settings.features.enableComparePage ? "Activée" : "Désactivée"}</span>
+                </div>
+              </Field>
+              <Field label="Page Couverture (/coverage)">
+                <div className="flex items-center gap-2">
+                  <Switch checked={settings.features.enableCoveragePage} onCheckedChange={(v) => update("features", "enableCoveragePage", v)} />
+                  <span className="text-sm text-muted-foreground">{settings.features.enableCoveragePage ? "Activée" : "Désactivée"}</span>
+                </div>
+              </Field>
+            </SectionCard>
+            <SectionCard title="Sections d'accueil" description="Afficher ou masquer les sections sur la page d'accueil">
+              <Field label="Afficher la section Services">
+                <div className="flex items-center gap-2">
+                  <Switch checked={true} disabled onCheckedChange={() => {}} />
+                  <span className="text-sm text-muted-foreground">Toujours activée</span>
+                </div>
+              </Field>
+              <Field label="Afficher la section Tarifs">
+                <div className="flex items-center gap-2">
+                  <Switch checked={settings.features.showPricingSection} onCheckedChange={(v) => update("features", "showPricingSection", v)} />
+                  <span className="text-sm text-muted-foreground">{settings.features.showPricingSection ? "Activée" : "Désactivée"}</span>
+                </div>
+              </Field>
+              <Field label="Afficher la section Galerie">
+                <div className="flex items-center gap-2">
+                  <Switch checked={settings.features.showGallerySection} onCheckedChange={(v) => update("features", "showGallerySection", v)} />
+                  <span className="text-sm text-muted-foreground">{settings.features.showGallerySection ? "Activée" : "Désactivée"}</span>
+                </div>
+              </Field>
+            </SectionCard>
+            <div className="flex justify-end">
+              <Button variant="ghost" size="sm" onClick={() => resetSection("features")}>Réinitialiser cette section</Button>
             </div>
           </TabsContent>
 

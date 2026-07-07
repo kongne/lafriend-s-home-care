@@ -25,6 +25,9 @@ const PricingGuide = lazy(() => import("./pages/PricingGuide"));
 const WorkerRegistration = lazy(() => import("./pages/WorkerRegistration"));
 const ProjectDetail = lazy(() => import("./pages/ProjectDetail"));
 const OAuthConsent = lazy(() => import("./pages/OAuthConsent"));
+const EstimatePage = lazy(() => import("./pages/EstimatePage"));
+const ComparePage = lazy(() => import("./pages/ComparePage"));
+const CoveragePage = lazy(() => import("./pages/CoveragePage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -99,6 +102,9 @@ const App = () => (
                 <Route path="/pricing-guide" element={routeElement(PricingGuide)} />
                 <Route path="/join-our-team" element={routeElement(WorkerRegistration)} />
                 <Route path="/projects/:slug" element={routeElement(ProjectDetail)} />
+                <Route path="/estimate" element={routeElement(EstimatePage)} />
+                <Route path="/compare" element={routeElement(ComparePage)} />
+                <Route path="/coverage" element={routeElement(CoveragePage)} />
                 <Route path="/.lovable/oauth/consent" element={routeElement(OAuthConsent)} />
                 <Route path="*" element={<NotFound />} />
               </Routes>

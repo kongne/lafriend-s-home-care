@@ -4,9 +4,6 @@ import { Services } from "@/components/Services";
 import { TrustBadges } from "@/components/TrustBadges";
 import { Gallery } from "@/components/Gallery";
 import { Pricing } from "@/components/Pricing";
-import { PriceEstimator } from "@/components/PriceEstimator";
-import { ServiceComparison } from "@/components/ServiceComparison";
-import { ServiceAreaMap } from "@/components/ServiceAreaMap";
 import { Testimonials } from "@/components/Testimonials";
 import { About } from "@/components/About";
 import { FAQ } from "@/components/FAQ";
@@ -31,16 +28,13 @@ const Index = () => {
         <HeroSlideshow />
         <TrustBadges />
         <Services />
-        <ServiceComparison />
-        <PriceEstimator />
+        <About />
         <Gallery />
         <Pricing />
-        <ServiceAreaMap />
         <Testimonials />
-        <About />
         <FAQ />
-        <Newsletter />
         <Contact />
+        <Newsletter />
       </main>
       <Footer />
       <ChatWidgetDeferred />
