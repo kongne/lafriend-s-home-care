@@ -9,6 +9,7 @@ import { ThemeToggle } from "./ThemeToggle";
 import { LanguageToggle } from "./LanguageToggle";
 import { BookingModal } from "./BookingModal";
 import { supabase } from "@/integrations/supabase/client";
+import logoAsset from "@/assets/lafriends-logo.png.asset.json";
 
 export const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -109,9 +110,16 @@ export const Navbar = () => {
         <div className="flex items-center justify-between">
           {/* Logo */}
           <a href="/" className="flex items-center gap-2">
-            <div className="text-xl sm:text-2xl font-bold text-primary">
-              LaFriend's <span className="text-accent">Services</span>
-            </div>
+            <img
+              src={logoAsset.url}
+              alt="LaFriend's Cleaning Services"
+              className="h-10 sm:h-12 md:h-14 w-auto object-contain"
+              width={200}
+              height={200}
+              loading="eager"
+              decoding="async"
+            />
+            <span className="sr-only">LaFriend's Cleaning Services</span>
           </a>
 
           {/* Desktop menu */}
