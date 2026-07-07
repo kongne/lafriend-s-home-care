@@ -1,5 +1,6 @@
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Link } from "react-router-dom";
+import { Phone, Mail, MapPin, Clock } from "lucide-react";
 
 const Facebook = ({ className }: { className?: string }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
@@ -92,10 +93,22 @@ export const Footer = () => {
           <div className="min-w-0">
             <h4 className="text-lg font-bold mb-4">{t('nav.contact')}</h4>
             <ul className="space-y-3 text-sm text-primary-foreground/80">
-              <li>📞 +237 693 13 82 92<br />+237 6 83 40 62 90<br /></li>
-              <li className="break-all">📧 lafriendsservices@gmail.com</li>
-              <li>📍 Bafoussam, Cameroun</li>
-              <li>🕐 Lun - Dim: 8:00 - 18:00</li>
+              <li className="flex items-start gap-2">
+                <Phone className="w-4 h-4 mt-0.5 shrink-0 text-accent" />
+                <span>+237 693 13 82 92<br />+237 6 83 40 62 90</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <Mail className="w-4 h-4 shrink-0 text-accent" />
+                <span className="break-all">lafriendsservices@gmail.com</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <MapPin className="w-4 h-4 shrink-0 text-accent" />
+                <span>Bafoussam, Cameroun</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <Clock className="w-4 h-4 shrink-0 text-accent" />
+                <span>Lun - Dim: 8:00 - 18:00</span>
+              </li>
             </ul>
           </div>
         </div>

@@ -8,6 +8,7 @@ interface Slide {
   titleKey: string;
   subtitleKey: string;
 }
+const PROGRESS_DURATION = 6000;
 const slides: Slide[] = [{
   image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1920&q=80",
   titleKey: "hero.title",
@@ -63,17 +64,17 @@ export const HeroSlideshow = () => {
           className={`absolute inset-0 z-0 transition-opacity duration-700 ${index === currentSlide ? "opacity-100" : "opacity-0"}`} 
           aria-hidden={index !== currentSlide}
         >
-          <img 
-            src={slide.image} 
-            alt="" 
-            className="w-full h-full object-cover" 
+          <img
+            src={slide.image}
+            alt=""
+            className="w-full h-full object-cover"
             loading={index === 0 ? "eager" : "lazy"}
-            {...{ fetchpriority: index === 0 ? "high" : "low" } as any}
+            fetchpriority={index === 0 ? "high" : "low"}
             decoding={index === 0 ? "sync" : "async"}
             width="1920"
             height="1080"
           />
-          <div className="absolute inset-0 bg-primary/80"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-primary/95 via-primary/85 to-primary/70"></div>
         </div>
       ))}
 
@@ -121,9 +122,8 @@ export const HeroSlideshow = () => {
 
       {/* Progress Bar */}
       <div className="absolute bottom-0 left-0 right-0 h-1 bg-primary-foreground/20 z-20">
-        <div className="h-full bg-accent transition-all" style={{
-        width: isPaused ? `${(currentSlide + 1) / slides.length * 100}%` : "100%",
-        animation: isPaused ? "none" : "progress 6s linear infinite"
+        <div className="h-full bg-accent" style={{
+        animation: isPaused ? "none" : `progress-bar ${PROGRESS_DURATION}ms linear`
       }} />
       </div>
     </section>;

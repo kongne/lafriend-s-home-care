@@ -8,6 +8,8 @@ import { useState, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+const PROGRESS_DURATION = 6000;
+
 const defaultTestimonials = [{
   name: "Marie Nguema",
   roleKey: "testimonials.role.homeowner",
@@ -149,14 +151,14 @@ export const Testimonials = () => {
     const interval = setInterval(nextSlide, 6000);
     return () => clearInterval(interval);
   }, [isPaused, nextSlide]);
-  return <section id="temoignages" className="py-20 bg-primary">
-    <div className="container mx-auto px-4">
-      <div ref={ref} className={`text-center mb-16 space-y-4 transition-all duration-700 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"}`}>
-        <p className="text-accent font-semibold uppercase tracking-wider">{t('testimonials.tagline')}</p>
-        <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-primary-foreground">
+  return <section id="temoignages" className="section-padding bg-primary">
+    <div className="section-container">
+      <div ref={ref} className={`transition-all duration-700 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"}`}>
+        <p className="text-center uppercase tracking-wider text-accent font-semibold text-sm mb-2">{t('testimonials.tagline')}</p>
+        <h2 className="section-title text-primary-foreground">
           {t('testimonials.title')}
         </h2>
-        <p className="text-base sm:text-lg text-primary-foreground/70 max-w-2xl mx-auto">
+        <p className="section-subtitle text-primary-foreground/70">
           {t('testimonials.subtitle')}
         </p>
       </div>
@@ -202,9 +204,8 @@ export const Testimonials = () => {
 
           {/* Progress bar */}
           <div className="absolute bottom-0 left-0 right-0 h-1 bg-muted">
-            <div className="h-full bg-accent transition-all ease-linear" style={{
-              width: isPaused ? `${(activeIndex + 1) / testimonials.length * 100}%` : '100%',
-              animation: isPaused ? 'none' : 'progress 6s linear infinite'
+            <div className="h-full bg-accent" style={{
+              animation: isPaused ? 'none' : `progress-bar ${PROGRESS_DURATION}ms linear`
             }} />
           </div>
 

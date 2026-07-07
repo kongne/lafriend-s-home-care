@@ -70,19 +70,19 @@ export const Services = () => {
     : fallbackServices;
 
   return (
-    <section id="services" className="py-16 md:py-20 bg-secondary">
-      <div className="container mx-auto px-4">
-        <div 
+    <section id="services" className="section-padding bg-secondary">
+      <div className="section-container">
+        <div
           ref={ref}
-          className={`text-center mb-10 md:mb-16 space-y-3 md:space-y-4 transition-all duration-700 ${
+          className={`transition-all duration-700 ${
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
           }`}
         >
-          <p className="text-accent font-semibold uppercase tracking-wider text-sm">{t('services.tagline')}</p>
-          <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold text-foreground">
+          <p className="section-subtitle !mb-2 uppercase tracking-wider text-accent font-semibold text-sm">{t('services.tagline')}</p>
+          <h2 className="section-title">
             {t('services.title')}
           </h2>
-          <p className="text-sm sm:text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="section-subtitle">
             {t('services.subtitle')}
           </p>
         </div>
@@ -92,21 +92,21 @@ export const Services = () => {
             <Loader2 className="h-8 w-8 animate-spin text-accent" />
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             {displayServices.map((service, index) => {
               const isDBSource = dbServices && dbServices.length > 0;
               const isCustom = service.id === "custom" && !isDBSource;
               return (
                 <Card
                   key={service.id}
-                  className={`p-5 md:p-8 hover:shadow-xl transition-all duration-500 hover:-translate-y-2 bg-card group cursor-pointer relative overflow-hidden ${
-                    isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+                  className={`card-elevated group cursor-pointer relative overflow-hidden ${
+                    isVisible ? "animate-fade-in-up" : "opacity-0"
                   }`}
-                  style={{ transitionDelay: `${index * 100}ms` }}
+                  style={{ animationDelay: `${index * 100}ms`, animationFillMode: "backwards" }}
                   onClick={() => isCustom ? navigate("/quote") : navigate(`/services/${service.id}`)}
                 >
                   {(service as any).badges?.length > 0 && (
-                    <div className="absolute top-3 right-3 flex gap-1">
+                    <div className="absolute top-3 right-3 z-10 flex gap-1">
                       {(service as any).badges.map((b: any, i: number) => (
                         <Badge key={i} className={`${b.color} text-white text-[10px]`}>{b.label}</Badge>
                       ))}
@@ -126,7 +126,7 @@ export const Services = () => {
                   <h3 className="text-lg md:text-2xl font-bold mb-2 md:mb-3 text-foreground group-hover:text-accent transition-colors">
                     {isDBSource ? service.titleKey : t(service.titleKey)}
                   </h3>
-                  <p className="text-muted-foreground mb-4 md:mb-6 text-sm">
+                  <p className="text-muted-foreground mb-4 md:mb-6 text-sm leading-relaxed">
                     {isDBSource ? service.descKey : t(service.descKey)}
                   </p>
                   {!isDBSource && (service as any).features?.length > 0 && (
@@ -163,7 +163,7 @@ export const Services = () => {
           </div>
         )}
 
-        <div className={`mt-8 md:mt-12 text-center transition-all duration-700 delay-500 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"}`}>
+        <div className={`mt-10 md:mt-16 text-center transition-all duration-700 ${isVisible ? "animate-fade-in" : "opacity-0"}`}>
           <Button
             size="lg"
             variant="outline"
