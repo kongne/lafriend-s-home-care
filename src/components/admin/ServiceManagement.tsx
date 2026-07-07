@@ -179,18 +179,18 @@ export const ServiceManagement = () => {
   const [formStatus, setFormStatus] = useState("draft");
   const [confirmDialog, setConfirmDialog] = useState<{ isOpen: boolean; title: string; description: string; onConfirm: () => Promise<void> }>({ isOpen: false, title: "", description: "", onConfirm: async () => {} });
 
-  const [catList, setCatList] = useState<ServiceCategory[]>([]);
   const [catName, setCatName] = useState("");
   const [catSlug, setCatSlug] = useState("");
   const [catDesc, setCatDesc] = useState("");
   const [catParent, setCatParent] = useState("");
   const [catOrder, setCatOrder] = useState(0);
   const [catStatus, setCatStatus] = useState("active");
+  const [catIcon, setCatIcon] = useState("");
+  const [catBanner, setCatBanner] = useState("");
   const [editCatId, setEditCatId] = useState<string | null>(null);
   const [catLoading, setCatLoading] = useState(false);
 
   useEffect(() => { fetchData(); }, []);
-  useEffect(() => { setCatList(categories); }, [categories]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -1064,25 +1064,35 @@ export const ServiceManagement = () => {
 
   const renderCategories = () => {
     const resetCatForm = () => {
-      setCatName(""); setCatSlug(""); setCatDesc(""); setCatParent(""); setCatOrder(0); setCatStatus("active"); setEditCatId(null);
+      setCatName(""); setCatSlug(""); setCatDesc(""); setCatParent(""); setCatOrder(0); setCatStatus("active"); setCatIcon(""); setCatBanner(""); setEditCatId(null);
     };
 
     const editCategory = (cat: ServiceCategory) => {
       setEditCatId(cat.id); setCatName(cat.name); setCatSlug(cat.slug); setCatDesc(cat.description || "");
       setCatParent(cat.parent_id || ""); setCatOrder(cat.display_order); setCatStatus(cat.status);
+      setCatIcon(cat.icon || ""); setCatBanner(cat.banner || "");
     };
+
+    const serviceCountByCat = useMemo(() => {
+      const m = new Map<string, number>();
+      services.forEach(s => { if (s.category_id) m.set(s.category_id, (m.get(s.category_id) || 0) + 1); });
+      return m;
+    }, [services]);
 
     const saveCategory = async () => {
       if (!catName.trim()) { toast({ title: "Erreur", description: "Le nom est requis.", variant: "destructive" }); return; }
       setCatLoading(true);
       try {
         const slug = catSlug.trim() || slugify(catName.trim());
-        const payload = { name: catName.trim(), slug, description: catDesc.trim() || null, parent_id: catParent || null, display_order: catOrder, status: catStatus };
+        if (!slug) { toast({ title: "Erreur", description: "Le slug est invalide.", variant: "destructive" }); setCatLoading(false); return; }
+        const payload = { name: catName.trim(), slug, description: catDesc.trim() || null, parent_id: catParent || null, display_order: catOrder, status: catStatus, icon: catIcon || null, banner: catBanner || null };
         if (editCatId) {
-          await supabase.from("service_categories").update(payload).eq("id", editCatId);
+          const { error } = await supabase.from("service_categories").update(payload).eq("id", editCatId);
+          if (error) { if (error.code === "23505") { toast({ title: "Erreur", description: "Ce slug existe déjà.", variant: "destructive" }); return; } throw error; }
           toast({ title: "Catégorie mise à jour" });
         } else {
-          await supabase.from("service_categories").insert(payload);
+          const { error } = await supabase.from("service_categories").insert(payload);
+          if (error) { if (error.code === "23505") { toast({ title: "Erreur", description: "Ce slug existe déjà.", variant: "destructive" }); return; } throw error; }
           toast({ title: "Catégorie créée" });
         }
         resetCatForm();
@@ -1092,15 +1102,37 @@ export const ServiceManagement = () => {
     };
 
     const deleteCategory = async (id: string) => {
+      const count = services.filter(s => s.category_id === id).length;
       setConfirmDialog({
         isOpen: true, title: "Supprimer la catégorie",
-        description: "Supprimer cette catégorie ? Les services associés ne seront pas supprimés.",
+        description: count > 0 ? `${count} service(s) lié(s) perdront leur catégorie. Continuer ?` : "Aucun service lié. Confirmer la suppression ?",
         onConfirm: async () => {
           try { await supabase.from("service_categories").delete().eq("id", id); toast({ title: "Catégorie supprimée" }); fetchData(); }
           catch (err) { logError("Category delete error:", err); toast({ title: "Erreur", variant: "destructive" }); }
         },
       });
     };
+
+    const handleCatImageUpload = async (field: "icon" | "banner") => {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "image/jpeg,image/png,image/webp,image/svg+xml";
+      input.onchange = async () => {
+        if (!input.files?.[0]) return;
+        try {
+          const ext = input.files[0].name.split(".").pop() || "webp";
+          const path = `category-${field}-${Date.now()}.${ext}`;
+          const { error: uploadError } = await supabase.storage.from("projects").upload(path, input.files[0], { contentType: input.files[0].type, upsert: false });
+          if (uploadError) throw uploadError;
+          const { data: pub } = supabase.storage.from("projects").getPublicUrl(path);
+          if (field === "icon") setCatIcon(pub.publicUrl); else setCatBanner(pub.publicUrl);
+          toast({ title: "Image téléchargée" });
+        } catch { toast({ title: "Erreur", description: "Échec du téléchargement.", variant: "destructive" }); }
+      };
+      input.click();
+    };
+
+    const getServiceCount = (catId: string) => serviceCountByCat.get(catId) || 0;
 
     return (
       <div className="grid lg:grid-cols-2 gap-6">
@@ -1120,6 +1152,24 @@ export const ServiceManagement = () => {
             <div className="space-y-2">
               <Label>Description</Label>
               <Textarea value={catDesc} onChange={e => setCatDesc(e.target.value)} rows={2} />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Icône</Label>
+                <div className="flex gap-2 items-center">
+                  <Input value={catIcon} onChange={e => setCatIcon(e.target.value)} placeholder="URL ou télécharger" className="flex-1" />
+                  <Button variant="outline" size="sm" onClick={() => handleCatImageUpload("icon")}><Upload className="h-4 w-4" /></Button>
+                </div>
+                {catIcon && <img src={catIcon} alt="" className="h-10 w-10 object-contain rounded border mt-1" />}
+              </div>
+              <div className="space-y-2">
+                <Label>Bannière</Label>
+                <div className="flex gap-2 items-center">
+                  <Input value={catBanner} onChange={e => setCatBanner(e.target.value)} placeholder="URL ou télécharger" className="flex-1" />
+                  <Button variant="outline" size="sm" onClick={() => handleCatImageUpload("banner")}><Upload className="h-4 w-4" /></Button>
+                </div>
+                {catBanner && <img src={catBanner} alt="" className="h-10 w-20 object-cover rounded border mt-1" />}
+              </div>
             </div>
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
@@ -1157,17 +1207,20 @@ export const ServiceManagement = () => {
         <Card>
           <CardHeader><CardTitle className="text-base">Catégories existantes</CardTitle></CardHeader>
           <CardContent>
-            {catList.length === 0 ? (
+            {categories.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-4">Aucune catégorie.</p>
             ) : (
               <div className="space-y-2">
-                {catList.map(cat => (
+                {categories.map(cat => (
                   <div key={cat.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                    <div>
-                      <p className="font-medium text-sm">{cat.name}</p>
-                      <p className="text-xs text-muted-foreground">/{cat.slug} {cat.parent_id && "· Sous-catégorie"}</p>
+                    <div className="flex items-center gap-3 min-w-0">
+                      {cat.icon && <img src={cat.icon} alt="" className="h-8 w-8 rounded object-contain shrink-0" />}
+                      <div className="min-w-0">
+                        <p className="font-medium text-sm truncate">{cat.name}</p>
+                        <p className="text-xs text-muted-foreground">/{cat.slug} {cat.parent_id && "· Sous-catégorie"} · {getServiceCount(cat.id)} service(s)</p>
+                      </div>
                     </div>
-                    <div className="flex gap-1">
+                    <div className="flex gap-1 shrink-0">
                       <Badge variant="outline" className={cat.status === "active" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}>{cat.status}</Badge>
                       <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => editCategory(cat)}><Settings className="h-3 w-3" /></Button>
                       <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => deleteCategory(cat.id)}><Trash2 className="h-3 w-3" /></Button>

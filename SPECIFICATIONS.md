@@ -153,14 +153,14 @@ Document every feature already implemented. For each, classify as:
 | **Authorization (RBAC)** | Complete | admin/moderator/user roles via `user_roles` table + `has_role()` RPC |
 | **Booking System** | Complete | Full CRUD, status management, recurring, reschedule, cancel |
 | **Quote Requests** | Complete | Form with reCAPTCHA, service type/size/frequency fields + customer tracking tab |
-| **Service Catalog** | Complete | DB-driven CRUD with categories, features, FAQs, addons, locations + search/category filters |
+| **Service Catalog** | Complete | DB-driven CRUD with categories (icon/banner upload, service count, slug conflict handling), features, FAQs, addons, locations + search/category filters |
 | **Reviews & Ratings** | Complete | Moderation (approve/reject/pin/feature), verified badges, audit logging, admin replies |
 | **Before/After Gallery** | Complete | BeforeAfterSlider, fullscreen lightbox, search, category/location filters, sort, lazy loading |
 | **Contact Forms** | Complete | Contact form with reCAPTCHA, inquiry categorization, preferred contact time, inbox management |
 | **CMS Capabilities** | Complete | Services, projects, reviews, feedback CRUD via admin |
 | **Media Management** | Complete | Admin Media Library: upload, browse, delete, preview, copy URL, per-bucket filtering |
 | **Settings / Configuration** | Complete | Centralized hub with 11 sections (General, Website, Content, Media, Communication, SEO, Security, Performance, Analytics, Integrations, Backups) + Account management |
-| **Notifications** | Complete | In-app notifications with read/unread, archive/restore, snooze, search, type filter, bulk archive/delete, group-by-category, preferences dialog (in-app/email/push per type) |
+| **Notifications** | Complete | In-app notifications with read/unread, archive/restore, snooze presets (15min/1h/3h/tomorrow/custom), search, type filter, date range filter, bulk archive/delete, group-by-category, preferences dialog (in-app/email/push per type), DND mode (high priority only), expandable long messages |
 | **Live Chat** | Complete | Real-time messaging, file upload, voice recording, booking context |
 | **Loyalty Program** | Complete | Points, rewards, tiers, referrals, transactions ledger |
 | **KYC Verification** | Complete | Identity document upload, admin review, audit trail |

@@ -15,6 +15,9 @@ import {
   ChevronDown,
   ChevronRight,
   Layers,
+  Moon,
+  CalendarRange,
+  ChevronUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +29,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
   DropdownMenuCheckboxItem,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuPortal,
+  DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
 import {
   Dialog,
@@ -48,7 +55,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, format, isAfter, subDays, startOfDay } from "date-fns";
 import { fr } from "date-fns/locale";
 
 interface Notification {
@@ -113,6 +120,9 @@ export const NotificationCenter = () => {
   const [preferences, setPreferences] = useState<NotificationPreference[]>(loadPreferences);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkMode, setBulkMode] = useState(false);
+  const [dateRange, setDateRange] = useState<"all" | "today" | "7d" | "30d" | "90d">("all");
+  const [dndMode, setDndMode] = useState(false);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
   const unreadCount = notifications.filter(n => !n.is_read && !n.is_archived).length;
@@ -229,12 +239,23 @@ export const NotificationCenter = () => {
     }
   };
 
-  const snoozeNotification = async (id: string, minutes: number = 30) => {
+  const snoozeLabels: Record<string, string> = {
+    "15": "15 minutes", "30": "30 minutes", "60": "1 heure",
+    "180": "3 heures", "1440": "Demain", "custom": "Personnalisé",
+  };
+
+  const snoozeNotification = async (id: string, minutes: number) => {
     setSnoozedIds((prev) => new Set([...prev, id]));
-    toast({ title: `Notification mise en attente pour ${minutes} minutes`, description: "Elle réapparaîtra bientôt" });
+    const label = snoozeLabels[String(minutes)] || `${minutes} minutes`;
+    toast({ title: `Notification mise en attente pour ${label}`, description: "Elle réapparaîtra bientôt" });
     setTimeout(() => {
       setSnoozedIds((prev) => { const newSet = new Set(prev); newSet.delete(id); return newSet; });
     }, minutes * 60 * 1000);
+  };
+
+  const snoozeWithCustom = (id: string) => {
+    const input = prompt("Minutes de report:", "30");
+    if (input) { const mins = parseInt(input); if (mins > 0) snoozeNotification(id, mins); }
   };
 
   const deleteNotification = async (id: string) => {
@@ -294,6 +315,24 @@ export const NotificationCenter = () => {
     });
   };
 
+  const toggleExpanded = (id: string) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const getDateThreshold = (): Date | null => {
+    switch (dateRange) {
+      case "today": return startOfDay(new Date());
+      case "7d": return subDays(new Date(), 7);
+      case "30d": return subDays(new Date(), 30);
+      case "90d": return subDays(new Date(), 90);
+      default: return null;
+    }
+  };
+
   const savePreferences = (prefs: NotificationPreference[]) => {
     setPreferences(prefs);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
@@ -316,7 +355,10 @@ export const NotificationCenter = () => {
       const notSnoozed = !snoozedIds.has(n.id);
       const pref = preferences.find((p) => p.type === n.type);
       const matchesPref = pref ? pref.inApp : true;
-      return matchesSearch && matchesType && matchesArchive && notSnoozed && matchesPref;
+      const threshold = getDateThreshold();
+      const matchesDate = threshold ? isAfter(new Date(n.created_at), threshold) : true;
+      const matchesDnd = dndMode ? n.priority === "high" || n.type === "error" || n.type === "warning" : true;
+      return matchesSearch && matchesType && matchesArchive && notSnoozed && matchesPref && matchesDate && matchesDnd;
     });
 
   const groupedNotifications = groupByType
@@ -390,8 +432,17 @@ export const NotificationCenter = () => {
             </Badge>
           )}
         </div>
-        <p className="text-xs text-muted-foreground line-clamp-2">{notification.message}</p>
-        <div className="flex items-center justify-between mt-1.5">
+                    {notification.message.length > 120 ? (
+                      <>
+                        <p className="text-xs text-muted-foreground line-clamp-2">{expandedIds.has(notification.id) ? notification.message : notification.message.slice(0, 120)}</p>
+                        <button onClick={(e) => { e.stopPropagation(); toggleExpanded(notification.id); }} className="text-xs text-accent hover:underline mt-0.5">
+                          {expandedIds.has(notification.id) ? "Voir moins" : "Voir plus"}
+                        </button>
+                      </>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">{notification.message}</p>
+                    )}
+                    <div className="flex items-center justify-between mt-1.5">
           <span className="text-xs text-muted-foreground/70">
             {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true, locale: fr })}
           </span>
@@ -412,11 +463,30 @@ export const NotificationCenter = () => {
             <EyeOff className="h-3 w-3" />
           </Button>
         )}
-        {!showArchived && (
-          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); snoozeNotification(notification.id, 30); }} title="Reporter 30 min">
-            <Clock className="h-3 w-3" />
-          </Button>
-        )}
+                        {!showArchived && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => e.stopPropagation()} title="Reporter">
+                                <Clock className="h-3 w-3" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuPortal>
+                              <DropdownMenuContent align="end" className="z-[100]">
+                                <DropdownMenuLabel>Reporter pour</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                {Object.entries(snoozeLabels).map(([mins, label]) => (
+                                  <DropdownMenuCheckboxItem
+                                    key={mins}
+                                    checked={false}
+                                    onSelect={(e) => { e.preventDefault(); if (mins === "custom") snoozeWithCustom(notification.id); else snoozeNotification(notification.id, parseInt(mins)); }}
+                                  >
+                                    {label}
+                                  </DropdownMenuCheckboxItem>
+                                ))}
+                              </DropdownMenuContent>
+                            </DropdownMenuPortal>
+                          </DropdownMenu>
+                        )}
         {!showArchived ? (
           <Button variant="ghost" size="icon" className="h-6 w-6 text-yellow-600 hover:text-yellow-600" onClick={(e) => { e.stopPropagation(); archiveNotification(notification.id); }} title="Archiver">
             <X className="h-3 w-3" />
@@ -552,6 +622,19 @@ export const NotificationCenter = () => {
               >
                 {showArchived ? "Archive" : "Actifs"}
               </Button>
+              <Select value={dateRange} onValueChange={(v: "all" | "today" | "7d" | "30d" | "90d") => setDateRange(v)}>
+                <SelectTrigger className="h-9 w-full sm:w-[130px] text-xs">
+                  <CalendarRange className="h-3 w-3 mr-1" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tout</SelectItem>
+                  <SelectItem value="today">Aujourd'hui</SelectItem>
+                  <SelectItem value="7d">7 jours</SelectItem>
+                  <SelectItem value="30d">30 jours</SelectItem>
+                  <SelectItem value="90d">90 jours</SelectItem>
+                </SelectContent>
+              </Select>
               <Button
                 variant={groupByType ? "default" : "outline"}
                 size="sm"
@@ -561,6 +644,16 @@ export const NotificationCenter = () => {
               >
                 <Layers className="h-4 w-4 mr-1" />
                 Grouper
+              </Button>
+              <Button
+                variant={dndMode ? "default" : "outline"}
+                size="sm"
+                onClick={() => setDndMode(!dndMode)}
+                className={cn("h-9 w-full sm:w-auto", dndMode && "bg-yellow-500 hover:bg-yellow-600 text-white")}
+                title="Ne pas déranger"
+              >
+                <Moon className="h-4 w-4 mr-1" />
+                NPD
               </Button>
             </div>
           </div>
