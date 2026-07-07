@@ -85,10 +85,12 @@ export const Navbar = () => {
       }`}>
         <div className="container mx-auto flex flex-wrap justify-between items-center text-sm gap-2">
           <div className="flex items-center gap-4 flex-wrap">
-            <a href="tel:+237693138292 +237683406290" className="flex items-center gap-2 hover:text-accent transition-colors">
+            <div className="flex items-center gap-2">
               <Phone className="w-4 h-4" />
-              <span className="hidden sm:inline whitespace-pre-line">{"+237 693 13 82 92\n+237 6"}</span>
-            </a>
+              <a href="tel:+237693138292" className="hover:text-accent transition-colors">+237 693 13 82 92</a>
+              <span className="text-primary-foreground/60">/</span>
+              <a href="tel:+237683406290" className="hover:text-accent transition-colors">+237 683 40 62 90</a>
+            </div>
             <a href="mailto:lafriendsservices@gmail.com" className="hidden sm:flex items-center gap-2 hover:text-accent transition-colors">
               <Mail className="w-4 h-4" />
               <span>lafriendsservices@gmail.com</span>

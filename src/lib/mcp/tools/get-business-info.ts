@@ -4,7 +4,7 @@ const INFO = {
   name: "LaFriend's Services Ménagers",
   location: "Bafoussam, Cameroun",
   hours: "Lundi–Samedi, 07:00–19:00",
-  phone: "+237 693 13 82 92",
+  phone: "+237 693 13 82 92 / +237 683 40 62 90",
   email: "lafriendsservices@gmail.com",
   website: "https://lafriendsservices.lovable.app",
   languages: ["fr", "en"],

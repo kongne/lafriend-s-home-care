@@ -77,7 +77,7 @@ export function brandedEmail(opts: BrandedEmailOptions): string {
         </tr>
         <tr>
           <td style="background:#1a1a2e;padding:20px 28px;color:#ffffff;text-align:center;font-size:12px;">
-            <div style="color:#f5c542;font-weight:700;margin-bottom:6px;">📞 +237 693 13 82 92</div>
+            <div style="color:#f5c542;font-weight:700;margin-bottom:6px;">📞 +237 693 13 82 92 / +237 683 40 62 90</div>
             <div style="opacity:0.75;">📍 Bafoussam, Cameroun • lafriendsservices.lovable.app</div>
           </td>
         </tr>

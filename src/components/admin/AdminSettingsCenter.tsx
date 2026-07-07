@@ -31,11 +31,11 @@ interface SettingsState {
 }
 
 const DEFAULTS: SettingsState = {
-  general: { siteName: "LaFriend's Services", tagline: "Services de Nettoyage Professionnels", contactEmail: "lafriendsservices@gmail.com", contactPhone: "+237 693 13 82 92", address: "Bafoussam, Cameroun", language: "fr" },
+  general: { siteName: "LaFriend's Services", tagline: "Services de Nettoyage Professionnels", contactEmail: "lafriendsservices@gmail.com", contactPhone: "+237 693 13 82 92 / +237 683 40 62 90", address: "Bafoussam, Cameroun", language: "fr" },
   website: { maintenanceMode: false, customCss: "", analyticsId: "", favicon: "" },
   content: { defaultThumbnail: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=400", maxImageSize: "2", allowedTypes: "jpeg,png,webp" },
   media: { compressionLevel: "high", autoOptimize: true, maxUploadWidth: "1920" },
-  communication: { emailSender: "noreply@lafriends.cm", whatsappNumber: "+237693138292", defaultMessage: "Bonjour! Je vous contacte depuis votre site web." },
+  communication: { emailSender: "noreply@lafriends.cm", whatsappNumber: "+237693138292 / +237683406290", defaultMessage: "Bonjour! Je vous contacte depuis votre site web." },
   seo: { defaultMetaDesc: "Services de nettoyage professionnels à Bafoussam, Cameroun.", ogImage: "", enableJsonLd: true },
   security: { recaptchaKey: "", rateLimitMax: "50", sessionTimeout: "30" },
   performance: { imageQuality: "80", enableCdn: true, lazyLoad: true },

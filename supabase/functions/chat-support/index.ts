@@ -71,7 +71,7 @@ Pricing (FCFA):
 - Car wash: from 5,000 FCFA
 
 Business hours: Monday-Saturday, 7:00 AM - 7:00 PM
-Contact: +237 693 13 82 92 | lafriendsservices@gmail.com
+Contact: +237 693 13 82 92 / +237 683 40 62 90 | lafriendsservices@gmail.com
 Location: Bafoussam, Cameroun
 
 IMPORTANT: Respond in ${language}. Be helpful, friendly, and professional. Guide customers to use the booking form on the website for appointments. Keep responses concise.`;

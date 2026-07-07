@@ -424,7 +424,7 @@ const ServiceDetails = () => {
             )}
 
             <div>
-              <a href="https://wa.me/237670000000" target="_blank" rel="noopener noreferrer">
+              <a href="https://wa.me/237693138292" target="_blank" rel="noopener noreferrer">
                 <Button variant="outline" className="w-full text-green-600 border-green-600 hover:bg-green-50 hover:text-green-700">
                   <Phone className="h-4 w-4 mr-2" />WhatsApp
                 </Button>
