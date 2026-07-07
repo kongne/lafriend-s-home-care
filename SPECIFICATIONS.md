@@ -159,13 +159,14 @@ Document every feature already implemented. For each, classify as:
 | **Contact Forms** | Complete | Contact form with reCAPTCHA, inquiry categorization, preferred contact time, inbox management |
 | **CMS Capabilities** | Complete | Services, projects, reviews, feedback CRUD via admin |
 | **Media Management** | Complete | Admin Media Library: upload, browse, delete, preview, copy URL, per-bucket filtering |
-| **Notifications** | Partial | In-app notifications exist — needs unified notification center with preferences |
+| **Settings / Configuration** | Complete | Centralized hub with 11 sections (General, Website, Content, Media, Communication, SEO, Security, Performance, Analytics, Integrations, Backups) + Account management |
+| **Notifications** | Complete | In-app notifications with read/unread, archive/restore, snooze, search, type filter, bulk archive/delete, group-by-category, preferences dialog (in-app/email/push per type) |
 | **Live Chat** | Complete | Real-time messaging, file upload, voice recording, booking context |
 | **Loyalty Program** | Complete | Points, rewards, tiers, referrals, transactions ledger |
 | **KYC Verification** | Complete | Identity document upload, admin review, audit trail |
 | **Search** | Future | Not implemented — candidate |
 | **SEO** | Partial | Meta tags per page, JSON-LD for services — needs sitemap, robots.txt, redirects |
-| **Analytics** | Partial | Recharts in admin — needs more metrics, export, trends |
+| **Analytics** | Complete | Recharts + configurable date range (7d/30d/90d/12m), KPICard with trend indicators |
 | **Bilingual (FR/EN)** | Complete | Custom React Context, ~300 keys, language toggle |
 | **Session Management** | Complete | 5-min inactivity timeout with 60s warning |
 | **WhatsApp Integration** | Complete | Floating button, booking context links |
@@ -492,7 +493,7 @@ Module {
 | Roles & Permissions | (new) | Medium | Future |
 | SEO | (new) | Medium | Future |
 | Analytics | (new) | Medium | Future (EnhancedAnalytics exists as tab) |
-| Settings | `settings` | Core | Partial (separate route) |
+| Settings | `settings` | Core | Complete (separate route, 11-section hub) |
 | Audit Logs | (new) | Low | Future |
 | Backups | (new) | Low | Future |
 

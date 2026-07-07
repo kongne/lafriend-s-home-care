@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { AdminAnalytics } from "@/components/admin/AdminAnalytics";
 import { EnhancedAnalytics } from "@/components/admin/EnhancedAnalytics";
@@ -122,6 +123,7 @@ const Admin = () => {
   const [sendingConfirmation, setSendingConfirmation] = useState<string | null>(null);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [dashboardTimeRange, setDashboardTimeRange] = useState<"7d" | "30d" | "90d" | "12m">("12m");
 
   const activeTab = searchParams.get("tab") || "analytics";
 
@@ -533,8 +535,24 @@ const Admin = () => {
       case "analytics":
         return (
           <div className="space-y-6">
+            {/* Date Range Selector */}
+            <div className="flex items-center justify-end gap-2">
+              <span className="text-sm text-muted-foreground">Période:</span>
+              <Select value={dashboardTimeRange} onValueChange={(v: "7d" | "30d" | "90d" | "12m") => setDashboardTimeRange(v)}>
+                <SelectTrigger className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="7d">7 derniers jours</SelectItem>
+                  <SelectItem value="30d">30 derniers jours</SelectItem>
+                  <SelectItem value="90d">90 derniers jours</SelectItem>
+                  <SelectItem value="12m">12 derniers mois</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* Dashboard Analytics */}
-            <DashboardAnalytics />
+            <DashboardAnalytics timeRange={dashboardTimeRange} />
 
             {/* Quick Actions */}
             <QuickActions 
