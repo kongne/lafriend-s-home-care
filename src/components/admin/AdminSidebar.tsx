@@ -69,6 +69,7 @@ const menuItems = [
   { icon: Clock, label: "Rappels", value: "reminders", path: "/admin?tab=reminders" },
   { icon: FileText, label: "Rapports", value: "reports", path: "/admin?tab=reports" },
   { icon: ShieldCheck, label: "Vérifications KYC", value: "verifications", path: "/admin/verifications" },
+  { icon: ImageIcon, label: "Médiathèque", value: "media", path: "/admin?tab=media" },
 ];
 
 const SidebarContent = ({ 

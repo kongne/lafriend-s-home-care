@@ -199,6 +199,11 @@ export const Testimonials = () => {
               </p>
               <p className="font-bold text-foreground text-lg">{testimonials[activeIndex].name}</p>
               <p className="text-muted-foreground">{testimonials[activeIndex].role} {testimonials[activeIndex].location ? `• ${testimonials[activeIndex].location}` : ''}</p>
+              {testimonials[activeIndex].role !== "Client Vérifié" && testimonials[activeIndex].role !== "Client" && (
+                <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider text-accent font-medium mt-1">
+                  <Sparkles className="w-3 h-3" /> {t('trust.verified')}
+                </span>
+              )}
             </div>
           </div>
 

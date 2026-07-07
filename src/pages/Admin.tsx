@@ -36,6 +36,7 @@ import { ServiceManagement } from "@/components/admin/ServiceManagement";
 
 import { BroadcastNotification } from "@/components/admin/BroadcastNotification";
 import { EmailRemindersManagement } from "@/components/admin/EmailRemindersManagement";
+import { MediaLibrary } from "@/components/admin/MediaLibrary";
 import { exportToCSV, bookingColumns, contactColumns, subscriberColumns } from "@/lib/exportCsv";
 import { exportToPDF } from "@/lib/exportPdf";
 import { downloadReport } from "@/lib/adminReports";
@@ -871,6 +872,13 @@ const Admin = () => {
                 ))
               )}
             </div>
+          </div>
+        );
+
+      case "media":
+        return (
+          <div className="space-y-6">
+            <MediaLibrary />
           </div>
         );
 

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Phone, Mail, MapPin, Clock, Shield } from "lucide-react";
+import { Phone, Mail, MapPin, Clock, Shield, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +12,9 @@ import { Loader2 } from "lucide-react";
 import { contactSchema, rateLimit } from "@/lib/validation";
 import { warn, error as logError } from "@/lib/logger";
 import { getRecaptchaToken, verifyRecaptchaToken } from "@/lib/recaptcha";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 
 export const Contact = () => {
   const { toast } = useToast();
@@ -25,6 +28,8 @@ export const Contact = () => {
     phone: "",
     subject: "",
     message: "",
+    inquiryType: "",
+    preferredContactTime: "",
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -88,13 +93,21 @@ export const Contact = () => {
         return;
       }
 
+      const subjectLine = formData.inquiryType
+        ? `[${formData.inquiryType}] ${validation.data.subject}`
+        : validation.data.subject;
+      const messageWithMeta = [
+        formData.preferredContactTime && `Meilleur moment pour contacter: ${formData.preferredContactTime}`,
+        validation.data.message,
+      ].filter(Boolean).join("\n\n");
+
       const { error } = await supabase.from("contact_submissions").insert({
         user_id: user?.id || null,
         full_name: validation.data.fullName,
         email: validation.data.email,
         phone: validation.data.phone || null,
-        subject: validation.data.subject,
-        message: validation.data.message
+        subject: subjectLine,
+        message: messageWithMeta,
       });
 
       if (error) throw error;
@@ -128,6 +141,8 @@ export const Contact = () => {
         phone: "",
         subject: "",
         message: "",
+        inquiryType: "",
+        preferredContactTime: "",
       });
     } catch (err) {
       logError("Contact error:", err);
@@ -245,6 +260,44 @@ export const Contact = () => {
                 className={errors.phone ? "border-destructive" : ""}
               />
               {errors.phone && <p className="text-sm text-destructive">{errors.phone}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="contact-inquiryType">{t('contact.inquiryType') || "Type de demande"}</Label>
+              <Select
+                value={formData.inquiryType}
+                onValueChange={(v) => setFormData(prev => ({ ...prev, inquiryType: v }))}
+              >
+                <SelectTrigger id="contact-inquiryType">
+                  <SelectValue placeholder={t('contact.inquiryPlaceholder') || "Sélectionnez un type..."} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="general">{t('contact.inquiryGeneral') || "Question générale"}</SelectItem>
+                  <SelectItem value="booking">{t('contact.inquiryBooking') || "Demande de réservation"}</SelectItem>
+                  <SelectItem value="quote">{t('contact.inquiryQuote') || "Demande de devis"}</SelectItem>
+                  <SelectItem value="complaint">{t('contact.inquiryComplaint') || "Réclamation"}</SelectItem>
+                  <SelectItem value="partnership">{t('contact.inquiryPartnership') || "Partenariat"}</SelectItem>
+                  <SelectItem value="other">{t('contact.inquiryOther') || "Autre"}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="contact-preferredTime">{t('contact.preferredTime') || "Meilleur moment pour vous contacter"}</Label>
+              <Select
+                value={formData.preferredContactTime}
+                onValueChange={(v) => setFormData(prev => ({ ...prev, preferredContactTime: v }))}
+              >
+                <SelectTrigger id="contact-preferredTime">
+                  <SelectValue placeholder={t('contact.timePlaceholder') || "Sélectionnez une période..."} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="morning">{t('contact.timeMorning') || "Matin (8h-12h)"}</SelectItem>
+                  <SelectItem value="afternoon">{t('contact.timeAfternoon') || "Après-midi (12h-18h)"}</SelectItem>
+                  <SelectItem value="evening">{t('contact.timeEvening') || "Soir (18h-20h)"}</SelectItem>
+                  <SelectItem value="anytime">{t('contact.timeAnytime') || "N'importe quand"}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">

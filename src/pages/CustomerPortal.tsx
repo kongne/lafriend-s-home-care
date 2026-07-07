@@ -19,7 +19,7 @@ import { ReviewDialog } from "@/components/customer/portal/ReviewDialog";
 import { SettingsTab } from "@/components/customer/portal/SettingsTab";
 import {
   Calendar, Clock, Loader2, Repeat, User, Phone, Mail,
-  BarChart3, Users, Bell, Settings as SettingsIcon, History,
+  BarChart3, Users, Bell, Settings as SettingsIcon, History, FileText, CheckCircle2,
 } from "lucide-react";
 import { isPast, isFuture, parseISO, format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -50,6 +50,8 @@ const CustomerPortal = () => {
   const { unreadCount } = useNotifications();
   const { data: kyc } = useKycStatus();
   const [kycSending, setKycSending] = useState(false);
+  const [quoteRequests, setQuoteRequests] = useState<any[]>([]);
+  const [quotesLoading, setQuotesLoading] = useState(true);
 
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
   const [cancelingBooking, setCancelingBooking] = useState<Booking | null>(null);
@@ -62,6 +64,23 @@ const CustomerPortal = () => {
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth?redirect=/customer-portal");
   }, [user, authLoading, navigate]);
+
+  useEffect(() => {
+    if (!user?.email) return;
+    const fetchQuotes = async () => {
+      setQuotesLoading(true);
+      try {
+        const { data } = await supabase
+          .from("contact_submissions")
+          .select("*")
+          .eq("email", user.email)
+          .order("created_at", { ascending: false });
+        setQuoteRequests(data || []);
+      } catch { }
+      finally { setQuotesLoading(false); }
+    };
+    fetchQuotes();
+  }, [user?.email]);
 
   const reviewedIds = useMemo(() => new Set(reviews.map((r) => r.booking_id)), [reviews]);
 
@@ -302,6 +321,10 @@ const CustomerPortal = () => {
               <Users className="h-4 w-4 shrink-0" />
               <span className="truncate hidden sm:inline">Parrainage</span>
             </TabsTrigger>
+            <TabsTrigger value="quotes" className="gap-1 px-2 sm:px-3 py-2 text-xs sm:text-sm flex-1 min-w-0">
+              <FileText className="h-4 w-4 shrink-0" />
+              <span className="truncate hidden sm:inline">Mes demandes</span> ({quoteRequests.length})
+            </TabsTrigger>
             <TabsTrigger value="settings" className="gap-1 px-2 sm:px-3 py-2 text-xs sm:text-sm flex-1 min-w-0">
               <SettingsIcon className="h-4 w-4 shrink-0" />
               <span className="truncate hidden sm:inline">Paramètres</span>
@@ -369,6 +392,55 @@ const CustomerPortal = () => {
 
           <TabsContent value="referral">
             <ReferralProgram />
+          </TabsContent>
+
+          <TabsContent value="quotes">
+            {quotesLoading ? (
+              <BookingSkeleton />
+            ) : quoteRequests.length === 0 ? (
+              <EmptyState
+                icon={FileText}
+                title="Aucune demande de devis"
+                description="Vos demandes de devis apparaîtront ici"
+                actionLabel="Faire une demande"
+                onAction={() => navigate("/quote")}
+              />
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {quoteRequests.map((q: any) => {
+                  const statusMap: Record<string, { label: string; color: string; icon: any }> = {
+                    unread: { label: "Non lu", color: "bg-amber-500", icon: Clock },
+                    read: { label: "Lu", color: "bg-blue-500", icon: Clock },
+                    replied: { label: "Répondu", color: "bg-green-500", icon: CheckCircle2 },
+                  };
+                  const s = statusMap[q.status] || { label: q.status, color: "bg-gray-500", icon: Clock };
+                  const StatusIcon = s.icon;
+                  return (
+                    <Card key={q.id} className="card-elevated">
+                      <CardContent className="p-5 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <Badge className={`${s.color} text-white text-[10px]`}>
+                            <StatusIcon className="h-3 w-3 mr-1" /> {s.label}
+                          </Badge>
+                          <span className="text-[10px] text-muted-foreground">
+                            {format(parseISO(q.created_at), "dd/MM/yyyy", { locale: fr })}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="font-semibold text-sm truncate">{q.subject}</p>
+                          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{q.message}</p>
+                        </div>
+                        {q.status === "replied" && (
+                          <Button size="sm" variant="outline" className="w-full text-xs">
+                            Voir la réponse
+                          </Button>
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="settings">

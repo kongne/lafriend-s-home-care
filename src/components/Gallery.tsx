@@ -1,14 +1,25 @@
-import { useState, useEffect, useMemo } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Eye, Search, X } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import {
+  Eye, Search, X, Maximize2, Minimize2, ChevronLeft, ChevronRight,
+  Calendar, MapPin, SlidersHorizontal, ArrowUpDown, Grid3X3
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { transformedUrl } from "@/lib/mediaUpload";
+import { BeforeAfterSlider } from "./BeforeAfterSlider";
+import {
+  Dialog, DialogContent, DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 
 interface ProjectImage {
   image_url: string;
@@ -25,6 +36,7 @@ interface Project {
   is_featured: boolean;
   duration_or_stats: string | null;
   stats_label: string | null;
+  created_at: string;
   images: ProjectImage[];
 }
 
@@ -52,7 +64,11 @@ const CATEGORY_LABELS: Record<string, { fr: string; en: string }> = {
   other: { fr: "Autre", en: "Other" },
 };
 
-const BeforeAfterCard = ({ project, index, isVisible, t, language }: { project: Project; index: number; isVisible: boolean; t: (key: string) => string; language: string }) => {
+const BeforeAfterCard = ({ project, index, isVisible, t, language, onOpenLightbox }: {
+  project: Project; index: number; isVisible: boolean;
+  t: (key: string) => string; language: string;
+  onOpenLightbox: () => void;
+}) => {
   const [showAfter, setShowAfter] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
 
@@ -61,14 +77,17 @@ const BeforeAfterCard = ({ project, index, isVisible, t, language }: { project: 
   const categoryLabel = CATEGORY_LABELS[project.category]?.[language as "fr" | "en"] || project.category;
 
   return (
-    <Link
-      to={`/projects/${project.slug}`}
+    <div
       className={`block relative overflow-hidden rounded-xl shadow-lg cursor-pointer group transition-all duration-700 hover:shadow-2xl hover:scale-[1.02] ${
         isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
       }`}
       style={{ transitionDelay: `${index * 150}ms` }}
       onMouseEnter={() => setShowAfter(true)}
       onMouseLeave={() => setShowAfter(false)}
+      onClick={onOpenLightbox}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === "Enter") onOpenLightbox(); }}
     >
       <div className="relative h-40 sm:h-56 md:h-64 overflow-hidden bg-muted">
         {!imageLoaded && (
@@ -122,11 +141,9 @@ const BeforeAfterCard = ({ project, index, isVisible, t, language }: { project: 
           {showAfter ? t('gallery.after') : t('gallery.before')}
         </div>
 
-        <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-300 ${
-          showAfter ? 'opacity-100' : 'opacity-0'
-        }`}>
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <div className="bg-accent/90 rounded-full p-3">
-            <Eye className="w-6 h-6 text-accent-foreground" />
+            <Maximize2 className="w-6 h-6 text-accent-foreground" />
           </div>
         </div>
 
@@ -134,7 +151,11 @@ const BeforeAfterCard = ({ project, index, isVisible, t, language }: { project: 
           <div className="flex items-end justify-between">
             <div className="min-w-0 flex-1">
               <p className="text-white font-semibold text-sm sm:text-base truncate">{project.title}</p>
-              <p className="text-white/70 text-xs sm:text-sm">{t('gallery.hover')}</p>
+              {project.location && (
+                <p className="text-white/60 text-xs flex items-center gap-1 mt-0.5">
+                  <MapPin className="h-3 w-3" /> {project.location}
+                </p>
+              )}
             </div>
             {project.duration_or_stats && (
               <div className="text-right flex-shrink-0 ml-2">
@@ -145,17 +166,89 @@ const BeforeAfterCard = ({ project, index, isVisible, t, language }: { project: 
           </div>
         </div>
       </div>
-    </Link>
+    </div>
+  );
+};
+
+const LightboxDialog = ({ project, open, onClose }: {
+  project: Project | null; open: boolean; onClose: () => void;
+}) => {
+  const beforeImg = project?.images.find((i) => i.image_type === "before")?.image_url;
+  const afterImg = project?.images.find((i) => i.image_type === "after")?.image_url;
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-y-auto">
+        <DialogTitle className="sr-only">
+          {project?.title || "Before/After"}
+        </DialogTitle>
+        {project && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-xl font-bold">{project.title}</h3>
+                {project.location && (
+                  <p className="text-sm text-muted-foreground flex items-center gap-1 mt-0.5">
+                    <MapPin className="h-3.5 w-3.5" /> {project.location}
+                  </p>
+                )}
+              </div>
+              <Badge variant="outline" className="text-xs">
+                {CATEGORY_LABELS[project.category]?.["fr"] || project.category}
+              </Badge>
+            </div>
+
+            {beforeImg && afterImg ? (
+              <div className="rounded-xl overflow-hidden border">
+                <BeforeAfterSlider
+                  beforeImage={beforeImg}
+                  afterImage={afterImg}
+                  beforeLabel="Avant"
+                  afterLabel="Après"
+                  className="w-full aspect-video"
+                />
+              </div>
+            ) : (
+              <div className="aspect-video rounded-xl overflow-hidden bg-muted flex items-center justify-center">
+                {beforeImg ? (
+                  <img src={transformedUrl(beforeImg, 1200)} alt="Avant" className="w-full h-full object-cover" />
+                ) : afterImg ? (
+                  <img src={transformedUrl(afterImg, 1200)} alt="Après" className="w-full h-full object-cover" />
+                ) : (
+                  <p className="text-muted-foreground">Aucune image disponible</p>
+                )}
+              </div>
+            )}
+
+            {project.description && (
+              <p className="text-sm text-muted-foreground leading-relaxed">{project.description}</p>
+            )}
+
+            {project.duration_or_stats && (
+              <div className="flex gap-4 text-sm">
+                <div className="bg-muted rounded-lg px-4 py-2">
+                  <span className="font-semibold">{project.duration_or_stats}</span>
+                  {project.stats_label && <span className="text-muted-foreground ml-1">{project.stats_label}</span>}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 };
 
 export const Gallery = () => {
   const { ref, isVisible } = useScrollReveal();
   const { t, language } = useLanguage();
+  const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
+  const [lightboxProject, setLightboxProject] = useState<Project | null>(null);
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -197,6 +290,7 @@ export const Gallery = () => {
           is_featured: p.is_featured,
           duration_or_stats: p.duration_or_stats,
           stats_label: p.stats_label,
+          created_at: p.created_at,
           images: imgMap.get(p.id) || [],
         }));
 
@@ -226,12 +320,21 @@ export const Gallery = () => {
           (p.location || "").toLowerCase().includes(q)
       );
     }
+    result = [...result].sort((a, b) => {
+      if (sortOrder === "newest") return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+    });
     return result;
-  }, [projects, activeCategory, searchQuery]);
+  }, [projects, activeCategory, searchQuery, sortOrder]);
 
   const availableCategories = useMemo(() => {
     const cats = new Set(projects.map((p) => p.category));
     return FILTER_CATEGORIES.filter((c) => cats.has(c));
+  }, [projects]);
+
+  const projectsByLocation = useMemo(() => {
+    const locs = new Set(projects.filter(p => p.location).map(p => p.location));
+    return Array.from(locs).slice(0, 10);
   }, [projects]);
 
   const showFilters = projects.length > 0;
@@ -256,19 +359,34 @@ export const Gallery = () => {
 
         {showFilters && (
           <div className={`mb-10 space-y-4 transition-all duration-700 delay-200 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}>
-            <div className="relative max-w-md mx-auto">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder={t("gallery.search") || "Rechercher un projet..."}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 pr-9"
-              />
-              {searchQuery && (
-                <button onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                  <X className="h-4 w-4" />
-                </button>
-              )}
+            <div className="flex flex-col sm:flex-row gap-3 max-w-2xl mx-auto">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder={t("gallery.search") || "Rechercher un projet..."}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 pr-9"
+                  aria-label="Search projects"
+                />
+                {searchQuery && (
+                  <button onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" aria-label="Clear search">
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <Select value={sortOrder} onValueChange={(v) => setSortOrder(v as "newest" | "oldest")}>
+                  <SelectTrigger className="w-[140px]" aria-label="Sort order">
+                    <ArrowUpDown className="h-4 w-4 mr-1" />
+                    <SelectValue placeholder="Trier" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="newest">{t("gallery.newest") || "Plus récents"}</SelectItem>
+                    <SelectItem value="oldest">{t("gallery.oldest") || "Plus anciens"}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="flex flex-wrap justify-center gap-2">
@@ -277,7 +395,9 @@ export const Gallery = () => {
                 variant={activeCategory === null ? "default" : "outline"}
                 onClick={() => setActiveCategory(null)}
                 className="text-xs sm:text-sm"
+                aria-pressed={activeCategory === null}
               >
+                <Grid3X3 className="h-3.5 w-3.5 mr-1 sm:mr-1.5" />
                 {t("gallery.all") || "Tous"}
               </Button>
               {availableCategories.map((cat) => (
@@ -287,11 +407,28 @@ export const Gallery = () => {
                   variant={activeCategory === cat ? "default" : "outline"}
                   onClick={() => setActiveCategory(cat)}
                   className="text-xs sm:text-sm"
+                  aria-pressed={activeCategory === cat}
                 >
                   {CATEGORY_LABELS[cat]?.[language as "fr" | "en"] || cat}
                 </Button>
               ))}
             </div>
+
+            {projectsByLocation.length > 0 && (
+              <div className="flex flex-wrap justify-center gap-1.5 text-xs text-muted-foreground">
+                <MapPin className="h-3.5 w-3.5" />
+                <span className="mr-1">{t("gallery.locations") || "Projets à"}:</span>
+                {projectsByLocation.map((loc, i) => (
+                  <button
+                    key={loc}
+                    onClick={() => setSearchQuery(loc!)}
+                    className="hover:text-foreground transition-colors underline underline-offset-2 decoration-dotted"
+                  >
+                    {loc}{i < projectsByLocation.length - 1 ? "," : ""}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -310,17 +447,44 @@ export const Gallery = () => {
             </div>
             <p className="font-semibold text-foreground">{t("gallery.noResults") || "Aucun projet trouvé"}</p>
             <p className="text-sm mt-1">{t("gallery.tryDifferent") || "Essayez un autre filtre ou terme de recherche."}</p>
+            <Button variant="outline" size="sm" className="mt-4" onClick={() => { setActiveCategory(null); setSearchQuery(""); }}>
+              {t("gallery.reset") || "Réinitialiser les filtres"}
+            </Button>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6">
             {filtered.map((project, index) => (
               <div key={project.id} className={isVisible ? "animate-fade-in-up" : "opacity-0"} style={{ animationDelay: `${index * 100}ms`, animationFillMode: "backwards" }}>
-                <BeforeAfterCard project={project} index={index} isVisible={true} t={t} language={language} />
+                <BeforeAfterCard
+                  project={project}
+                  index={index}
+                  isVisible={true}
+                  t={t}
+                  language={language}
+                  onOpenLightbox={() => setLightboxProject(project)}
+                />
               </div>
             ))}
           </div>
         )}
+
+        <div className={`mt-10 text-center transition-all duration-700 ${isVisible ? "animate-fade-in" : "opacity-0"}`}>
+          <Button
+            variant="outline"
+            onClick={() => navigate("/#contact")}
+            className="font-semibold"
+          >
+            <SlidersHorizontal className="h-4 w-4 mr-2" />
+            {t("gallery.request") || "Demander un projet similaire"}
+          </Button>
+        </div>
       </div>
+
+      <LightboxDialog
+        project={lightboxProject}
+        open={!!lightboxProject}
+        onClose={() => setLightboxProject(null)}
+      />
     </section>
   );
 };
