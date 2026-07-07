@@ -497,7 +497,7 @@ export const ServiceManagement = () => {
       Réservations: s.total_bookings,
       "Créé le": new Date(s.created_at).toLocaleDateString("fr"),
     }));
-    exportToCSV(data, "services", cols.map(c => ({ key: c, label: c })));
+    exportToCSV(data, "services", cols.map(c => ({ key: c, label: c })) as any);
   };
 
   const exportPDFFn = () => {

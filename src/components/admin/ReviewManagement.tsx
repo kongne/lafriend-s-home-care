@@ -151,8 +151,8 @@ export const ReviewManagement = () => {
       onConfirm: async () => {
         try {
           const { error } = await supabase
-            .from("reviews")
-            .update({ status: newStatus })
+            .from("reviews" as any)
+            .update({ status: newStatus } as any)
             .eq("id", id);
 
           if (error) throw error;
@@ -194,8 +194,8 @@ export const ReviewManagement = () => {
       onConfirm: async () => {
         try {
           const { error } = await supabase
-            .from("reviews")
-            .update({ is_pinned: !currentPinned })
+            .from("reviews" as any)
+            .update({ is_pinned: !currentPinned } as any)
             .eq("id", id);
 
           if (error) throw error;
@@ -229,8 +229,8 @@ export const ReviewManagement = () => {
       onConfirm: async () => {
         try {
           const { error } = await supabase
-            .from("reviews")
-            .update({ is_featured: !currentFeatured })
+            .from("reviews" as any)
+            .update({ is_featured: !currentFeatured } as any)
             .eq("id", id);
 
           if (error) throw error;

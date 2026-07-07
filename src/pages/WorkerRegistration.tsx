@@ -99,7 +99,7 @@ const WorkerRegistration = () => {
       if (cvFile) cvPath = await uploadFile(cvFile, `cv-${form.fullName.replace(/\s+/g, "_")}`);
       if (certFile) certPath = await uploadFile(certFile, `cert-${form.fullName.replace(/\s+/g, "_")}`);
 
-      const { error } = await supabase.from("worker_applications").insert({
+      const { error } = await supabase.from("worker_applications" as any).insert({
         full_name: form.fullName.trim(),
         email: form.email.trim().toLowerCase(),
         phone: form.phone.trim(),
@@ -110,7 +110,7 @@ const WorkerRegistration = () => {
         cv_url: cvPath,
         certificates_url: certPath,
         status: "pending",
-      });
+      } as any);
 
       if (error) throw error;
 
