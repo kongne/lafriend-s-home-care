@@ -476,6 +476,45 @@ export type Database = {
           },
         ]
       }
+      feedback: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          message: string
+          name: string
+          phone: string | null
+          service: string | null
+          status: string
+          subject: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          message: string
+          name: string
+          phone?: string | null
+          service?: string | null
+          status?: string
+          subject?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          message?: string
+          name?: string
+          phone?: string | null
+          service?: string | null
+          status?: string
+          subject?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       feedback_ratings: {
         Row: {
           booking_id: string | null
@@ -815,363 +854,6 @@ export type Database = {
         }
         Relationships: []
       }
-      referrals: {
-        Row: {
-          bonus_points: number
-          completed_at: string | null
-          created_at: string
-          id: string
-          referral_code: string
-          referred_email: string
-          referred_user_id: string | null
-          referrer_id: string
-          status: string
-        }
-        Insert: {
-          bonus_points?: number
-          completed_at?: string | null
-          created_at?: string
-          id?: string
-          referral_code: string
-          referred_email: string
-          referred_user_id?: string | null
-          referrer_id: string
-          status?: string
-        }
-        Update: {
-          bonus_points?: number
-          completed_at?: string | null
-          created_at?: string
-          id?: string
-          referral_code?: string
-          referred_email?: string
-          referred_user_id?: string | null
-          referrer_id?: string
-          status?: string
-        }
-        Relationships: []
-      }
-      before_after_projects: {
-        Row: {
-          id: string
-          title: string
-          category: string
-          before_image_url: string
-          after_image_url: string
-          duration_or_stats: string | null
-          stats_label: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          title: string
-          category: string
-          before_image_url: string
-          after_image_url: string
-          duration_or_stats?: string | null
-          stats_label?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          title?: string
-          category?: string
-          before_image_url?: string
-          after_image_url?: string
-          duration_or_stats?: string | null
-          stats_label?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      reviews: {
-        Row: {
-          booking_id: string
-          comment: string | null
-          created_at: string
-          id: string
-          is_public: boolean
-          rating: number
-          staff_id: string | null
-          updated_at: string
-          user_id: string
-          status: string
-          is_pinned: boolean
-          is_featured: boolean
-        }
-        Insert: {
-          booking_id: string
-          comment?: string | null
-          created_at?: string
-          id?: string
-          is_public?: boolean
-          rating: number
-          staff_id?: string | null
-          updated_at?: string
-          user_id: string
-          status?: string
-          is_pinned?: boolean
-          is_featured?: boolean
-        }
-        Update: {
-          booking_id?: string
-          comment?: string | null
-          created_at?: string
-          id?: string
-          is_public?: boolean
-          rating?: number
-          staff_id?: string | null
-          updated_at?: string
-          user_id?: string
-          status?: string
-          is_pinned?: boolean
-          is_featured?: boolean
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fk_reviews_booking"
-            columns: ["booking_id"]
-            isOneToOne: true
-            referencedRelation: "bookings"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
-      staff_availability: {
-        Row: {
-          created_at: string
-          day_of_week: number
-          end_time: string
-          id: string
-          is_available: boolean
-          staff_id: string
-          start_time: string
-        }
-        Insert: {
-          created_at?: string
-          day_of_week: number
-          end_time: string
-          id?: string
-          is_available?: boolean
-          staff_id: string
-          start_time: string
-        }
-        Update: {
-          created_at?: string
-          day_of_week?: number
-          end_time?: string
-          id?: string
-          is_available?: boolean
-          staff_id?: string
-          start_time?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "staff_availability_staff_id_fkey"
-            columns: ["staff_id"]
-            isOneToOne: false
-            referencedRelation: "staff_members"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      staff_emails: {
-        Row: {
-          created_at: string
-          email: string
-          id: string
-          is_active: boolean
-          name: string | null
-        }
-        Insert: {
-          created_at?: string
-          email: string
-          id?: string
-          is_active?: boolean
-          name?: string | null
-        }
-        Update: {
-          created_at?: string
-          email?: string
-          id?: string
-          is_active?: boolean
-          name?: string | null
-        }
-        Relationships: []
-      }
-      staff_members: {
-        Row: {
-          created_at: string
-          email: string
-          full_name: string
-          hourly_rate: number | null
-          id: string
-          is_active: boolean
-          phone: string | null
-          photo_url: string | null
-          specializations: string[] | null
-          updated_at: string
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          email: string
-          full_name: string
-          hourly_rate?: number | null
-          id?: string
-          is_active?: boolean
-          phone?: string | null
-          photo_url?: string | null
-          specializations?: string[] | null
-          updated_at?: string
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          email?: string
-          full_name?: string
-          hourly_rate?: number | null
-          id?: string
-          is_active?: boolean
-          phone?: string | null
-          photo_url?: string | null
-          specializations?: string[] | null
-          updated_at?: string
-          user_id?: string | null
-        }
-        Relationships: []
-      }
-      staff_time_off: {
-        Row: {
-          created_at: string
-          end_date: string
-          id: string
-          reason: string | null
-          staff_id: string
-          start_date: string
-        }
-        Insert: {
-          created_at?: string
-          end_date: string
-          id?: string
-          reason?: string | null
-          staff_id: string
-          start_date: string
-        }
-        Update: {
-          created_at?: string
-          end_date?: string
-          id?: string
-          reason?: string | null
-          staff_id?: string
-          start_date?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "staff_time_off_staff_id_fkey"
-            columns: ["staff_id"]
-            isOneToOne: false
-            referencedRelation: "staff_members"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      user_roles: {
-        Row: {
-          created_at: string
-          id: string
-          role: Database["public"]["Enums"]["app_role"]
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          role: Database["public"]["Enums"]["app_role"]
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          role?: Database["public"]["Enums"]["app_role"]
-          user_id?: string
-        }
-        Relationships: []
-      }
-      worker_kyw: {
-        Row: {
-          created_at: string | null
-          document_status: string
-          document_type: string
-          document_url: string | null
-          id: string
-          rejection_reason: string | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          document_status?: string
-          document_type: string
-          document_url?: string | null
-          id?: string
-          rejection_reason?: string | null
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          document_status?: string
-          document_type?: string
-          document_url?: string | null
-          id?: string
-          rejection_reason?: string | null
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
-      feedback: {
-        Row: {
-          created_at: string
-          email: string
-          id: string
-          message: string
-          name: string
-          phone: string | null
-          service: string | null
-          status: string
-          subject: string | null
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          email: string
-          id?: string
-          message: string
-          name: string
-          phone?: string | null
-          service?: string | null
-          status?: string
-          subject?: string | null
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          email?: string
-          id?: string
-          message?: string
-          name?: string
-          phone?: string | null
-          service?: string | null
-          status?: string
-          subject?: string | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
       project_images: {
         Row: {
           created_at: string
@@ -1258,6 +940,78 @@ export type Database = {
           status?: string
           title?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          bonus_points: number
+          completed_at: string | null
+          created_at: string
+          id: string
+          referral_code: string
+          referred_email: string
+          referred_user_id: string | null
+          referrer_id: string
+          status: string
+        }
+        Insert: {
+          bonus_points?: number
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          referral_code: string
+          referred_email: string
+          referred_user_id?: string | null
+          referrer_id: string
+          status?: string
+        }
+        Update: {
+          bonus_points?: number
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          referral_code?: string
+          referred_email?: string
+          referred_user_id?: string | null
+          referrer_id?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      reviews: {
+        Row: {
+          booking_id: string
+          comment: string | null
+          created_at: string
+          id: string
+          is_public: boolean
+          rating: number
+          staff_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          booking_id: string
+          comment?: string | null
+          created_at?: string
+          id?: string
+          is_public?: boolean
+          rating: number
+          staff_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          booking_id?: string
+          comment?: string | null
+          created_at?: string
+          id?: string
+          is_public?: boolean
+          rating?: number
+          staff_id?: string | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -1520,6 +1274,7 @@ export type Database = {
       }
       services: {
         Row: {
+          banner_image: string | null
           base_price: number | null
           best_seller: boolean
           canonical_url: string | null
@@ -1533,8 +1288,6 @@ export type Database = {
           estimated_duration: string | null
           featured: boolean
           featured_image: string | null
-          banner_image: string | null
-          service_icon: string | null
           id: string
           instant_booking: boolean
           is_appointment_required: boolean
@@ -1554,6 +1307,7 @@ export type Database = {
           seo_description: string | null
           seo_title: string | null
           service_code: string | null
+          service_icon: string | null
           short_description: string | null
           slug: string
           status: string
@@ -1563,6 +1317,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          banner_image?: string | null
           base_price?: number | null
           best_seller?: boolean
           canonical_url?: string | null
@@ -1576,8 +1331,6 @@ export type Database = {
           estimated_duration?: string | null
           featured?: boolean
           featured_image?: string | null
-          banner_image?: string | null
-          service_icon?: string | null
           id?: string
           instant_booking?: boolean
           is_appointment_required?: boolean
@@ -1597,6 +1350,7 @@ export type Database = {
           seo_description?: string | null
           seo_title?: string | null
           service_code?: string | null
+          service_icon?: string | null
           short_description?: string | null
           slug: string
           status?: string
@@ -1606,6 +1360,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          banner_image?: string | null
           base_price?: number | null
           best_seller?: boolean
           canonical_url?: string | null
@@ -1619,8 +1374,6 @@ export type Database = {
           estimated_duration?: string | null
           featured?: boolean
           featured_image?: string | null
-          banner_image?: string | null
-          service_icon?: string | null
           id?: string
           instant_booking?: boolean
           is_appointment_required?: boolean
@@ -1640,6 +1393,7 @@ export type Database = {
           seo_description?: string | null
           seo_title?: string | null
           service_code?: string | null
+          service_icon?: string | null
           short_description?: string | null
           slug?: string
           status?: string
@@ -1657,6 +1411,199 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      staff_availability: {
+        Row: {
+          created_at: string
+          day_of_week: number
+          end_time: string
+          id: string
+          is_available: boolean
+          staff_id: string
+          start_time: string
+        }
+        Insert: {
+          created_at?: string
+          day_of_week: number
+          end_time: string
+          id?: string
+          is_available?: boolean
+          staff_id: string
+          start_time: string
+        }
+        Update: {
+          created_at?: string
+          day_of_week?: number
+          end_time?: string
+          id?: string
+          is_available?: boolean
+          staff_id?: string
+          start_time?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_availability_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      staff_emails: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          is_active: boolean
+          name: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          is_active?: boolean
+          name?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          is_active?: boolean
+          name?: string | null
+        }
+        Relationships: []
+      }
+      staff_members: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string
+          hourly_rate: number | null
+          id: string
+          is_active: boolean
+          phone: string | null
+          photo_url: string | null
+          specializations: string[] | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name: string
+          hourly_rate?: number | null
+          id?: string
+          is_active?: boolean
+          phone?: string | null
+          photo_url?: string | null
+          specializations?: string[] | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string
+          hourly_rate?: number | null
+          id?: string
+          is_active?: boolean
+          phone?: string | null
+          photo_url?: string | null
+          specializations?: string[] | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      staff_time_off: {
+        Row: {
+          created_at: string
+          end_date: string
+          id: string
+          reason: string | null
+          staff_id: string
+          start_date: string
+        }
+        Insert: {
+          created_at?: string
+          end_date: string
+          id?: string
+          reason?: string | null
+          staff_id: string
+          start_date: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string
+          id?: string
+          reason?: string | null
+          staff_id?: string
+          start_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_time_off_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      worker_kyw: {
+        Row: {
+          created_at: string | null
+          document_status: string
+          document_type: string
+          document_url: string | null
+          id: string
+          rejection_reason: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          document_status?: string
+          document_type: string
+          document_url?: string | null
+          id?: string
+          rejection_reason?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          document_status?: string
+          document_type?: string
+          document_url?: string | null
+          id?: string
+          rejection_reason?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {
@@ -1684,6 +1631,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_service_views: {
+        Args: { service_slug: string }
+        Returns: undefined
+      }
       is_room_participant: {
         Args: { _room_id: string; _user_id: string }
         Returns: boolean
@@ -1699,10 +1650,6 @@ export type Database = {
       redeem_points_for_booking: {
         Args: { p_booking_id: string; p_points: number; p_user_id: string }
         Returns: number
-      }
-      increment_service_views: {
-        Args: { service_slug: string }
-        Returns: undefined
       }
     }
     Enums: {
