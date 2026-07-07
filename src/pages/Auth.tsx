@@ -235,10 +235,13 @@ const Auth = () => {
       <div className="w-full max-w-md">
         <div className="bg-card rounded-2xl shadow-xl p-8 border border-border">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-foreground mb-2">
+            <div className="w-14 h-14 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-4">
+              <User className="h-7 w-7 text-accent" />
+            </div>
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
               {isLogin ? "Connexion" : "Créer un compte"}
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               {isLogin
                 ? "Connectez-vous pour accéder à votre espace"
                 : "Inscrivez-vous pour réserver nos services"}
@@ -473,8 +476,8 @@ const Auth = () => {
           )}
         </div>
 
-        <div className="text-center mt-6">
-          <a href="/" className="text-muted-foreground hover:text-primary transition-colors">
+        <div className="text-center mt-8">
+          <a href="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
             ← Retour à l'accueil
           </a>
         </div>

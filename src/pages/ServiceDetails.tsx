@@ -162,11 +162,25 @@ const ServiceDetails = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-8 space-y-6">
-          <Skeleton className="h-64 w-full rounded-xl" />
-          <Skeleton className="h-8 w-1/3" />
-          <Skeleton className="h-4 w-2/3" />
-          <Skeleton className="h-48 w-full rounded-xl" />
+        <div className="container mx-auto px-4 pt-8 space-y-6">
+          <Skeleton className="h-48 sm:h-64 md:h-80 w-full rounded-xl" />
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-1/3" />
+            <Skeleton className="h-4 w-2/3" />
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {[1,2,3,4].map(i => <Skeleton key={i} className="h-20 rounded-xl" />)}
+          </div>
+          <div className="grid lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 space-y-4">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-5/6" />
+              <Skeleton className="h-4 w-4/6" />
+            </div>
+            <div>
+              <Skeleton className="h-64 rounded-xl" />
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -174,10 +188,13 @@ const ServiceDetails = () => {
 
   if (notFound && !fallback) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <h1 className="text-3xl font-bold">{t("common.notFound") || "Service introuvable"}</h1>
-          <p className="text-muted-foreground">Le service demandé n'existe pas.</p>
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <div className="text-center space-y-4 max-w-md">
+          <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto">
+            <HelpCircle className="h-8 w-8 text-muted-foreground" />
+          </div>
+          <h1 className="text-2xl md:text-3xl font-bold">{t("common.notFound") || "Service introuvable"}</h1>
+          <p className="text-muted-foreground">Le service demandé n'existe pas ou a été retiré.</p>
           <Link to="/#services"><Button variant="outline"><ChevronRight className="h-4 w-4 mr-1" />{t("nav.services")}</Button></Link>
         </div>
       </div>
@@ -239,35 +256,38 @@ const ServiceDetails = () => {
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaData) }} />
       )}
 
-      {displayImage && (
+      {displayImage ? (
         <div className="relative h-48 sm:h-64 md:h-80 lg:h-96 overflow-hidden bg-muted">
           <img src={displayImage} alt={displayName} className="w-full h-full object-cover" loading="lazy" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-          <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10">
-            <div className="container mx-auto">
+          <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10 lg:p-16">
+            <div className="section-container">
               <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white">{displayName}</h1>
-              {displayShortDesc && <p className="text-white/80 mt-2 max-w-2xl">{displayShortDesc}</p>}
+              {displayShortDesc && <p className="text-white/80 mt-2 max-w-2xl text-sm md:text-base">{displayShortDesc}</p>}
             </div>
+          </div>
+        </div>
+      ) : (
+        <div className="section-padding pb-0">
+          <div className="section-container">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold">{displayName}</h1>
           </div>
         </div>
       )}
 
-      <div className="container mx-auto px-4 py-8">
-        {!displayImage && (
-          <h1 className="text-3xl md:text-4xl font-bold mb-6">{displayName}</h1>
-        )}
-
+      <div className="section-padding">
+        <div className="section-container">
         {displayHighlights.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-12">
             {displayHighlights.map((h: any, i: number) => h && (
-              <Card key={i} className="bg-muted/50">
+              <Card key={i} className="card-elevated bg-muted/50">
                 <CardContent className="p-4 flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-accent/10">
+                  <div className="p-2 rounded-lg bg-accent/10 shrink-0">
                     <h.icon className="h-5 w-5 text-accent" />
                   </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">{h.label}</p>
-                    <p className="font-semibold text-sm">{h.value}</p>
+                  <div className="min-w-0">
+                    <p className="text-xs text-muted-foreground truncate">{h.label}</p>
+                    <p className="font-semibold text-sm truncate">{h.value}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -275,25 +295,25 @@ const ServiceDetails = () => {
           </div>
         )}
 
-        <div className="grid lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-8">
+        <div className="grid lg:grid-cols-3 gap-8 lg:gap-12">
+          <div className="lg:col-span-2 space-y-12">
             {(displayDesc || features.length > 0 || displayFaqs.length > 0) && (
-              <div className="space-y-4">
+              <div className="space-y-8">
                 {displayDesc && (
                   <div>
-                    <h2 className="text-xl font-semibold mb-3">{t("project.details") || "Description"}</h2>
+                    <h2 className="text-xl md:text-2xl font-bold mb-4">{t("project.details") || "Description"}</h2>
                     <p className="text-muted-foreground leading-relaxed whitespace-pre-line">{displayDesc}</p>
                   </div>
                 )}
 
                 {displayFeatures.length > 0 && (
                   <div>
-                    <h2 className="text-xl font-semibold mb-3">Ce qui est inclus</h2>
-                    <div className="grid sm:grid-cols-2 gap-2">
+                    <h2 className="text-xl md:text-2xl font-bold mb-4">Ce qui est inclus</h2>
+                    <div className="grid sm:grid-cols-2 gap-3">
                       {displayFeatures.map(f => (
-                        <div key={f.id} className="flex items-center gap-2 text-sm">
-                          <CheckCircle className="h-4 w-4 text-accent flex-shrink-0" />
-                          <span>{f.feature}</span>
+                        <div key={f.id} className="flex items-center gap-3 bg-muted/30 rounded-lg px-4 py-3">
+                          <CheckCircle className="h-5 w-5 text-accent flex-shrink-0" />
+                          <span className="text-sm">{f.feature}</span>
                         </div>
                       ))}
                     </div>
@@ -302,12 +322,12 @@ const ServiceDetails = () => {
 
                 {displayIncluded.length > 0 && !service && (
                   <div>
-                    <h2 className="text-xl font-semibold mb-3">Ce qui est inclus</h2>
-                    <div className="grid sm:grid-cols-2 gap-2">
+                    <h2 className="text-xl md:text-2xl font-bold mb-4">Ce qui est inclus</h2>
+                    <div className="grid sm:grid-cols-2 gap-3">
                       {displayIncluded.map((item: string, i: number) => (
-                        <div key={i} className="flex items-center gap-2 text-sm">
-                          <CheckCircle className="h-4 w-4 text-accent flex-shrink-0" />
-                          <span>{item}</span>
+                        <div key={i} className="flex items-center gap-3 bg-muted/30 rounded-lg px-4 py-3">
+                          <CheckCircle className="h-5 w-5 text-accent flex-shrink-0" />
+                          <span className="text-sm">{item}</span>
                         </div>
                       ))}
                     </div>
@@ -318,17 +338,17 @@ const ServiceDetails = () => {
 
             {displayAddons.length > 0 && (
               <div>
-                <h2 className="text-xl font-semibold mb-3">Options complémentaires</h2>
-                <div className="grid sm:grid-cols-2 gap-3">
+                <h2 className="text-xl md:text-2xl font-bold mb-4">Options complémentaires</h2>
+                <div className="grid sm:grid-cols-2 gap-4">
                   {displayAddons.map(addon => (
-                    <Card key={addon.id} className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-4">
-                        <div className="flex justify-between items-start">
-                          <h3 className="font-semibold text-sm">{addon.name}</h3>
-                          {addon.price && <span className="font-bold text-accent text-sm">{addon.price.toLocaleString()} XAF</span>}
+                    <Card key={addon.id} className="card-elevated">
+                      <CardContent className="p-5">
+                        <div className="flex justify-between items-start mb-2">
+                          <h3 className="font-semibold">{addon.name}</h3>
+                          {addon.price && <span className="font-bold text-accent shrink-0 ml-2">{addon.price.toLocaleString()} XAF</span>}
                         </div>
-                        {addon.description && <p className="text-xs text-muted-foreground mt-1">{addon.description}</p>}
-                        {addon.duration && <p className="text-xs text-muted-foreground mt-1">{addon.duration}</p>}
+                        {addon.description && <p className="text-sm text-muted-foreground">{addon.description}</p>}
+                        {addon.duration && <p className="text-xs text-muted-foreground mt-2">Durée: {addon.duration}</p>}
                       </CardContent>
                     </Card>
                   ))}
@@ -338,62 +358,82 @@ const ServiceDetails = () => {
 
             {displayFaqs.length > 0 && (
               <div>
-                <h2 className="text-xl font-semibold mb-3">Questions fréquentes</h2>
+                <h2 className="text-xl md:text-2xl font-bold mb-4">Questions fréquentes</h2>
                 <div className="space-y-3">
                   {displayFaqs.map(faq => (
-                    <details key={faq.id} className="group border rounded-lg">
-                      <summary className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/50 transition-colors">
-                        <span className="font-medium text-sm">{faq.question}</span>
-                        <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
+                    <details key={faq.id} className="group border border-border rounded-xl overflow-hidden">
+                      <summary className="flex items-center justify-between p-4 md:p-5 cursor-pointer hover:bg-muted/50 transition-colors">
+                        <span className="font-medium text-sm md:text-base pr-4">{faq.question}</span>
+                        <ChevronDown className="h-5 w-5 shrink-0 text-muted-foreground transition-transform duration-300 group-open:rotate-180" />
                       </summary>
-                      <div className="px-4 pb-4 text-sm text-muted-foreground">{faq.answer}</div>
+                      <div className="px-4 md:px-5 pb-4 md:pb-5 text-sm text-muted-foreground border-t border-border pt-3">
+                        {faq.answer}
+                      </div>
                     </details>
                   ))}
                 </div>
               </div>
             )}
+
+            {/* Back to services */}
+            <div>
+              <Link to="/#services" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <ChevronRight className="h-4 w-4 rotate-180" />
+                Retour aux services
+              </Link>
+            </div>
           </div>
 
-          <div className="space-y-4">
-            <div className="bg-accent/5 rounded-xl p-6 space-y-4 border border-accent/20">
-              <h3 className="font-semibold text-lg">{displayName}</h3>
-              {displayPrice && <p className="text-2xl font-bold text-accent">{displayPrice}</p>}
-              <div className="space-y-2">
+          <div className="space-y-6 lg:sticky lg:top-24 lg:self-start">
+            <div className="bg-accent/5 rounded-xl p-6 md:p-8 space-y-6 border border-accent/20">
+              <div>
+                <h3 className="font-semibold text-lg">{displayName}</h3>
+                {displayPrice && <p className="text-2xl md:text-3xl font-bold text-accent mt-2">{displayPrice}</p>}
+              </div>
+              <div className="space-y-3">
                 <BookingModal>
-                  <Button className="w-full">{t("project.bookService") || "Réserver"}</Button>
+                  <Button className="w-full" size="lg">{t("project.bookService") || "Réserver maintenant"}</Button>
                 </BookingModal>
                 {service?.quote_required && (
                   <Link to="/quote">
-                    <Button variant="outline" className="w-full">Demander un devis</Button>
+                    <Button variant="outline" className="w-full" size="lg">Demander un devis</Button>
                   </Link>
                 )}
               </div>
               {service?.online_payment_enabled && (
-                <p className="text-xs text-muted-foreground text-center">Paiement en ligne sécurisé</p>
+                <p className="text-xs text-muted-foreground text-center flex items-center justify-center gap-1">
+                  <ShieldCheck className="h-3.5 w-3.5" /> Paiement en ligne sécurisé
+                </p>
               )}
             </div>
 
             {locations.length > 0 && (
-              <Card>
-                <CardContent className="p-4 space-y-2">
+              <Card className="card-elevated">
+                <CardContent className="p-5 space-y-3">
                   <h4 className="font-semibold text-sm flex items-center gap-2"><MapPin className="h-4 w-4 text-accent" /> Zones desservies</h4>
-                  {locations.map(l => (
-                    <p key={l.id} className="text-sm text-muted-foreground">{l.location}</p>
-                  ))}
+                  <div className="space-y-2">
+                    {locations.map(l => (
+                      <p key={l.id} className="text-sm text-muted-foreground flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-accent/60 shrink-0" />
+                        {l.location}
+                      </p>
+                    ))}
+                  </div>
                 </CardContent>
               </Card>
             )}
 
-            <div className="flex gap-2">
-              <a href="https://wa.me/237670000000" target="_blank" rel="noopener noreferrer" className="flex-1">
-                <Button variant="outline" className="w-full text-green-600 border-green-600">
+            <div>
+              <a href="https://wa.me/237670000000" target="_blank" rel="noopener noreferrer">
+                <Button variant="outline" className="w-full text-green-600 border-green-600 hover:bg-green-50 hover:text-green-700">
                   <Phone className="h-4 w-4 mr-2" />WhatsApp
                 </Button>
               </a>
             </div>
           </div>
-        </div>
       </div>
+    </div>
+    </div>
     </div>
   );
 };

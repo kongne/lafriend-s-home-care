@@ -237,25 +237,25 @@ export const Gallery = () => {
   const showFilters = projects.length > 0;
 
   return (
-    <section id="galerie" className="py-20 bg-background">
-      <div className="container mx-auto px-4">
+    <section id="galerie" className="section-padding bg-background">
+      <div className="section-container">
         <div
           ref={ref}
-          className={`text-center mb-12 space-y-4 transition-all duration-700 ${
+          className={`transition-all duration-700 ${
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
           }`}
         >
-          <p className="text-accent font-semibold uppercase tracking-wider">{t('gallery.tagline')}</p>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground">
+          <p className="text-center uppercase tracking-wider text-accent font-semibold text-sm mb-2">{t('gallery.tagline')}</p>
+          <h2 className="section-title">
             {t('gallery.title')}
           </h2>
-          <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="section-subtitle">
             {t('gallery.subtitle')}
           </p>
         </div>
 
         {showFilters && (
-          <div className={`mb-8 space-y-4 transition-all duration-700 delay-200 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}>
+          <div className={`mb-10 space-y-4 transition-all duration-700 delay-200 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}>
             <div className="relative max-w-md mx-auto">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -304,15 +304,19 @@ export const Gallery = () => {
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="text-center py-16 text-muted-foreground">
-            <Search className="h-12 w-12 mx-auto mb-3 opacity-50" />
-            <p className="font-semibold">{t("gallery.noResults") || "Aucun projet trouvé"}</p>
+          <div className="text-center py-20 text-muted-foreground">
+            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+              <Search className="h-8 w-8 opacity-50" />
+            </div>
+            <p className="font-semibold text-foreground">{t("gallery.noResults") || "Aucun projet trouvé"}</p>
             <p className="text-sm mt-1">{t("gallery.tryDifferent") || "Essayez un autre filtre ou terme de recherche."}</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6">
             {filtered.map((project, index) => (
-              <BeforeAfterCard key={project.id} project={project} index={index} isVisible={isVisible} t={t} language={language} />
+              <div key={project.id} className={isVisible ? "animate-fade-in-up" : "opacity-0"} style={{ animationDelay: `${index * 100}ms`, animationFillMode: "backwards" }}>
+                <BeforeAfterCard project={project} index={index} isVisible={true} t={t} language={language} />
+              </div>
             ))}
           </div>
         )}

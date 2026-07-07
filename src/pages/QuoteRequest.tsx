@@ -86,17 +86,23 @@ const QuoteRequest = () => {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <main className="container mx-auto px-4 py-24">
-          <Card className="max-w-lg mx-auto p-8 text-center space-y-4">
-            <CheckCircle className="h-16 w-16 mx-auto text-green-500" />
-            <h2 className="text-2xl font-bold text-foreground">Demande reçue !</h2>
-            <p className="text-muted-foreground">
-              Notre équipe vous contactera sous 24h avec un devis personnalisé.
-            </p>
+        <main className="section-padding">
+        <div className="section-container max-w-lg">
+          <Card className="card-elevated p-10 text-center space-y-6">
+            <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto">
+              <CheckCircle className="h-8 w-8 text-green-500" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-foreground mb-2">Demande reçue !</h2>
+              <p className="text-muted-foreground">
+                Notre équipe vous contactera sous 24h avec un devis personnalisé.
+              </p>
+            </div>
             <Button onClick={() => setSubmitted(false)} variant="outline">
               Nouvelle demande
             </Button>
           </Card>
+        </div>
         </main>
         <Footer />
       </div>
@@ -111,20 +117,22 @@ const QuoteRequest = () => {
         path="/quote"
       />
       <Navbar />
-      <main className="container mx-auto px-4 py-24">
-        <div className="max-w-2xl mx-auto">
-          <div className="text-center mb-8">
-            <FileText className="h-12 w-12 mx-auto text-accent mb-4" />
-            <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+      <main className="section-padding">
+        <div className="section-container max-w-2xl">
+          <div className="text-center mb-10">
+            <div className="w-14 h-14 rounded-xl bg-accent/10 flex items-center justify-center mx-auto mb-4">
+              <FileText className="h-7 w-7 text-accent" />
+            </div>
+            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
               Demander un devis gratuit
             </h1>
-            <p className="text-muted-foreground mt-2">
+            <p className="text-muted-foreground text-base max-w-lg mx-auto">
               Décrivez vos besoins et recevez un devis personnalisé sous 24h
             </p>
           </div>
 
-          <Card className="p-6 md:p-8">
-            <form onSubmit={handleSubmit} className="space-y-4">
+          <Card className="card-elevated p-6 md:p-8">
+            <form onSubmit={handleSubmit} className="space-y-5">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="fullName">Nom complet *</Label>
@@ -195,7 +203,7 @@ const QuoteRequest = () => {
                 <Textarea id="message" name="message" value={formData.message} onChange={handleChange} rows={4} maxLength={2000} placeholder="Décrivez vos besoins spécifiques, accès, contraintes horaires..." />
               </div>
 
-              <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 font-semibold py-5" disabled={loading || !formData.serviceType || !formData.fullName || !formData.email}>
+              <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 font-semibold py-5 text-base" disabled={loading || !formData.serviceType || !formData.fullName || !formData.email}>
                 {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Envoi en cours...</> : "Demander mon devis gratuit"}
               </Button>
             </form>

@@ -142,64 +142,64 @@ export const Contact = () => {
   };
 
   return (
-    <section id="contact" className="py-20 bg-secondary">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-16 space-y-4">
-          <p className="text-accent font-semibold uppercase tracking-wider">{t('nav.contact')}</p>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground">
+    <section id="contact" className="section-padding bg-secondary">
+      <div className="section-container">
+        <div className="text-center mb-12">
+          <p className="uppercase tracking-wider text-accent font-semibold text-sm mb-2">{t('nav.contact')}</p>
+          <h2 className="section-title">
             {t('contact.title')}
           </h2>
-          <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="section-subtitle">
             {t('contact.subtitle')}
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-12">
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16">
           {/* Contact info */}
           <div className="space-y-8">
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0">
+              <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
                 <Phone className="w-6 h-6 text-accent" />
               </div>
               <div>
-                <h3 className="text-xl font-bold mb-2 text-foreground">Téléphone</h3>
+                <h3 className="text-lg font-bold mb-1 text-foreground">Téléphone</h3>
                 <p className="text-muted-foreground whitespace-pre-line">{"+237 693 13 82 92\n+237 683 40 62 90"}</p>
               </div>
             </div>
 
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0">
+              <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
                 <Mail className="w-6 h-6 text-accent" />
               </div>
               <div>
-                <h3 className="text-xl font-bold mb-2 text-foreground">Email</h3>
+                <h3 className="text-lg font-bold mb-1 text-foreground">Email</h3>
                 <p className="text-muted-foreground">lafriendsservices@gmail.com</p>
               </div>
             </div>
 
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0">
+              <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
                 <MapPin className="w-6 h-6 text-accent" />
               </div>
               <div>
-                <h3 className="text-xl font-bold mb-2 text-foreground">Adresse</h3>
+                <h3 className="text-lg font-bold mb-1 text-foreground">Adresse</h3>
                 <p className="text-muted-foreground">Bafoussam, Cameroun</p>
               </div>
             </div>
 
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0">
+              <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
                 <Clock className="w-6 h-6 text-accent" />
               </div>
               <div>
-                <h3 className="text-xl font-bold mb-2 text-foreground">Horaires</h3>
+                <h3 className="text-lg font-bold mb-1 text-foreground">Horaires</h3>
                 <p className="text-muted-foreground">Lun - Dim: 8:00 - 18:00</p>
               </div>
             </div>
           </div>
 
           {/* Contact form */}
-          <form onSubmit={handleSubmit} className="space-y-6 bg-card p-6 sm:p-8 rounded-lg shadow-lg">
+          <form onSubmit={handleSubmit} className="space-y-6 bg-card p-6 sm:p-8 rounded-xl shadow-lg border border-border">
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="contact-fullName">{t('booking.name')}</Label>

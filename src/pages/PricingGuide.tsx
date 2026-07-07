@@ -132,32 +132,34 @@ const PricingGuide = () => {
       <script type="application/ld+json">{JSON.stringify(faqJsonLd)}</script>
       <Navbar />
 
-      <main className="container mx-auto px-4 py-24 max-w-4xl">
-        <header className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 text-sm uppercase tracking-wider text-accent font-semibold mb-3">
+      <main className="section-container py-24 max-w-4xl">
+        <header className="text-center mb-16">
+          <div className="inline-flex items-center gap-2 text-sm uppercase tracking-wider text-accent font-semibold mb-4">
             <Calculator className="h-4 w-4" />
             {language === "en" ? "Pricing guide" : "Guide des tarifs"}
           </div>
           <h1 className="text-3xl md:text-5xl font-bold text-foreground mb-4 leading-tight">
             {c.title}
           </h1>
-          <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             {c.intro}
           </p>
         </header>
 
-        <section className="mb-12">
+        <section className="mb-16">
           <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-6">
             {c.factorsTitle}
           </h2>
           <div className="grid sm:grid-cols-2 gap-4">
             {c.factors.map((f, i) => (
-              <Card key={i} className="p-5">
+              <Card key={i} className="card-elevated p-5">
                 <div className="flex items-start gap-3">
-                  <Info className="h-5 w-5 text-accent flex-shrink-0 mt-0.5" />
+                  <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center shrink-0 mt-0.5">
+                    <Info className="h-4 w-4 text-accent" />
+                  </div>
                   <div>
                     <h3 className="font-semibold text-foreground mb-1">{f.t}</h3>
-                    <p className="text-sm text-muted-foreground">{f.d}</p>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{f.d}</p>
                   </div>
                 </div>
               </Card>
@@ -165,42 +167,54 @@ const PricingGuide = () => {
           </div>
         </section>
 
-        <section className="mb-12">
+        <section className="mb-16">
           <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-6">
             {c.breakdownTitle}
           </h2>
-          <div className="grid md:grid-cols-3 gap-4 mb-6">
-            <Card className="p-5">
-              <Home className="h-8 w-8 text-accent mb-3" />
-              <h3 className="font-semibold text-foreground mb-1">
+          <div className="grid md:grid-cols-3 gap-6 mb-6">
+            <Card className="card-elevated p-6">
+              <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center mb-4">
+                <Home className="h-6 w-6 text-accent" />
+              </div>
+              <h3 className="font-semibold text-foreground mb-2">
                 {language === "en" ? "Residential" : "Résidentiel"}
               </h3>
-              <p className="text-2xl font-bold text-foreground">15 000+ <span className="text-sm font-normal text-muted-foreground">FCFA</span></p>
+              <p className="text-3xl font-bold text-foreground">15 000+ <span className="text-base font-normal text-muted-foreground">FCFA</span></p>
             </Card>
-            <Card className="p-5">
-              <Building2 className="h-8 w-8 text-accent mb-3" />
-              <h3 className="font-semibold text-foreground mb-1">
+            <Card className="card-elevated p-6">
+              <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center mb-4">
+                <Building2 className="h-6 w-6 text-accent" />
+              </div>
+              <h3 className="font-semibold text-foreground mb-2">
                 {language === "en" ? "Commercial" : "Commercial"}
               </h3>
-              <p className="text-2xl font-bold text-foreground">25 000+ <span className="text-sm font-normal text-muted-foreground">FCFA</span></p>
+              <p className="text-3xl font-bold text-foreground">25 000+ <span className="text-base font-normal text-muted-foreground">FCFA</span></p>
             </Card>
-            <Card className="p-5">
-              <Car className="h-8 w-8 text-accent mb-3" />
-              <h3 className="font-semibold text-foreground mb-1">
+            <Card className="card-elevated p-6">
+              <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center mb-4">
+                <Car className="h-6 w-6 text-accent" />
+              </div>
+              <h3 className="font-semibold text-foreground mb-2">
                 {language === "en" ? "Car wash" : "Lavage auto"}
               </h3>
-              <p className="text-2xl font-bold text-foreground">5 000+ <span className="text-sm font-normal text-muted-foreground">FCFA</span></p>
+              <p className="text-3xl font-bold text-foreground">5 000+ <span className="text-base font-normal text-muted-foreground">FCFA</span></p>
             </Card>
           </div>
 
           <h3 className="text-xl font-semibold text-foreground mb-4">{c.rangesTitle}</h3>
-          <Card className="overflow-hidden">
+          <Card className="card-elevated overflow-hidden">
             <table className="w-full text-left">
+              <thead>
+                <tr className="border-b border-border bg-muted/50">
+                  <th className="p-4 text-sm font-semibold text-foreground">{language === "en" ? "Property / Service" : "Propriété / Service"}</th>
+                  <th className="p-4 text-sm font-semibold text-foreground text-right">{language === "en" ? "Price range" : "Fourchette de prix"}</th>
+                </tr>
+              </thead>
               <tbody>
                 {c.ranges.map((r, i) => (
-                  <tr key={i} className="border-b border-border last:border-0">
+                  <tr key={i} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
                     <td className="p-4 text-sm md:text-base text-foreground">{r.label}</td>
-                    <td className="p-4 text-sm md:text-base font-semibold text-foreground text-right">{r.price}</td>
+                    <td className="p-4 text-sm md:text-base font-semibold text-foreground text-right whitespace-nowrap">{r.price}</td>
                   </tr>
                 ))}
               </tbody>
@@ -214,35 +228,35 @@ const PricingGuide = () => {
           </p>
         </section>
 
-        <section className="mb-12">
+        <section className="mb-16">
           <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-6">
             {c.saveTitle}
           </h2>
-          <ul className="space-y-3">
+          <div className="grid sm:grid-cols-2 gap-3">
             {c.saveTips.map((tip, i) => (
-              <li key={i} className="flex items-start gap-3">
-                <CheckCircle className="h-5 w-5 text-accent flex-shrink-0 mt-0.5" />
-                <span className="text-foreground">{tip}</span>
-              </li>
+              <div key={i} className="flex items-start gap-3 bg-muted/30 rounded-xl px-5 py-4">
+                <CheckCircle className="h-5 w-5 text-accent shrink-0 mt-0.5" />
+                <span className="text-foreground text-sm">{tip}</span>
+              </div>
             ))}
-          </ul>
+          </div>
         </section>
 
-        <section className="mb-12">
+        <section className="mb-16">
           <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-6">
             {c.faqTitle}
           </h2>
-          <div className="space-y-4">
+          <div className="space-y-3">
             {c.faqs.map((f, i) => (
-              <Card key={i} className="p-5">
+              <Card key={i} className="card-elevated p-5">
                 <h3 className="font-semibold text-foreground mb-2">{f.q}</h3>
-                <p className="text-sm text-muted-foreground">{f.a}</p>
+                <p className="text-sm text-muted-foreground leading-relaxed">{f.a}</p>
               </Card>
             ))}
           </div>
         </section>
 
-        <section className="rounded-2xl bg-primary text-primary-foreground p-8 md:p-12 text-center">
+        <section className="rounded-2xl bg-primary text-primary-foreground p-10 md:p-14 text-center">
           <h2 className="text-2xl md:text-3xl font-bold mb-3">{c.ctaTitle}</h2>
           <p className="text-primary-foreground/80 mb-6 max-w-xl mx-auto">{c.ctaText}</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">

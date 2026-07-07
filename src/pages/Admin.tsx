@@ -615,7 +615,14 @@ const Admin = () => {
                 </Card>
               </SelectableItem>
             ))}
-            {filteredBookings.length === 0 && <Card><CardContent className="py-8 text-center text-muted-foreground">Aucune réservation</CardContent></Card>}
+            {filteredBookings.length === 0 && (
+              <Card>
+                <CardContent className="py-12 text-center text-muted-foreground">
+                  <CalendarDays className="h-10 w-10 mx-auto mb-3 opacity-50" />
+                  <p>Aucune réservation</p>
+                </CardContent>
+              </Card>
+            )}
           </div>
         );
 
@@ -670,7 +677,14 @@ const Admin = () => {
                 </Card>
               </SelectableItem>
             ))}
-            {filteredContacts.length === 0 && <Card><CardContent className="py-8 text-center text-muted-foreground">Aucun message</CardContent></Card>}
+            {filteredContacts.length === 0 && (
+              <Card>
+                <CardContent className="py-12 text-center text-muted-foreground">
+                  <Mail className="h-10 w-10 mx-auto mb-3 opacity-50" />
+                  <p>Aucun message</p>
+                </CardContent>
+              </Card>
+            )}
           </div>
         );
 
@@ -837,7 +851,12 @@ const Admin = () => {
             </div>
             <div className="grid gap-3">
               {filteredBookings.length === 0 ? (
-                <Card><CardContent className="py-8 text-center text-muted-foreground">Aucune réservation</CardContent></Card>
+                <Card>
+                  <CardContent className="py-12 text-center text-muted-foreground">
+                    <FileText className="h-10 w-10 mx-auto mb-3 opacity-50" />
+                    <p>Aucune réservation</p>
+                  </CardContent>
+                </Card>
               ) : (
                 filteredBookings.map((booking) => (
                   <Card key={booking.id}>
