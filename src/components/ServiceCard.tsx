@@ -32,7 +32,7 @@ export const ServiceCard = memo(({ service, index, isVisible, isDBSource, t }: P
 
   return (
     <Card
-      className={`card-elevated group cursor-pointer relative overflow-hidden ${
+      className={`card-elevated group cursor-pointer relative overflow-hidden p-5 md:p-8 ${
         isVisible ? "animate-fade-in-up" : "opacity-0"
       }`}
       style={{ animationDelay: `${index * 100}ms`, animationFillMode: "backwards" }}
