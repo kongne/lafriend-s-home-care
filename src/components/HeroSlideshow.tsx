@@ -105,7 +105,7 @@ export const HeroSlideshow = () => {
                   {t("hero.book")}
                 </Button>
               </BookingModal>
-              <Button size="lg" variant="outline" aria-label="Découvrir nos services de nettoyage professionnel" onClick={() => document.getElementById("apropos")?.scrollIntoView({
+              <Button size="lg" variant="outline" aria-label="Découvrir nos services de nettoyage professionnel" onClick={() => document.getElementById("services")?.scrollIntoView({
               behavior: "smooth"
             })} className="border-2 border-primary-foreground font-semibold text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 text-primary bg-primary-foreground">
                 {t("hero.learnMore")}

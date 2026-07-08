@@ -15,7 +15,7 @@ export const translations: Translations = {
   'nav.gallery': { fr: 'Galerie', en: 'Gallery' },
   'nav.pricing': { fr: 'Tarifs', en: 'Pricing' },
   'nav.testimonials': { fr: 'Témoignages', en: 'Testimonials' },
-  'nav.about': { fr: 'À Propos', en: 'About' },
+
   'nav.faq': { fr: 'FAQ', en: 'FAQ' },
   'nav.contact': { fr: 'Contact', en: 'Contact' },
   'nav.login': { fr: 'Connexion', en: 'Login' },
@@ -33,29 +33,13 @@ export const translations: Translations = {
   'hero.slide3.title': { fr: 'Lavage Auto Premium', en: 'Premium Car Wash' },
   'hero.slide3.subtitle': { fr: 'Service de lavage automobile complet pour l\'extérieur et l\'intérieur. Redonnez vie à votre véhicule avec notre expertise.', en: 'Complete car wash service for exterior and interior. Bring your vehicle back to life with our expertise.' },
   
-  // Stats section
-  'stats.clients': { fr: 'Clients Satisfaits', en: 'Satisfied Clients' },
-  'stats.years': { fr: 'Années d\'Expérience', en: 'Years Experience' },
-  'stats.quality': { fr: 'Garantie Qualité', en: 'Quality Guarantee' },
-  'stats.support': { fr: 'Support Disponible', en: 'Support Available' },
-  
   // Booking form
   'booking.title': { fr: 'Réserver un service', en: 'Book a service' },
   'booking.name': { fr: 'Votre Nom', en: 'Your Name' },
   'booking.namePlaceholder': { fr: 'Entrez votre nom', en: 'Enter your name' },
   'booking.email': { fr: 'Email', en: 'Email' },
   'booking.phone': { fr: 'Numéro de téléphone', en: 'Phone number' },
-  'booking.address': { fr: 'Adresse', en: 'Address' },
-  'booking.addressPlaceholder': { fr: 'Votre adresse', en: 'Your address' },
-  'booking.service': { fr: 'Choisir un Service', en: 'Choose a Service' },
-  'booking.servicePlaceholder': { fr: 'Sélectionner un service', en: 'Select a service' },
-  'booking.date': { fr: 'Date souhaitée', en: 'Preferred date' },
-  'booking.time': { fr: 'Heure souhaitée', en: 'Preferred time' },
-  'booking.timePlaceholder': { fr: 'Heure', en: 'Time' },
-  'booking.message': { fr: 'Message (optionnel)', en: 'Message (optional)' },
-  'booking.messagePlaceholder': { fr: 'Précisions supplémentaires...', en: 'Additional details...' },
-  'booking.submit': { fr: 'RÉSERVER MAINTENANT', en: 'BOOK NOW' },
-  'booking.submitting': { fr: 'Envoi en cours...', en: 'Submitting...' },
+
   'booking.success': { fr: 'Réservation envoyée!', en: 'Booking submitted!' },
   'booking.successDesc': { fr: 'Nous vous contacterons bientôt pour confirmer votre rendez-vous.', en: 'We will contact you soon to confirm your appointment.' },
   'booking.error': { fr: 'Erreur', en: 'Error' },
@@ -90,10 +74,7 @@ export const translations: Translations = {
   'services.car.f1': { fr: 'Lavage extérieur', en: 'Exterior wash' },
   'services.car.f2': { fr: 'Nettoyage intérieur', en: 'Interior cleaning' },
   'services.car.f3': { fr: 'Traitement des tissus', en: 'Fabric treatment' },
-  'services.nanny': { fr: 'Placement de Nounou', en: 'Nanny Placement' },
-  'services.nanny.desc': { fr: "Service de garde d'enfants professionnel", en: 'Professional childcare service' },
-  'services.cook': { fr: 'Service de Cuisinière', en: 'Cook Service' },
-  'services.cook.desc': { fr: 'Cuisinière professionnelle pour votre domicile', en: 'Professional cook for your home' },
+
   'services.custom': { fr: 'Service Personnalisé', en: 'Custom Service' },
   'services.custom.desc': { fr: 'Besoin d\'un service spécifique? Nous créons une solution sur mesure.', en: 'Need a specific service? We create a custom solution.' },
   'services.custom.f1': { fr: 'Solutions adaptées', en: 'Tailored solutions' },
@@ -117,12 +98,7 @@ export const translations: Translations = {
   'gallery.subtitle': { fr: 'Découvrez la transformation grâce à nos services professionnels', en: 'Discover the transformation with our professional services' },
   'gallery.before': { fr: 'Avant', en: 'Before' },
   'gallery.after': { fr: 'Après', en: 'After' },
-  'gallery.hover': { fr: 'Survolez pour voir le résultat', en: 'Hover to see the result' },
-  'gallery.kitchen': { fr: 'Cuisine Résidentielle', en: 'Residential Kitchen' },
-  'gallery.office': { fr: 'Bureau Commercial', en: 'Commercial Office' },
-  'gallery.car': { fr: 'Véhicule Intérieur', en: 'Vehicle Interior' },
-  'gallery.bathroom': { fr: 'Salle de Bain', en: 'Bathroom' },
- 'gallery.bandjounVilla': { fr: 'Villa Bandjoun — Post-Construction', en: 'Bandjoun Villa — Post-Construction' },
+
   
   // Pricing section
   'pricing.tagline': { fr: 'Nos Tarifs', en: 'Our Prices' },
@@ -167,21 +143,7 @@ export const translations: Translations = {
   'testimonials.t3': { fr: 'Le meilleur rapport qualité-prix à Douala. Je recommande vivement pour tout type de nettoyage.', en: 'The best value for money in Douala. I highly recommend for any type of cleaning.' },
   'testimonials.t4': { fr: 'Après nos travaux de construction, ils ont rendu le bâtiment impeccable en un temps record.', en: 'After our construction work, they made the building spotless in record time.' },
   
-  // About section
-  'about.tagline': { fr: 'À propos de la société', en: 'About the company' },
-  'about.title': { fr: 'Entreprise de nettoyage de confiance depuis 2020', en: 'Trusted cleaning company since 2020' },
-  'about.p1': { fr: 'Bienvenue chez <strong>LaFriend\'s Services Ménagers</strong>, votre partenaire de confiance pour des services de nettoyage professionnels. Que vous ayez besoin d\'un nettoyage résidentiel, d\'un entretien de bureaux ou d\'un lavage de voiture, notre équipe d\'experts est là pour vous offrir une propreté impeccable.', en: 'Welcome to <strong>LaFriend\'s Services Ménagers</strong>, your trusted partner for professional cleaning services. Whether you need residential cleaning, office maintenance or car washing, our team of experts is here to offer you impeccable cleanliness.' },
-  'about.p2': { fr: 'Grâce à notre plateforme en ligne innovante, réserver un service de nettoyage n\'a jamais été aussi simple. Nos produits écologiques et nos techniques de pointe garantissent un résultat optimal tout en respectant l\'environnement.', en: 'Thanks to our innovative online platform, booking a cleaning service has never been easier. Our eco-friendly products and cutting-edge techniques guarantee optimal results while respecting the environment.' },
-  'about.p3': { fr: 'Faites confiance à LaFriend\'s pour transformer votre espace et vous offrir un cadre de vie sain et agréable. Découvrez dès maintenant la différence LaFriend\'s et profitez d\'un service de qualité à des prix compétitifs.', en: 'Trust LaFriend\'s to transform your space and offer you a healthy and pleasant living environment. Discover the LaFriend\'s difference now and enjoy quality service at competitive prices.' },
-  'about.stat1': { fr: 'Clients Satisfaits', en: 'Satisfied Clients' },
-  'about.stat2': { fr: 'Service Disponible', en: 'Available Service' },
-  'about.stat3': { fr: 'Années d\'Expérience', en: 'Years of Experience' },
-  'about.stat4': { fr: 'Garantie Qualité', en: 'Quality Guarantee' },
-  'about.p4': { fr: 'Basée à Bafoussam, notre entreprise intervient dans toute la région de l\'Ouest Cameroun. Nous sommes fiers de contribuer à un cadre de vie plus sain pour nos communautés, avec un service client disponible 7j/7 et une garantie satisfaction à 100%.', en: 'Based in Bafoussam, our company serves the entire West Cameroon region. We are proud to contribute to a healthier living environment for our communities, with customer service available 7 days a week and a 100% satisfaction guarantee.' },
-  'about.highlight1': { fr: 'Équipe certifiée et assurée', en: 'Certified and insured team' },
-  'about.highlight2': { fr: 'Produits 100% écologiques', en: '100% eco-friendly products' },
-  'about.highlight3': { fr: 'Service dans tout l\'Ouest Cameroun', en: 'Service across West Cameroon' },
-  'about.highlight4': { fr: 'Support client 7j/7', en: '7/7 customer support' },
+
   
   // FAQ section
   'faq.tagline': { fr: 'FAQ', en: 'FAQ' },
@@ -210,12 +172,9 @@ export const translations: Translations = {
   'footer.description': { fr: 'Votre partenaire de confiance pour des services de nettoyage professionnels.', en: 'Your trusted partner for professional cleaning services.' },
   'footer.quickLinks': { fr: 'Liens Rapides', en: 'Quick Links' },
   'footer.ourServices': { fr: 'Nos Services', en: 'Our Services' },
-  'footer.newsletter': { fr: 'Newsletter', en: 'Newsletter' },
-  'footer.newsletterDesc': { fr: 'Inscrivez-vous pour recevoir nos offres spéciales', en: 'Subscribe to receive our special offers' },
-  'footer.emailPlaceholder': { fr: 'Votre email', en: 'Your email' },
+
   'footer.rights': { fr: 'Tous droits réservés.', en: 'All rights reserved.' },
-  'footer.subscribed': { fr: 'Inscrit!', en: 'Subscribed!' },
-  'footer.subscribedDesc': { fr: 'Merci pour votre inscription à notre newsletter.', en: 'Thank you for subscribing to our newsletter.' },
+
   'footer.pricingGuide': { fr: 'Guide des prix', en: 'Pricing Guide' },
   
   // Contact
@@ -288,26 +247,13 @@ export const translations: Translations = {
   'session.logoutNow': { fr: 'Se déconnecter', en: 'Log Out Now' },
   'session.timeoutToast': { fr: 'Vous avez été déconnecté(e) en toute sécurité pour cause d\'inactivité.', en: 'You have been logged out safely due to inactivity.' },
 
-  // Service details page
-  'details.notFound': { fr: 'Service non trouvé', en: 'Service not found' },
-  'details.backHome': { fr: "Retour à l'accueil", en: 'Back to home' },
-  'details.back': { fr: 'Retour', en: 'Back' },
-  'details.included': { fr: 'Ce qui est inclus', en: "What's included" },
-  'details.howItWorks': { fr: 'Comment ça marche', en: 'How it works' },
-  'details.step': { fr: 'Étape', en: 'Step' },
-  'details.ready': { fr: 'Prêt à réserver ?', en: 'Ready to book?' },
-  'details.readyDesc': { fr: 'Réservez en quelques clics ou demandez un devis personnalisé', en: 'Book in a few clicks or request a custom quote' },
-  'details.bookNow': { fr: 'Réserver maintenant', en: 'Book now' },
-  'details.requestQuote': { fr: 'Demander un devis', en: 'Request a quote' },
+
 
   // Booking extras
-  'booking.currency': { fr: 'Devise', en: 'Currency' },
-  'booking.distance': { fr: 'Distance (km)', en: 'Distance (km)' },
-  'booking.travelFee': { fr: 'Frais de déplacement', en: 'Travel fee' },
-  'booking.exchangeFee': { fr: 'Frais de change', en: 'Exchange fee' },
+
 
   // Navigation
-  'nav.recruitment': { fr: 'Recrutement', en: 'Join Us' },
+
 
   // Testimonials
   'testimonials.viewAll': { fr: 'Voir tous les avis', en: 'View all reviews' },
