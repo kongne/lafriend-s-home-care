@@ -99,7 +99,18 @@ export const translations: Translations = {
   'services.custom.f1': { fr: 'Solutions adaptées', en: 'Tailored solutions' },
   'services.custom.f2': { fr: 'Devis gratuit', en: 'Free quote' },
   'services.custom.f3': { fr: 'Conseil expert', en: 'Expert advice' },
-  
+  'services.featured': { fr: 'À la une', en: 'Featured' },
+  'services.all': { fr: 'Tous', en: 'All' },
+  'services.requestQuote': { fr: 'Demander un devis gratuit', en: 'Request a free quote' },
+  'services.search': { fr: 'Rechercher un service...', en: 'Search services...' },
+  'services.noResults': { fr: 'Aucun service trouvé', en: 'No services found' },
+  'services.tryDifferent': { fr: 'Essayez un autre filtre ou terme de recherche.', en: 'Try a different filter or search term.' },
+  'services.reset': { fr: 'Réinitialiser les filtres', en: 'Reset filters' },
+
+  // nav
+  'nav.closeMenu': { fr: 'Fermer le menu', en: 'Close menu' },
+  'nav.openMenu': { fr: 'Ouvrir le menu', en: 'Open menu' },
+
   // Gallery section
   'gallery.tagline': { fr: 'Notre Travail', en: 'Our Work' },
   'gallery.title': { fr: 'Avant & Après', en: 'Before & After' },
@@ -191,6 +202,10 @@ export const translations: Translations = {
   'faq.q7': { fr: 'Quels sont les meilleurs services de nettoyage à domicile disponibles au Cameroun ?', en: 'What are the best home cleaning services available in Cameroon?' },
   'faq.a7': { fr: 'LaFriend\'s Services offre les meilleurs services de nettoyage à domicile au Cameroun avec du personnel professionnel formé, des produits écologiques, des horaires flexibles et des prix compétitifs. Nous servons Douala, Yaoundé et les environs avec des services de nettoyage résidentiel, commercial et spécialisé.', en: 'LaFriend\'s Services offers the best home cleaning services in Cameroon with professional trained staff, eco-friendly products, flexible scheduling, and competitive pricing. We serve Douala, Yaoundé, and surrounding areas with residential, commercial, and specialized cleaning services.' },
   
+  // Estimate page
+  'estimate.title': { fr: 'Estimation en ligne', en: 'Online Estimate' },
+  'estimate.subtitle': { fr: 'Obtenez une estimation instantanée pour vos travaux de nettoyage', en: 'Get an instant estimate for your cleaning work' },
+
   // Footer
   'footer.description': { fr: 'Votre partenaire de confiance pour des services de nettoyage professionnels.', en: 'Your trusted partner for professional cleaning services.' },
   'footer.quickLinks': { fr: 'Liens Rapides', en: 'Quick Links' },
@@ -201,6 +216,7 @@ export const translations: Translations = {
   'footer.rights': { fr: 'Tous droits réservés.', en: 'All rights reserved.' },
   'footer.subscribed': { fr: 'Inscrit!', en: 'Subscribed!' },
   'footer.subscribedDesc': { fr: 'Merci pour votre inscription à notre newsletter.', en: 'Thank you for subscribing to our newsletter.' },
+  'footer.pricingGuide': { fr: 'Guide des prix', en: 'Pricing Guide' },
   
   // Contact
   'contact.title': { fr: 'Contactez-nous', en: 'Contact Us' },
@@ -211,6 +227,22 @@ export const translations: Translations = {
   'contact.sending': { fr: 'Envoi...', en: 'Sending...' },
   'contact.success': { fr: 'Message envoyé!', en: 'Message sent!' },
   'contact.successDesc': { fr: 'Nous vous répondrons dans les plus brefs délais.', en: 'We will respond as soon as possible.' },
+  'contact.inquiryType': { fr: "Type d'enquête", en: 'Inquiry Type' },
+  'contact.inquiryPlaceholder': { fr: 'Sélectionnez un type', en: 'Select a type' },
+  'contact.inquiryGeneral': { fr: 'Demande Générale', en: 'General Inquiry' },
+  'contact.inquiryBooking': { fr: 'Réservation', en: 'Booking' },
+  'contact.inquiryQuote': { fr: 'Devis', en: 'Quote' },
+  'contact.inquiryComplaint': { fr: 'Réclamation', en: 'Complaint' },
+  'contact.inquiryPartnership': { fr: 'Partenariat', en: 'Partnership' },
+  'contact.inquiryOther': { fr: 'Autre', en: 'Other' },
+  'contact.preferredTime': { fr: 'Heure préférée', en: 'Preferred Time' },
+  'contact.timePlaceholder': { fr: 'Sélectionnez une heure', en: 'Select a time' },
+  'contact.timeMorning': { fr: 'Matin (8h-12h)', en: 'Morning (8am-12pm)' },
+  'contact.timeAfternoon': { fr: 'Après-midi (12h-17h)', en: 'Afternoon (12pm-5pm)' },
+  'contact.timeEvening': { fr: 'Soirée (17h-20h)', en: 'Evening (5pm-8pm)' },
+  'contact.timeAnytime': { fr: 'Peu importe', en: 'Anytime' },
+  'contact.message': { fr: 'Message', en: 'Message' },
+  'contact.messagePlaceholder': { fr: 'Votre message...', en: 'Your message...' },
   
   // Theme
   'theme.light': { fr: 'Clair', en: 'Light' },
@@ -286,6 +318,11 @@ export const translations: Translations = {
   'gallery.noResults': { fr: 'Aucun projet trouvé', en: 'No projects found' },
   'gallery.tryDifferent': { fr: 'Essayez un autre filtre ou terme de recherche.', en: 'Try a different filter or search term.' },
   'gallery.back': { fr: 'Retour à la galerie', en: 'Back to gallery' },
+  'gallery.locations': { fr: 'Projets à', en: 'Projects in' },
+  'gallery.newest': { fr: 'Plus récents', en: 'Newest' },
+  'gallery.oldest': { fr: 'Plus anciens', en: 'Oldest' },
+  'gallery.request': { fr: 'Demander un projet similaire', en: 'Request a similar project' },
+  'gallery.reset': { fr: 'Réinitialiser les filtres', en: 'Reset filters' },
 
   // Project detail
   'project.details': { fr: 'Détails du projet', en: 'Project Details' },
