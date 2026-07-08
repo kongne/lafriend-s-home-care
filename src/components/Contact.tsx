@@ -12,6 +12,7 @@ import { Loader2 } from "lucide-react";
 import { contactSchema, rateLimit } from "@/lib/validation";
 import { warn, error as logError } from "@/lib/logger";
 import { getRecaptchaToken, verifyRecaptchaToken } from "@/lib/recaptcha";
+import { Section } from "@/components/ui/section";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
