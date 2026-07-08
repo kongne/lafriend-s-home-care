@@ -8,4 +8,11 @@ const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+const missingVars = [!SUPABASE_URL && 'VITE_SUPABASE_URL', !SUPABASE_PUBLISHABLE_KEY && 'VITE_SUPABASE_PUBLISHABLE_KEY'].filter(Boolean);
+if (missingVars.length > 0) {
+  console.error(`[Supabase] Missing environment variables: ${missingVars.join(', ')}. Set them in your Lovable Cloud dashboard.`);
+}
+
+export const supabase = SUPABASE_URL && SUPABASE_PUBLISHABLE_KEY
+  ? createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY)
+  : (null as unknown as ReturnType<typeof createClient<Database>>);

@@ -115,7 +115,7 @@ export const Navbar = () => {
             <img
               src={logoAsset.url}
               alt="LaFriend's Cleaning Services"
-              className="h-10 sm:h-12 md:h-14 w-auto object-contain"
+              className="h-12 sm:h-14 md:h-16 w-auto object-contain"
               width={200}
               height={200}
               loading="eager"
@@ -240,6 +240,17 @@ export const Navbar = () => {
         {/* Mobile menu */}
         {isMenuOpen && (
           <div id="mobile-menu" className="lg:hidden mt-4 pb-4 space-y-3 animate-in slide-in-from-top">
+            <div className="flex justify-center pb-2 border-b border-border mb-2">
+              <img
+                src={logoAsset.url}
+                alt="LaFriend's Cleaning Services"
+                className="h-16 w-auto object-contain"
+                width={160}
+                height={80}
+                loading="eager"
+                decoding="async"
+              />
+            </div>
             {[
               { href: "#services", label: t('nav.services') },
               { href: "#galerie", label: t('nav.gallery') },
