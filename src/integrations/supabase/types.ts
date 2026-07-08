@@ -14,6 +14,84 @@ export type Database = {
   }
   public: {
     Tables: {
+      announcements: {
+        Row: {
+          background_color: string
+          countdown_ends_at: string | null
+          created_at: string
+          created_by: string | null
+          dismissible: boolean
+          display_order: number
+          display_pages: string[] | null
+          ends_at: string
+          icon: string | null
+          id: string
+          is_active: boolean
+          link_text: string | null
+          link_url: string | null
+          message: string
+          show_countdown: boolean
+          starts_at: string
+          status: string
+          target_countries: string[] | null
+          target_languages: string[] | null
+          target_users: string
+          text_color: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          background_color?: string
+          countdown_ends_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          dismissible?: boolean
+          display_order?: number
+          display_pages?: string[] | null
+          ends_at?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          link_text?: string | null
+          link_url?: string | null
+          message: string
+          show_countdown?: boolean
+          starts_at?: string
+          status?: string
+          target_countries?: string[] | null
+          target_languages?: string[] | null
+          target_users?: string
+          text_color?: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          background_color?: string
+          countdown_ends_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          dismissible?: boolean
+          display_order?: number
+          display_pages?: string[] | null
+          ends_at?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          link_text?: string | null
+          link_url?: string | null
+          message?: string
+          show_countdown?: boolean
+          starts_at?: string
+          status?: string
+          target_countries?: string[] | null
+          target_languages?: string[] | null
+          target_users?: string
+          text_color?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           action: string
