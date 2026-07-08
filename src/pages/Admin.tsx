@@ -36,6 +36,7 @@ import { DashboardAnalytics } from "@/components/admin/DashboardAnalytics";
 import { ServiceManagement } from "@/components/admin/ServiceManagement";
 
 import { BroadcastNotification } from "@/components/admin/BroadcastNotification";
+import { AnnouncementManagement } from "@/components/admin/AnnouncementManagement";
 import { EmailRemindersManagement } from "@/components/admin/EmailRemindersManagement";
 import { MediaLibrary } from "@/components/admin/MediaLibrary";
 import { exportToCSV, bookingColumns, contactColumns, subscriberColumns } from "@/lib/exportCsv";
@@ -787,6 +788,13 @@ const Admin = () => {
           <div className="space-y-6">
             <h2 className="text-xl font-semibold">Diffusion de Messages</h2>
             <BroadcastNotification />
+          </div>
+        );
+
+      case "announcements":
+        return (
+          <div className="space-y-6">
+            <AnnouncementManagement />
           </div>
         );
 

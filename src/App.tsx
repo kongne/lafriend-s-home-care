@@ -11,6 +11,7 @@ import { lazy, Suspense, type ComponentType } from "react";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { SessionTimeoutDialog } from "@/components/SessionTimeoutDialog";
+import { AnnouncementBar } from "@/components/AnnouncementBar";
 
 const Auth = lazy(() => import("./pages/Auth"));
 const Admin = lazy(() => import("./pages/Admin"));
@@ -88,6 +89,7 @@ const App = () => (
             <Sonner />
             <BrowserRouter>
               <SessionTimeoutDialog />
+              <AnnouncementBar />
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={routeElement(Auth)} />

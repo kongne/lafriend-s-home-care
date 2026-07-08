@@ -62,6 +62,7 @@ const menuItems = [
   { icon: Share2, label: "Parrainages", value: "referrals", path: "/admin?tab=referrals" },
   { icon: Bell, label: "Notifications", value: "notifications", path: "/admin?tab=notifications" },
   { icon: Megaphone, label: "Diffusion", value: "broadcast", path: "/admin?tab=broadcast" },
+  { icon: Bell, label: "Bannière Annonces", value: "announcements", path: "/admin?tab=announcements" },
   { icon: Star, label: "Avis Clients", value: "feedback", path: "/admin?tab=feedback" },
   { icon: Star, label: "Modération Avis", value: "reviews", path: "/admin?tab=reviews" },
   { icon: ImageIcon, label: "Projets Galerie", value: "projects", path: "/admin?tab=projects" },
