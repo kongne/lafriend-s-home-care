@@ -111,6 +111,7 @@ export const Services = () => {
 
   return (
     <Section id="services" bg="muted" tagline={t('services.tagline')} title={t('services.title')} subtitle={t('services.subtitle')}>
+      <div ref={ref}>
 
         {!loading && allServices.length > 0 && (
           <div className={`mb-8 space-y-4 transition-all duration-700 delay-200 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}>
@@ -199,6 +200,7 @@ export const Services = () => {
             </Button>
           </div>
         </AnimatedSection>
+      </div>
     </Section>
   );
 };
