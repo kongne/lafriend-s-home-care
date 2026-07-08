@@ -50,7 +50,7 @@ export const ServiceCard = memo(({ service, index, isVisible, isDBSource, t }: P
       )}
       {isDBSource && service.featuredImage ? (
         <div className="mb-4 md:mb-6 h-12 w-12 md:h-16 md:w-16 rounded-full overflow-hidden">
-          <img src={service.featuredImage} alt="" className="w-full h-full object-cover" />
+          <img src={service.featuredImage} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
         </div>
       ) : (
         <div className="mb-4 md:mb-6">

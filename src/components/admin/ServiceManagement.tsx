@@ -451,6 +451,12 @@ export const ServiceManagement = () => {
     return m;
   }, [categories]);
 
+  const serviceCountByCat = useMemo(() => {
+    const m = new Map<string, number>();
+    services.forEach(s => { if (s.category_id) m.set(s.category_id, (m.get(s.category_id) || 0) + 1); });
+    return m;
+  }, [services]);
+
   const dashboardStats = useMemo(() => {
     const total = services.length;
     const published = services.filter(s => s.status === "published").length;
@@ -1072,12 +1078,6 @@ export const ServiceManagement = () => {
       setCatParent(cat.parent_id || ""); setCatOrder(cat.display_order); setCatStatus(cat.status);
       setCatIcon(cat.icon || ""); setCatBanner(cat.banner || "");
     };
-
-    const serviceCountByCat = useMemo(() => {
-      const m = new Map<string, number>();
-      services.forEach(s => { if (s.category_id) m.set(s.category_id, (m.get(s.category_id) || 0) + 1); });
-      return m;
-    }, [services]);
 
     const saveCategory = async () => {
       if (!catName.trim()) { toast({ title: "Erreur", description: "Le nom est requis.", variant: "destructive" }); return; }

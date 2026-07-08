@@ -2,6 +2,7 @@ import { Shield, Clock, Award, ThumbsUp, Leaf, Users } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Section } from "@/components/ui/section";
 import { SectionHeader } from "@/components/ui/section-header";
+import { AnimatedSection } from "@/components/ui/animated-section";
 
 export const TrustBadges = () => {
   const { t } = useLanguage();
@@ -21,6 +22,7 @@ export const TrustBadges = () => {
         title={t("trust.title") || "Pourquoi nous choisir?"}
         subtitle={t("trust.subtitle") || "Des garanties qui font la différence"}
       />
+      <AnimatedSection>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6 md:gap-8">
         {badges.map((badge, index) => (
           <div key={index} className="flex flex-col items-center text-center p-4 rounded-xl hover:bg-accent/5 transition-colors group">
@@ -36,6 +38,7 @@ export const TrustBadges = () => {
           </div>
         ))}
       </div>
+      </AnimatedSection>
     </Section>
   );
 };

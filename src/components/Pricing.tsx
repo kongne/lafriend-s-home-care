@@ -65,7 +65,7 @@ export const Pricing = () => {
                   ? "border-2 border-accent shadow-2xl lg:scale-105"
                   : "border border-border hover:shadow-xl"
               }`}
-              style={{ animationDelay: `${index * 150}ms` }}
+              style={{ animationDelay: `${index * 100}ms` }}
             >
               {plan.popular && (
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-accent text-accent-foreground px-4 py-1 rounded-full text-sm font-semibold animate-bounce-subtle">
