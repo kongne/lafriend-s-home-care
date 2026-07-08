@@ -46,6 +46,8 @@ export const InteractiveCoverageMap = () => {
     available: language === "fr" ? "Aujourd'hui" : "Today",
     free: language === "fr" ? "Gratuit" : "Free",
     hq: language === "fr" ? "Siège" : "HQ",
+    hqLabel: language === "fr" ? "Notre siège social" : "Our headquarters",
+    availableTowns: language === "fr" ? "Villes disponibles :" : "Available towns:",
     book: language === "fr" ? "Réserver dans cette zone" : "Book in this Area",
     open: language === "fr" ? "Ouvrir" : "Open",
   }), [language]);
@@ -146,7 +148,7 @@ export const InteractiveCoverageMap = () => {
                 {selectedZone.primary && (
                   <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg px-3 py-2">
                     <Badge className="bg-accent text-accent-foreground text-[10px]">{t.hq}</Badge>
-                    <span>{language === "fr" ? "Notre siège social" : "Our headquarters"}</span>
+                    <span>{t.hqLabel}</span>
                   </div>
                 )}
 
@@ -163,7 +165,7 @@ export const InteractiveCoverageMap = () => {
           {!showMap && (
             <div className="p-5 md:p-6">
               <p className="text-sm text-muted-foreground mb-4">
-                {language === "fr" ? "Villes disponibles :" : "Available towns:"}
+                {t.availableTowns}
               </p>
               <div className="flex flex-wrap gap-2">
                 {ZONES.map((z) => (

@@ -1,12 +1,13 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
-import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { BookingModal } from "./BookingModal";
+import { Section } from "@/components/ui/section";
+import { SectionHeader } from "@/components/ui/section-header";
+import { AnimatedSection } from "@/components/ui/animated-section";
 
 export const Pricing = () => {
-  const { ref, isVisible } = useScrollReveal();
   const { t } = useLanguage();
 
   const pricingPlans = [
@@ -51,23 +52,10 @@ export const Pricing = () => {
   ];
 
   return (
-    <section id="tarifs" className="py-20 bg-background">
-      <div className="container mx-auto px-4">
-        <div 
-          ref={ref}
-          className={`text-center mb-16 space-y-4 transition-all duration-700 ${
-            isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
-          }`}
-        >
-          <p className="text-accent font-semibold uppercase tracking-wider">{t('pricing.tagline')}</p>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground">
-            {t('pricing.title')}
-          </h2>
-          <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
-            {t('pricing.subtitle')}
-          </p>
-        </div>
+    <Section id="tarifs">
+      <SectionHeader tagline={t('pricing.tagline')} title={t('pricing.title')} subtitle={t('pricing.subtitle')} />
 
+      <AnimatedSection>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 max-w-6xl mx-auto">
           {pricingPlans.map((plan, index) => (
             <Card
@@ -76,8 +64,8 @@ export const Pricing = () => {
                 plan.popular
                   ? "border-2 border-accent shadow-2xl lg:scale-105"
                   : "border border-border hover:shadow-xl"
-              } ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"}`}
-              style={{ transitionDelay: `${index * 150}ms` }}
+              }`}
+              style={{ animationDelay: `${index * 150}ms` }}
             >
               {plan.popular && (
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-accent text-accent-foreground px-4 py-1 rounded-full text-sm font-semibold animate-bounce-subtle">
@@ -122,7 +110,7 @@ export const Pricing = () => {
             {t('pricing.note')}
           </p>
         </div>
-      </div>
-    </section>
+      </AnimatedSection>
+    </Section>
   );
 };

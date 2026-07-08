@@ -157,17 +157,7 @@ export const Contact = () => {
   };
 
   return (
-    <section id="contact" className="section-padding bg-secondary">
-      <div className="section-container">
-        <div className="text-center mb-12">
-          <p className="uppercase tracking-wider text-accent font-semibold text-sm mb-2">{t('nav.contact')}</p>
-          <h2 className="section-title">
-            {t('contact.title')}
-          </h2>
-          <p className="section-subtitle">
-            {t('contact.subtitle')}
-          </p>
-        </div>
+    <Section id="contact" bg="muted" tagline={t('nav.contact')} title={t('contact.title')} subtitle={t('contact.subtitle')}>
 
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16">
           {/* Contact info */}
@@ -225,10 +215,12 @@ export const Contact = () => {
                   value={formData.fullName}
                   onChange={handleChange}
                   required 
+                  aria-required="true"
+                  aria-describedby={errors.fullName ? "contact-fullName-error" : undefined}
                   maxLength={100}
                   className={errors.fullName ? "border-destructive" : ""}
                 />
-                {errors.fullName && <p className="text-sm text-destructive">{errors.fullName}</p>}
+                {errors.fullName && <p id="contact-fullName-error" className="text-sm text-destructive">{errors.fullName}</p>}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="contact-email">{t('booking.email')}</Label>
@@ -240,10 +232,12 @@ export const Contact = () => {
                   value={formData.email}
                   onChange={handleChange}
                   required 
+                  aria-required="true"
+                  aria-describedby={errors.email ? "contact-email-error" : undefined}
                   maxLength={255}
                   className={errors.email ? "border-destructive" : ""}
                 />
-                {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
+                {errors.email && <p id="contact-email-error" className="text-sm text-destructive">{errors.email}</p>}
               </div>
             </div>
 
@@ -302,32 +296,36 @@ export const Contact = () => {
 
             <div className="space-y-2">
               <Label htmlFor="contact-subject">{t('contact.subject')}</Label>
-              <Input 
-                id="contact-subject" 
-                name="subject"
-                placeholder={t('contact.subjectPlaceholder')} 
-                value={formData.subject}
-                onChange={handleChange}
-                required 
-                maxLength={200}
-                className={errors.subject ? "border-destructive" : ""}
-              />
-              {errors.subject && <p className="text-sm text-destructive">{errors.subject}</p>}
+                <Input 
+                  id="contact-subject" 
+                  name="subject"
+                  placeholder={t('contact.subjectPlaceholder')} 
+                  value={formData.subject}
+                  onChange={handleChange}
+                  required 
+                  aria-required="true"
+                  aria-describedby={errors.subject ? "contact-subject-error" : undefined}
+                  maxLength={200}
+                  className={errors.subject ? "border-destructive" : ""}
+                />
+                {errors.subject && <p id="contact-subject-error" className="text-sm text-destructive">{errors.subject}</p>}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="contact-message">{t('contact.message')}</Label>
-              <Textarea 
-                id="contact-message" 
-                name="message"
-                placeholder={t('contact.messagePlaceholder')} 
-                value={formData.message}
-                onChange={handleChange}
-                required 
-                maxLength={1000}
-                className={errors.message ? "border-destructive" : ""}
-              />
-              {errors.message && <p className="text-sm text-destructive">{errors.message}</p>}
+                <Textarea 
+                  id="contact-message" 
+                  name="message"
+                  placeholder={t('contact.messagePlaceholder')} 
+                  value={formData.message}
+                  onChange={handleChange}
+                  required 
+                  aria-required="true"
+                  aria-describedby={errors.message ? "contact-message-error" : undefined}
+                  maxLength={1000}
+                  className={errors.message ? "border-destructive" : ""}
+                />
+                {errors.message && <p id="contact-message-error" className="text-sm text-destructive">{errors.message}</p>}
             </div>
 
             <Button 
@@ -348,11 +346,10 @@ export const Contact = () => {
             {/* CAPTCHA Badge Notice */}
             <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground mt-4">
               <Shield className="w-3 h-3" />
-              <p>Protected by reCAPTCHA</p>
+              <p>Protected by reCAPTCHA. <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground transition-colors">Privacy</a> &amp; <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground transition-colors">Terms</a>.</p>
             </div>
           </form>
         </div>
-      </div>
-    </section>
+    </Section>
   );
 };

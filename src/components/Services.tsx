@@ -1,13 +1,13 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Home, Building2, HardHat, Sparkles, Car, CheckCircle, ChevronRight, FileText, Loader2, Search, X, LayoutGrid } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import { Home, Building2, HardHat, Sparkles, Car, FileText, Loader2, Search, X, LayoutGrid } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { BookingModal } from "./BookingModal";
+import { ServiceCard } from "./ServiceCard";
+import { Section } from "@/components/ui/section";
+import { AnimatedSection } from "@/components/ui/animated-section";
 import { supabase } from "@/integrations/supabase/client";
 
 interface DBService {
@@ -110,22 +110,7 @@ export const Services = () => {
   }, [allServices, activeCategory, searchQuery]);
 
   return (
-    <section id="services" className="section-padding bg-secondary">
-      <div className="section-container">
-        <div
-          ref={ref}
-          className={`transition-all duration-700 ${
-            isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
-          }`}
-        >
-          <p className="section-subtitle !mb-2 uppercase tracking-wider text-accent font-semibold text-sm">{t('services.tagline')}</p>
-          <h2 className="section-title">
-            {t('services.title')}
-          </h2>
-          <p className="section-subtitle">
-            {t('services.subtitle')}
-          </p>
-        </div>
+    <Section id="services" bg="muted" tagline={t('services.tagline')} title={t('services.title')} subtitle={t('services.subtitle')}>
 
         {!loading && allServices.length > 0 && (
           <div className={`mb-8 space-y-4 transition-all duration-700 delay-200 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}>
@@ -181,96 +166,40 @@ export const Services = () => {
                 <Search className="h-8 w-8 opacity-50" />
               </div>
               <p className="font-semibold text-foreground">{t("services.noResults") || "Aucun service trouvé"}</p>
-              <p className="text-sm mt-1">{t("gallery.tryDifferent") || "Essayez un autre filtre ou terme de recherche."}</p>
+              <p className="text-sm mt-1">{t("services.tryDifferent") || "Essayez un autre filtre ou terme de recherche."}</p>
               <Button variant="outline" size="sm" className="mt-4" onClick={() => { setActiveCategory(null); setSearchQuery(""); }}>
-                {t("gallery.reset") || "Réinitialiser les filtres"}
+                {t("services.reset") || "Réinitialiser les filtres"}
               </Button>
             </div>
           ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-            {filteredServices.map((service, index) => {
-              const isDBSource = dbServices && dbServices.length > 0;
-              const isCustom = service.id === "custom" && !isDBSource;
-              return (
-                <Card
-                  key={service.id}
-                  className={`card-elevated group cursor-pointer relative overflow-hidden ${
-                    isVisible ? "animate-fade-in-up" : "opacity-0"
-                  }`}
-                  style={{ animationDelay: `${index * 100}ms`, animationFillMode: "backwards" }}
-                  onClick={() => isCustom ? navigate("/quote") : navigate(`/services/${service.id}`)}
-                >
-                  {(service as any).badges?.length > 0 && (
-                    <div className="absolute top-3 right-3 z-10 flex gap-1">
-                      {(service as any).badges.map((b: any, i: number) => (
-                        <Badge key={i} className={`${b.color} text-white text-[10px]`}>{b.label}</Badge>
-                      ))}
-                    </div>
-                  )}
-                  {isDBSource && (service as any).featuredImage ? (
-                    <div className="mb-4 md:mb-6 h-12 w-12 md:h-16 md:w-16 rounded-full overflow-hidden">
-                      <img src={(service as any).featuredImage} alt="" className="w-full h-full object-cover" />
-                    </div>
-                  ) : (
-                    <div className="mb-4 md:mb-6">
-                      <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-accent/10 flex items-center justify-center group-hover:bg-accent group-hover:scale-110 transition-all duration-300">
-                        {(service as any).icon && <service.icon className="w-6 h-6 md:w-8 md:h-8 text-accent group-hover:text-accent-foreground transition-colors duration-300" />}
-                      </div>
-                    </div>
-                  )}
-                  <h3 className="text-lg md:text-2xl font-bold mb-2 md:mb-3 text-foreground group-hover:text-accent transition-colors">
-                    {isDBSource ? service.titleKey : t(service.titleKey)}
-                  </h3>
-                  <p className="text-muted-foreground mb-4 md:mb-6 text-sm leading-relaxed">
-                    {isDBSource ? service.descKey : t(service.descKey)}
-                  </p>
-                  {!isDBSource && (service as any).features?.length > 0 && (
-                    <ul className="space-y-2 mb-4 md:mb-6">
-                      {(service as any).features.map((featureKey: string, idx: number) => (
-                        <li key={idx} className="flex items-center gap-2 text-sm text-foreground">
-                          <CheckCircle className="w-4 h-4 text-accent flex-shrink-0" />
-                          <span>{t(featureKey)}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                  {(service as any).price && (
-                    <p className="text-lg font-bold text-accent mb-3">À partir de {(service as any).price}</p>
-                  )}
-                  <div className="flex gap-2">
-                    <BookingModal>
-                      <Button className="flex-1 bg-accent text-accent-foreground hover:bg-accent/90 text-sm" onClick={e => e.stopPropagation()}>
-                        {t('hero.book')}
-                      </Button>
-                    </BookingModal>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="shrink-0"
-                      onClick={e => { e.stopPropagation(); isCustom ? navigate("/quote") : navigate(`/services/${service.id}`); }}
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </Card>
-              );
-            })}
+            {filteredServices.map((service, index) => (
+              <ServiceCard
+                key={service.id}
+                service={service as any}
+                index={index}
+                isVisible={isVisible}
+                isDBSource={!!(dbServices && dbServices.length > 0)}
+                t={t}
+              />
+            ))}
           </div>
           )}
 
-        <div className={`mt-10 md:mt-16 text-center transition-all duration-700 ${isVisible ? "animate-fade-in" : "opacity-0"}`}>
-          <Button
-            size="lg"
-            variant="outline"
-            onClick={() => navigate("/quote")}
-            className="font-semibold px-6 md:px-8"
-          >
-            <FileText className="h-4 w-4 mr-2" />
-            {t('services.requestQuote') || "Demander un devis gratuit"}
-          </Button>
-        </div>
-      </div>
-    </section>
+        <AnimatedSection>
+          <div className="mt-10 md:mt-16 text-center">
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={() => navigate("/quote")}
+              className="font-semibold px-6 md:px-8"
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              {t('services.requestQuote') || "Demander un devis gratuit"}
+            </Button>
+          </div>
+        </AnimatedSection>
+    </Section>
   );
 };
 

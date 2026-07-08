@@ -21,7 +21,7 @@ export const WhatsAppButton = () => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="fixed bottom-24 right-6 z-50 group focus:outline-none">
+        <button className="fixed bottom-24 right-6 z-50 group focus:outline-none" aria-label={t("whatsapp.tooltip")}>
           <div className="relative">
             <div className="absolute inset-0 bg-green-500 rounded-full animate-ping opacity-25" />
             <div className="relative flex items-center justify-center w-14 h-14 bg-green-500 rounded-full shadow-lg hover:bg-green-600 transition-all duration-300 hover:scale-110">

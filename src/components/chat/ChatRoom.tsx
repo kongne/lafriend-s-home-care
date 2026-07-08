@@ -113,7 +113,7 @@ export const ChatRoom = ({ roomId, title, onClose }: Props) => {
       )}
 
       <ScrollArea className="flex-1 px-3 py-2">
-        <div ref={scrollRef} className="space-y-3">
+        <div ref={scrollRef} className="space-y-3" role="log" aria-live="polite" aria-label="Messages">
           {isLoading ? (
             <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin" /></div>
           ) : messages.length === 0 ? (
@@ -154,6 +154,7 @@ export const ChatRoom = ({ roomId, title, onClose }: Props) => {
           onChange={(e) => { setText(e.target.value); sendTyping(); }}
           onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
           placeholder="Écrire un message…"
+          aria-label="Message"
           className="flex-1"
         />
         <Button onClick={handleSend} disabled={!text.trim() || sendMessage.isPending}

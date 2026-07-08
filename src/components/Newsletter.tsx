@@ -66,26 +66,30 @@ export const Newsletter = () => {
   };
 
   return (
-    <section className="py-16 bg-primary text-primary-foreground">
-      <div className="container mx-auto px-4">
-        <div className="max-w-2xl mx-auto text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-accent/20 mb-6">
-            <Mail className="w-8 h-8 text-accent" />
+    <section id="newsletter" className="bg-primary text-primary-foreground">
+      <div className="max-w-4xl mx-auto px-4 py-12 md:py-16">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center shrink-0">
+              <Mail className="w-6 h-6 text-accent" />
+            </div>
+            <div>
+              <h2 className="text-xl md:text-2xl font-bold">
+                {t("newsletter.title") || "Restez informé"}
+              </h2>
+              <p className="text-primary-foreground/70 text-sm">
+                {t("newsletter.subtitle") || "Offres exclusives et conseils de nettoyage."}
+              </p>
+            </div>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-bold mb-3">
-            {t("newsletter.title") || "Restez informé"}
-          </h2>
-          <p className="text-primary-foreground/80 mb-6">
-            {t("newsletter.subtitle") || "Inscrivez-vous à notre newsletter pour recevoir nos offres exclusives et conseils de nettoyage."}
-          </p>
           
           {subscribed ? (
-            <div className="flex items-center justify-center gap-2 text-accent">
-              <CheckCircle className="w-6 h-6" />
-              <span className="font-semibold">Merci pour votre inscription!</span>
+            <div className="flex items-center gap-2 text-accent shrink-0">
+              <CheckCircle className="w-5 h-5" />
+              <span className="font-semibold text-sm">Merci!</span>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+            <form onSubmit={handleSubmit} className="flex gap-3 w-full md:w-auto shrink-0">
               <Input
                 type="email"
                 placeholder="votre@email.com"
@@ -93,12 +97,13 @@ export const Newsletter = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 maxLength={255}
-                className="bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground placeholder:text-primary-foreground/50 flex-1"
+                aria-label="Email"
+                className="bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground placeholder:text-primary-foreground/50 min-w-[200px]"
               />
               <Button
                 type="submit"
                 disabled={loading}
-                className="bg-accent text-accent-foreground hover:bg-accent/90 font-semibold"
+                className="bg-accent text-accent-foreground hover:bg-accent/90 font-semibold shrink-0"
               >
                 {loading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />

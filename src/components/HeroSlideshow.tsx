@@ -89,7 +89,7 @@ export const HeroSlideshow = () => {
       {/* Content */}
       <div className="container mx-auto px-4 relative z-10">
         <div className="max-w-3xl mx-auto text-center lg:text-left lg:mx-0">
-          <div key={currentSlide} className="text-primary-foreground space-y-6 animate-fade-in">
+          <div key={currentSlide} className="text-primary-foreground space-y-6 animate-fade-in" aria-live="polite" aria-atomic="true">
             <p className="text-sm uppercase tracking-wider text-accent font-semibold">
               {t("hero.tagline")}
             </p>

@@ -4,11 +4,11 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { Section } from "@/components/ui/section";
+import { AnimatedSection } from "@/components/ui/animated-section";
 
 export const FAQ = () => {
-  const { ref, isVisible } = useScrollReveal();
   const { t } = useLanguage();
 
   const faqs = [
@@ -22,30 +22,9 @@ export const FAQ = () => {
   ];
 
   return (
-    <section id="faq" className="py-20 bg-secondary">
-      <div className="container mx-auto px-4 max-w-4xl">
-        <div 
-          ref={ref}
-          className={`text-center mb-16 space-y-4 transition-all duration-700 ${
-            isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
-          }`}
-        >
-          <p className="text-accent font-semibold uppercase tracking-wider">{t('faq.tagline')}</p>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground">
-            {t('faq.title')}
-          </h2>
-          <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
-            {t('faq.subtitle')}
-          </p>
-        </div>
-
-        <Accordion 
-          type="single" 
-          collapsible 
-          className={`space-y-4 transition-all duration-700 delay-200 ${
-            isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
-          }`}
-        >
+    <Section id="faq" bg="muted" tagline={t('faq.tagline')} title={t('faq.title')} subtitle={t('faq.subtitle')}>
+      <AnimatedSection>
+        <Accordion type="single" collapsible className="space-y-4 max-w-4xl mx-auto">
           {faqs.map((faq, index) => (
             <AccordionItem
               key={index}
@@ -61,7 +40,7 @@ export const FAQ = () => {
             </AccordionItem>
           ))}
         </Accordion>
-      </div>
-    </section>
+      </AnimatedSection>
+    </Section>
   );
 };

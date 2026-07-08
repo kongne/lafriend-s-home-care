@@ -6,7 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card } from "@/components/ui/card";
+import { Section } from "@/components/ui/section";
+import { SectionHeader } from "@/components/ui/section-header";
+import { AnimatedSection } from "@/components/ui/animated-section";
 import {
   Eye, Search, X, Maximize2, Minimize2, ChevronLeft, ChevronRight,
   Calendar, MapPin, SlidersHorizontal, ArrowUpDown, Grid3X3
@@ -340,22 +342,9 @@ export const Gallery = () => {
   const showFilters = projects.length > 0;
 
   return (
-    <section id="galerie" className="section-padding bg-background">
-      <div className="section-container">
-        <div
-          ref={ref}
-          className={`transition-all duration-700 ${
-            isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
-          }`}
-        >
-          <p className="text-center uppercase tracking-wider text-accent font-semibold text-sm mb-2">{t('gallery.tagline')}</p>
-          <h2 className="section-title">
-            {t('gallery.title')}
-          </h2>
-          <p className="section-subtitle">
-            {t('gallery.subtitle')}
-          </p>
-        </div>
+    <Section id="galerie">
+      <div ref={ref}>
+        <SectionHeader tagline={t('gallery.tagline')} title={t('gallery.title')} subtitle={t('gallery.subtitle')} />
 
         {showFilters && (
           <div className={`mb-10 space-y-4 transition-all duration-700 delay-200 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}>
@@ -468,16 +457,18 @@ export const Gallery = () => {
           </div>
         )}
 
-        <div className={`mt-10 text-center transition-all duration-700 ${isVisible ? "animate-fade-in" : "opacity-0"}`}>
-          <Button
-            variant="outline"
-            onClick={() => navigate("/#contact")}
-            className="font-semibold"
-          >
-            <SlidersHorizontal className="h-4 w-4 mr-2" />
-            {t("gallery.request") || "Demander un projet similaire"}
-          </Button>
-        </div>
+        <AnimatedSection>
+          <div className="mt-10 text-center">
+            <Button
+              variant="outline"
+              onClick={() => navigate("/#contact")}
+              className="font-semibold"
+            >
+              <SlidersHorizontal className="h-4 w-4 mr-2" />
+              {t("gallery.request") || "Demander un projet similaire"}
+            </Button>
+          </div>
+        </AnimatedSection>
       </div>
 
       <LightboxDialog
@@ -485,7 +476,7 @@ export const Gallery = () => {
         open={!!lightboxProject}
         onClose={() => setLightboxProject(null)}
       />
-    </section>
+    </Section>
   );
 };
 

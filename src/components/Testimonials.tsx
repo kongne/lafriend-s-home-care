@@ -7,6 +7,8 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useState, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Section } from "@/components/ui/section";
+import { AnimatedSection } from "@/components/ui/animated-section";
 
 const PROGRESS_DURATION = 6000;
 
@@ -41,13 +43,8 @@ const defaultTestimonials = [{
 }];
 
 export const Testimonials = () => {
-  const {
-    ref,
-    isVisible
-  } = useScrollReveal();
-  const {
-    t
-  } = useLanguage();
+  const { ref, isVisible } = useScrollReveal();
+  const { t } = useLanguage();
   const [activeIndex, setActiveIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -151,17 +148,9 @@ export const Testimonials = () => {
     const interval = setInterval(nextSlide, 6000);
     return () => clearInterval(interval);
   }, [isPaused, nextSlide]);
-  return <section id="temoignages" className="section-padding bg-primary">
-    <div className="section-container">
-      <div ref={ref} className={`transition-all duration-700 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"}`}>
-        <p className="text-center uppercase tracking-wider text-accent font-semibold text-sm mb-2">{t('testimonials.tagline')}</p>
-        <h2 className="section-title text-primary-foreground">
-          {t('testimonials.title')}
-        </h2>
-        <p className="section-subtitle text-primary-foreground/70">
-          {t('testimonials.subtitle')}
-        </p>
-      </div>
+  return (
+    <Section id="temoignages" bg="primary" tagline={t('testimonials.tagline')} title={t('testimonials.title')} subtitle={t('testimonials.subtitle')}>
+      <div ref={ref}>
 
       {/* Featured Testimonial */}
       <div className="mb-12 relative px-6 sm:px-0" onMouseEnter={() => setIsPaused(true)} onMouseLeave={() => setIsPaused(false)}>
@@ -177,7 +166,7 @@ export const Testimonials = () => {
           <Sparkles className="absolute top-4 right-4 w-8 h-8 text-accent/30" />
 
           {/* Animated content wrapper */}
-          <div key={activeIndex} className="flex flex-col md:flex-row items-center gap-8 animate-fade-in">
+          <div key={activeIndex} className="flex flex-col md:flex-row items-center gap-8 animate-fade-in" aria-live="polite" aria-atomic="true">
             <div className="relative">
               {testimonials[activeIndex].image ? (
                 <img src={testimonials[activeIndex].image} alt={testimonials[activeIndex].name} className="w-24 h-24 md:w-32 md:h-32 rounded-full object-cover ring-4 ring-accent/30 transition-transform duration-500" loading="lazy" decoding="async" width={128} height={128} />
@@ -266,16 +255,20 @@ export const Testimonials = () => {
         ))}
       </div>
 
-      {/* View all link */}
-      <div className="text-center">
-        <Link
-          to="/customer-portal#reviews"
-          className="inline-flex items-center gap-2 text-accent hover:text-accent/80 font-semibold text-sm transition-colors"
-        >
-          {t('testimonials.viewAll')}
-          <ChevronRight className="w-4 h-4" />
-        </Link>
       </div>
-    </div>
-  </section>;
+
+      {/* View all link */}
+      <AnimatedSection>
+        <div className="text-center">
+          <Link
+            to="/customer-portal#reviews"
+            className="inline-flex items-center gap-2 text-accent hover:text-accent/80 font-semibold text-sm transition-colors"
+          >
+            {t('testimonials.viewAll')}
+            <ChevronRight className="w-4 h-4" />
+          </Link>
+        </div>
+      </AnimatedSection>
+    </Section>
+  );
 };

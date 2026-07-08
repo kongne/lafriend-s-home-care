@@ -31,8 +31,8 @@ export const Footer = () => {
               {t('footer.description')}
             </p>
             <div className="flex gap-3 flex-wrap">
-              <a href="https://www.facebook.com/profile.php?id=100090077262286" className="w-10 h-10 rounded-full bg-primary-foreground/10 hover:bg-accent flex items-center justify-center transition-colors">
-                <Facebook className="w-5 h-5" />
+              <a href="https://www.facebook.com/profile.php?id=100090077262286" aria-label="Facebook" className="w-10 h-10 rounded-full bg-primary-foreground/10 hover:bg-accent flex items-center justify-center transition-colors">
+                <Facebook className="w-5 h-5" aria-hidden="true" />
               </a>
               {/*<a href="#" className="w-10 h-10 rounded-full bg-primary-foreground/10 hover:bg-accent flex items-center justify-center transition-colors">
                 <Twitter className="w-5 h-5" />

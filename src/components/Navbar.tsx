@@ -133,10 +133,10 @@ export const Navbar = () => {
               {t('nav.gallery')}
             </a>
             <div className="relative group">
-              <button className="flex items-center gap-1 text-foreground hover:text-accent transition-colors font-medium">
+              <button className="flex items-center gap-1 text-foreground hover:text-accent transition-colors font-medium" aria-haspopup="true" aria-expanded="false">
                 Outils <ChevronDown className="w-3 h-3" />
               </button>
-              <div className="absolute top-full left-0 mt-2 w-52 bg-background border border-border rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+              <div className="absolute top-full left-0 mt-2 w-52 bg-background border border-border rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible group-focus-within:opacity-100 group-focus-within:visible transition-all duration-200 z-50">
                 <Link to="/estimate" className="flex items-center gap-2 px-4 py-2.5 hover:bg-accent/10 transition-colors text-sm border-b border-border">
                   <Calculator className="w-4 h-4 text-accent" /> Devis en ligne
                 </Link>
