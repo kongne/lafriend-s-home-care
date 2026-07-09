@@ -34,8 +34,8 @@ DerivedData/
 *.jks
 *.keystore
 
-# Environment files - never commit secrets
-.env
+# Environment files - .env must be tracked for Lovable build (VITE_* values are public)
+# Other env files remain ignored
 .env.*
 !.env.example
 !.env.local.example
