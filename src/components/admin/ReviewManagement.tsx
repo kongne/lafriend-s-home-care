@@ -40,6 +40,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { error as logError } from "@/lib/logger";
+import { BulkActions, SelectableItem } from "./BulkActions";
 
 interface Review {
   id: string;
@@ -89,6 +90,44 @@ export const ReviewManagement = () => {
     description: "",
     onConfirm: async () => {},
   });
+
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const allSelected = paginatedReviews.length > 0 && paginatedReviews.every(r => selectedIds.has(r.id));
+  const someSelected = selectedIds.size > 0 && !allSelected;
+
+  const toggleSelect = (id: string, checked: boolean) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (checked) next.add(id); else next.delete(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = (checked: boolean) => {
+    if (checked) setSelectedIds(new Set(paginatedReviews.map(r => r.id)));
+    else setSelectedIds(new Set());
+  };
+
+  const handleBulkAction = async (action: string, ids: string[]) => {
+    let success = 0;
+    for (const id of ids) {
+      try {
+        if (action === 'approved' || action === 'rejected') {
+          const { error } = await supabase.from("reviews" as any).update({ status: action } as any).eq("id", id);
+          if (error) throw error;
+          await writeAuditLog(action === 'approved' ? 'approve_review' : 'reject_review', { review_id: id });
+        } else if (action === 'delete') {
+          const { error } = await supabase.from("reviews").delete().eq("id", id);
+          if (error) throw error;
+          await writeAuditLog('delete_review', { review_id: id });
+        }
+        success++;
+      } catch { /* skip failed */ }
+    }
+    setSelectedIds(new Set());
+    fetchReviews();
+    return { success, failed: ids.length - success };
+  };
 
   useEffect(() => {
     fetchReviews();
@@ -422,6 +461,16 @@ export const ReviewManagement = () => {
         </div>
       </div>
 
+      {/* Bulk Actions */}
+      <BulkActions
+        selectedIds={Array.from(selectedIds)}
+        onSelectAll={toggleSelectAll}
+        allSelected={allSelected}
+        someSelected={someSelected}
+        onBulkAction={handleBulkAction}
+        type="reviews"
+      />
+
       {/* Reviews list */}
       {loading ? (
         <div className="grid md:grid-cols-2 gap-4">
@@ -460,8 +509,8 @@ export const ReviewManagement = () => {
             };
 
             return (
+              <SelectableItem key={review.id} id={review.id} selected={selectedIds.has(review.id)} onSelect={toggleSelect}>
               <Card
-                key={review.id}
                 className={`relative overflow-hidden transition-all duration-300 hover:shadow-md border ${
                   review.is_pinned
                     ? "border-accent shadow-sm"
@@ -603,6 +652,7 @@ export const ReviewManagement = () => {
                   </div>
                 </CardContent>
               </Card>
+              </SelectableItem>
             );
           })}
         </div>

@@ -26,7 +26,7 @@ interface BulkActionsProps {
   allSelected: boolean;
   someSelected: boolean;
   onBulkAction: (action: string, ids: string[]) => Promise<{ success: number; failed: number }>;
-  type: 'bookings' | 'contacts' | 'referrals' | 'reminders';
+  type: 'bookings' | 'contacts' | 'referrals' | 'reminders' | 'announcements' | 'reviews' | 'customer-feedback' | 'feedback' | 'staff' | 'projects';
 }
 
 export const BulkActions = ({ 
@@ -80,6 +80,39 @@ export const BulkActions = ({
     ],
     reminders: [
       { action: 'cancelled', label: 'Annuler', icon: XCircle, color: 'text-red-500' },
+      { action: 'delete', label: 'Supprimer', icon: Trash2, color: 'text-destructive' },
+    ],
+    announcements: [
+      { action: 'active', label: 'Activer', icon: CheckCircle, color: 'text-green-500' },
+      { action: 'inactive', label: 'Désactiver', icon: XCircle, color: 'text-amber-500' },
+      { action: 'archived', label: 'Archiver', icon: Clock, color: 'text-gray-500' },
+      { action: 'delete', label: 'Supprimer', icon: Trash2, color: 'text-destructive' },
+    ],
+    reviews: [
+      { action: 'approved', label: 'Approuver', icon: CheckCircle, color: 'text-green-500' },
+      { action: 'rejected', label: 'Rejeter', icon: XCircle, color: 'text-red-500' },
+      { action: 'delete', label: 'Supprimer', icon: Trash2, color: 'text-destructive' },
+    ],
+    'customer-feedback': [
+      { action: 'read', label: 'Marquer lu', icon: CheckCircle, color: 'text-blue-500' },
+      { action: 'replied', label: 'Marquer résolu', icon: CheckCircle, color: 'text-green-500' },
+      { action: 'archived', label: 'Archiver', icon: Clock, color: 'text-gray-500' },
+      { action: 'delete', label: 'Supprimer', icon: Trash2, color: 'text-destructive' },
+    ],
+    feedback: [
+      { action: 'archived', label: 'Archiver', icon: Clock, color: 'text-gray-500' },
+      { action: 'active', label: 'Restaurer', icon: CheckCircle, color: 'text-green-500' },
+      { action: 'delete', label: 'Supprimer', icon: Trash2, color: 'text-destructive' },
+    ],
+    staff: [
+      { action: 'active', label: 'Activer', icon: CheckCircle, color: 'text-green-500' },
+      { action: 'inactive', label: 'Désactiver', icon: XCircle, color: 'text-amber-500' },
+      { action: 'delete', label: 'Supprimer', icon: Trash2, color: 'text-destructive' },
+    ],
+    projects: [
+      { action: 'published', label: 'Publier', icon: CheckCircle, color: 'text-green-500' },
+      { action: 'draft', label: 'Passer en brouillon', icon: Clock, color: 'text-gray-500' },
+      { action: 'archived', label: 'Archiver', icon: XCircle, color: 'text-amber-500' },
       { action: 'delete', label: 'Supprimer', icon: Trash2, color: 'text-destructive' },
     ],
   };

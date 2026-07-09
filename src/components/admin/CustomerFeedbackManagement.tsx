@@ -42,6 +42,7 @@ import {
   Inbox,
 } from "lucide-react";
 import { error as logError } from "@/lib/logger";
+import { BulkActions, SelectableItem } from "./BulkActions";
 
 interface Feedback {
   id: string;
@@ -98,6 +99,44 @@ export const CustomerFeedbackManagement = () => {
     description: string;
     onConfirm: () => Promise<void>;
   }>({ isOpen: false, title: "", description: "", onConfirm: async () => {} });
+
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const allSelected = paginated.length > 0 && paginated.every(f => selectedIds.has(f.id));
+  const someSelected = selectedIds.size > 0 && !allSelected;
+
+  const toggleSelect = (id: string, checked: boolean) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (checked) next.add(id); else next.delete(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = (checked: boolean) => {
+    if (checked) setSelectedIds(new Set(paginated.map(f => f.id)));
+    else setSelectedIds(new Set());
+  };
+
+  const handleBulkAction = async (action: string, ids: string[]) => {
+    let success = 0;
+    for (const id of ids) {
+      try {
+        if (action === 'read' || action === 'replied' || action === 'archived') {
+          const { error } = await supabase.from("contact_submissions").update({ status: action }).eq("id", id);
+          if (error) throw error;
+          await writeAuditLog("update_feedback_status", { feedback_id: id, new_status: action });
+        } else if (action === 'delete') {
+          const { error } = await supabase.from("contact_submissions").delete().eq("id", id);
+          if (error) throw error;
+          await writeAuditLog("delete_feedback", { feedback_id: id });
+        }
+        success++;
+      } catch { /* skip failed */ }
+    }
+    setSelectedIds(new Set());
+    fetchFeedbacks();
+    return { success, failed: ids.length - success };
+  };
 
   useEffect(() => { fetchFeedbacks(); }, []);
 
@@ -312,8 +351,17 @@ export const CustomerFeedbackManagement = () => {
         </Card>
       ) : (
         <div className="space-y-3">
+          <BulkActions
+            selectedIds={Array.from(selectedIds)}
+            onSelectAll={toggleSelectAll}
+            allSelected={allSelected}
+            someSelected={someSelected}
+            onBulkAction={handleBulkAction}
+            type="customer-feedback"
+          />
           {paginated.map((fb) => (
-            <Card key={fb.id} className="hover:shadow-md transition-shadow">
+            <SelectableItem key={fb.id} id={fb.id} selected={selectedIds.has(fb.id)} onSelect={toggleSelect}>
+            <Card className="hover:shadow-md transition-shadow">
               <CardContent className="p-5">
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
@@ -364,6 +412,7 @@ export const CustomerFeedbackManagement = () => {
                 </div>
               </CardContent>
             </Card>
+            </SelectableItem>
           ))}
         </div>
       )}

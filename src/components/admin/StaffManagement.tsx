@@ -25,7 +25,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { 
+import { BulkActions } from "./BulkActions";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
   Plus, 
   Edit2, 
   Trash2, 
@@ -90,6 +92,41 @@ export const StaffManagement = () => {
     is_active: true
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const allSelected = staff.length > 0 && staff.every(s => selectedIds.has(s.id));
+  const someSelected = selectedIds.size > 0 && !allSelected;
+
+  const toggleSelect = (id: string, checked: boolean) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (checked) next.add(id); else next.delete(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = (checked: boolean) => {
+    if (checked) setSelectedIds(new Set(staff.map(s => s.id)));
+    else setSelectedIds(new Set());
+  };
+
+  const handleBulkAction = async (action: string, ids: string[]) => {
+    let success = 0;
+    for (const id of ids) {
+      try {
+        if (action === 'active') {
+          await supabase.from("staff_members").update({ is_active: true }).eq("id", id);
+        } else if (action === 'inactive') {
+          await supabase.from("staff_members").update({ is_active: false }).eq("id", id);
+        } else if (action === 'delete') {
+          await supabase.from("staff_members").delete().eq("id", id);
+        }
+        success++;
+      } catch { /* skip failed */ }
+    }
+    setSelectedIds(new Set());
+    fetchStaff();
+    return { success, failed: ids.length - success };
+  };
 
   useEffect(() => {
     fetchStaff();
@@ -474,10 +511,25 @@ export const StaffManagement = () => {
           </p>
         </Card>
       ) : (
+        <div className="space-y-3">
+          <BulkActions
+            selectedIds={Array.from(selectedIds)}
+            onSelectAll={toggleSelectAll}
+            allSelected={allSelected}
+            someSelected={someSelected}
+            onBulkAction={handleBulkAction}
+            type="staff"
+          />
         <Card>
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-10">
+                  <Checkbox
+                    checked={allSelected ? true : someSelected ? "indeterminate" : false}
+                    onCheckedChange={(checked) => toggleSelectAll(Boolean(checked))}
+                  />
+                </TableHead>
                 <TableHead>Employé</TableHead>
                 <TableHead>Contact</TableHead>
                 <TableHead>Spécialisations</TableHead>
@@ -489,6 +541,12 @@ export const StaffManagement = () => {
             <TableBody>
               {staff.map((member) => (
                 <TableRow key={member.id}>
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedIds.has(member.id)}
+                      onCheckedChange={(checked) => toggleSelect(member.id, Boolean(checked))}
+                    />
+                  </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar>
@@ -569,6 +627,7 @@ export const StaffManagement = () => {
             </TableBody>
           </Table>
         </Card>
+        </div>
       )}
 
       {/* Edit Dialog */}

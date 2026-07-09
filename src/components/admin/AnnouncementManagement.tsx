@@ -22,6 +22,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { error as logError } from "@/lib/logger";
+import { BulkActions, SelectableItem } from "./BulkActions";
 import {
   Plus, Search, Trash2, Megaphone, Clock, Bell, AlertTriangle, Info,
   Gift, Percent, Phone, Calendar, Sparkles, Users, Archive, Eye,
@@ -114,6 +115,44 @@ export const AnnouncementManagement = () => {
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean; title: string; description: string; onConfirm: () => Promise<void>;
   }>({ isOpen: false, title: "", description: "", onConfirm: async () => {} });
+
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const allSelected = filtered.length > 0 && filtered.every(a => selectedIds.has(a.id));
+  const someSelected = selectedIds.size > 0 && !allSelected;
+
+  const toggleSelect = (id: string, checked: boolean) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (checked) next.add(id); else next.delete(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = (checked: boolean) => {
+    if (checked) setSelectedIds(new Set(filtered.map(a => a.id)));
+    else setSelectedIds(new Set());
+  };
+
+  const handleBulkAction = async (action: string, ids: string[]) => {
+    let success = 0;
+    for (const id of ids) {
+      try {
+        if (action === 'active') {
+          await supabase.from("announcements").update({ is_active: true, status: "active" }).eq("id", id);
+        } else if (action === 'inactive') {
+          await supabase.from("announcements").update({ is_active: false }).eq("id", id);
+        } else if (action === 'archived') {
+          await supabase.from("announcements").update({ status: "archived", is_active: false }).eq("id", id);
+        } else if (action === 'delete') {
+          await supabase.from("announcements").delete().eq("id", id);
+        }
+        success++;
+      } catch { /* skip failed */ }
+    }
+    setSelectedIds(new Set());
+    fetchData();
+    return { success, failed: ids.length - success };
+  };
 
   useEffect(() => { fetchData(); }, []);
 
@@ -287,6 +326,14 @@ export const AnnouncementManagement = () => {
         </Card>
       ) : (
         <div className="space-y-3">
+          <BulkActions
+            selectedIds={Array.from(selectedIds)}
+            onSelectAll={toggleSelectAll}
+            allSelected={allSelected}
+            someSelected={someSelected}
+            onBulkAction={handleBulkAction}
+            type="announcements"
+          />
           {filtered.map(a => {
             const IconComp = a.icon ? ICON_MAP[a.icon] : null;
             const now = new Date();
@@ -296,7 +343,8 @@ export const AnnouncementManagement = () => {
             const isWithin = (!starts || starts <= now) && (!ends || ends >= now);
 
             return (
-              <Card key={a.id} className={`border-l-4 ${a.status === "archived" ? "border-l-gray-300 opacity-60" : a.is_active && isWithin ? "border-l-green-500" : "border-l-amber-400"}`}>
+              <SelectableItem key={a.id} id={a.id} selected={selectedIds.has(a.id)} onSelect={toggleSelect}>
+              <Card className={`border-l-4 ${a.status === "archived" ? "border-l-gray-300 opacity-60" : a.is_active && isWithin ? "border-l-green-500" : "border-l-amber-400"}`}>
                 <CardContent className="p-4">
                   <div className="flex items-start gap-4">
                     <div className={`flex-shrink-0 h-10 w-10 rounded-lg ${a.background_color} ${a.text_color} flex items-center justify-center`}>
@@ -337,6 +385,7 @@ export const AnnouncementManagement = () => {
                   </div>
                 </CardContent>
               </Card>
+              </SelectableItem>
             );
           })}
         </div>

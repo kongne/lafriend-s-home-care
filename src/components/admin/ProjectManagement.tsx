@@ -31,6 +31,7 @@ import { compressIfImage, transformedUrl } from "@/lib/mediaUpload";
 import { slugify } from "@/lib/slug";
 import { randomUUID } from "@/lib/uuid";
 import { error as logError } from "@/lib/logger";
+import { BulkActions, SelectableItem } from "./BulkActions";
 import {
   Image,
   Plus,
@@ -134,6 +135,42 @@ export const ProjectManagement = () => {
     description: string;
     onConfirm: () => Promise<void>;
   }>({ isOpen: false, title: "", description: "", onConfirm: async () => {} });
+
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const allSelected = paginated.length > 0 && paginated.every(p => selectedIds.has(p.id));
+  const someSelected = selectedIds.size > 0 && !allSelected;
+
+  const toggleSelect = (id: string, checked: boolean) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (checked) next.add(id); else next.delete(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = (checked: boolean) => {
+    if (checked) setSelectedIds(new Set(paginated.map(p => p.id)));
+    else setSelectedIds(new Set());
+  };
+
+  const handleBulkAction = async (action: string, ids: string[]) => {
+    let success = 0;
+    for (const id of ids) {
+      try {
+        if (['published', 'draft', 'archived'].includes(action)) {
+          await supabase.from("projects").update({ status: action }).eq("id", id);
+          await writeAuditLog("change_project_status", { project_id: id, status: action });
+        } else if (action === 'delete') {
+          await supabase.from("projects").delete().eq("id", id);
+          await writeAuditLog("delete_project", { project_id: id });
+        }
+        success++;
+      } catch { /* skip failed */ }
+    }
+    setSelectedIds(new Set());
+    fetchProjects();
+    return { success, failed: ids.length - success };
+  };
 
   useEffect(() => { fetchProjects(); }, []);
 
@@ -555,11 +592,22 @@ export const ProjectManagement = () => {
         </Card>
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="col-span-full">
+          <BulkActions
+            selectedIds={Array.from(selectedIds)}
+            onSelectAll={toggleSelectAll}
+            allSelected={allSelected}
+            someSelected={someSelected}
+            onBulkAction={handleBulkAction}
+            type="projects"
+          />
+          </div>
           {paginated.map((project) => {
             const beforeImg = project.images.find((i) => i.image_type === "before")?.image_url;
             const afterImg = project.images.find((i) => i.image_type === "after")?.image_url;
             return (
-              <Card key={project.id} className="overflow-hidden hover:shadow-md transition-shadow group">
+              <SelectableItem key={project.id} id={project.id} selected={selectedIds.has(project.id)} onSelect={toggleSelect}>
+              <Card className="overflow-hidden hover:shadow-md transition-shadow group">
                 <div className="relative h-44 bg-muted">
                   {beforeImg && afterImg ? (
                     <div className="flex h-full">
@@ -607,6 +655,7 @@ export const ProjectManagement = () => {
                   </div>
                 </CardContent>
               </Card>
+              </SelectableItem>
             );
           })}
         </div>

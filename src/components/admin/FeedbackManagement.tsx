@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import { error as logError } from "@/lib/logger";
+import { BulkActions, SelectableItem } from "./BulkActions";
 import {
   Star,
   Trash2,
@@ -37,6 +38,41 @@ export const FeedbackManagement = () => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "active" | "archived">("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const allSelected = filteredFeedbacks.length > 0 && filteredFeedbacks.every(f => selectedIds.has(f.id));
+  const someSelected = selectedIds.size > 0 && !allSelected;
+
+  const toggleSelect = (id: string, checked: boolean) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (checked) next.add(id); else next.delete(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = (checked: boolean) => {
+    if (checked) setSelectedIds(new Set(filteredFeedbacks.map(f => f.id)));
+    else setSelectedIds(new Set());
+  };
+
+  const handleBulkAction = async (action: string, ids: string[]) => {
+    let success = 0;
+    for (const id of ids) {
+      try {
+        if (action === 'archived') {
+          await supabase.from("feedback_ratings" as any).update({ is_archived: true }).eq("id", id);
+        } else if (action === 'active') {
+          await supabase.from("feedback_ratings" as any).update({ is_archived: false }).eq("id", id);
+        } else if (action === 'delete') {
+          await supabase.from("feedback_ratings" as any).delete().eq("id", id);
+        }
+        success++;
+      } catch { /* skip failed */ }
+    }
+    setSelectedIds(new Set());
+    fetchFeedbacks();
+    return { success, failed: ids.length - success };
+  };
 
   useEffect(() => {
     fetchFeedbacks();
@@ -181,8 +217,17 @@ export const FeedbackManagement = () => {
         </Card>
       ) : (
         <div className="grid gap-4">
+          <BulkActions
+            selectedIds={Array.from(selectedIds)}
+            onSelectAll={toggleSelectAll}
+            allSelected={allSelected}
+            someSelected={someSelected}
+            onBulkAction={handleBulkAction}
+            type="feedback"
+          />
           {filteredFeedbacks.map((feedback) => (
-            <Card key={feedback.id}>
+            <SelectableItem key={feedback.id} id={feedback.id} selected={selectedIds.has(feedback.id)} onSelect={toggleSelect}>
+            <Card>
               <CardContent className="pt-6">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
@@ -292,6 +337,7 @@ export const FeedbackManagement = () => {
                 </div>
               </CardContent>
             </Card>
+            </SelectableItem>
           ))}
         </div>
       )}
