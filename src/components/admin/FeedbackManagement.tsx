@@ -39,8 +39,6 @@ export const FeedbackManagement = () => {
   const [filter, setFilter] = useState<"all" | "active" | "archived">("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const allSelected = filteredFeedbacks.length > 0 && filteredFeedbacks.every(f => selectedIds.has(f.id));
-  const someSelected = selectedIds.size > 0 && !allSelected;
 
   const toggleSelect = (id: string, checked: boolean) => {
     setSelectedIds(prev => {
@@ -48,30 +46,6 @@ export const FeedbackManagement = () => {
       if (checked) next.add(id); else next.delete(id);
       return next;
     });
-  };
-
-  const toggleSelectAll = (checked: boolean) => {
-    if (checked) setSelectedIds(new Set(filteredFeedbacks.map(f => f.id)));
-    else setSelectedIds(new Set());
-  };
-
-  const handleBulkAction = async (action: string, ids: string[]) => {
-    let success = 0;
-    for (const id of ids) {
-      try {
-        if (action === 'archived') {
-          await supabase.from("feedback_ratings" as any).update({ is_archived: true }).eq("id", id);
-        } else if (action === 'active') {
-          await supabase.from("feedback_ratings" as any).update({ is_archived: false }).eq("id", id);
-        } else if (action === 'delete') {
-          await supabase.from("feedback_ratings" as any).delete().eq("id", id);
-        }
-        success++;
-      } catch { /* skip failed */ }
-    }
-    setSelectedIds(new Set());
-    fetchFeedbacks();
-    return { success, failed: ids.length - success };
   };
 
   useEffect(() => {
@@ -168,6 +142,33 @@ export const FeedbackManagement = () => {
     if (filter === "archived") return fb.is_archived;
     return true;
   });
+
+  const allSelected = filteredFeedbacks.length > 0 && filteredFeedbacks.every(f => selectedIds.has(f.id));
+  const someSelected = selectedIds.size > 0 && !allSelected;
+
+  const toggleSelectAll = (checked: boolean) => {
+    if (checked) setSelectedIds(new Set(filteredFeedbacks.map(f => f.id)));
+    else setSelectedIds(new Set());
+  };
+
+  const handleBulkAction = async (action: string, ids: string[]) => {
+    let success = 0;
+    for (const id of ids) {
+      try {
+        if (action === 'archived') {
+          await supabase.from("feedback_ratings" as any).update({ is_archived: true }).eq("id", id);
+        } else if (action === 'active') {
+          await supabase.from("feedback_ratings" as any).update({ is_archived: false }).eq("id", id);
+        } else if (action === 'delete') {
+          await supabase.from("feedback_ratings" as any).delete().eq("id", id);
+        }
+        success++;
+      } catch { /* skip failed */ }
+    }
+    setSelectedIds(new Set());
+    fetchFeedbacks();
+    return { success, failed: ids.length - success };
+  };
 
   if (loading) {
     return (

@@ -117,8 +117,6 @@ export const AnnouncementManagement = () => {
   }>({ isOpen: false, title: "", description: "", onConfirm: async () => {} });
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const allSelected = filtered.length > 0 && filtered.every(a => selectedIds.has(a.id));
-  const someSelected = selectedIds.size > 0 && !allSelected;
 
   const toggleSelect = (id: string, checked: boolean) => {
     setSelectedIds(prev => {
@@ -126,32 +124,6 @@ export const AnnouncementManagement = () => {
       if (checked) next.add(id); else next.delete(id);
       return next;
     });
-  };
-
-  const toggleSelectAll = (checked: boolean) => {
-    if (checked) setSelectedIds(new Set(filtered.map(a => a.id)));
-    else setSelectedIds(new Set());
-  };
-
-  const handleBulkAction = async (action: string, ids: string[]) => {
-    let success = 0;
-    for (const id of ids) {
-      try {
-        if (action === 'active') {
-          await supabase.from("announcements").update({ is_active: true, status: "active" }).eq("id", id);
-        } else if (action === 'inactive') {
-          await supabase.from("announcements").update({ is_active: false }).eq("id", id);
-        } else if (action === 'archived') {
-          await supabase.from("announcements").update({ status: "archived", is_active: false }).eq("id", id);
-        } else if (action === 'delete') {
-          await supabase.from("announcements").delete().eq("id", id);
-        }
-        success++;
-      } catch { /* skip failed */ }
-    }
-    setSelectedIds(new Set());
-    fetchData();
-    return { success, failed: ids.length - success };
   };
 
   useEffect(() => { fetchData(); }, []);
@@ -292,6 +264,35 @@ export const AnnouncementManagement = () => {
   );
 
   const activeCount = announcements.filter(a => a.is_active && a.status === "active").length;
+
+  const allSelected = filtered.length > 0 && filtered.every(a => selectedIds.has(a.id));
+  const someSelected = selectedIds.size > 0 && !allSelected;
+
+  const toggleSelectAll = (checked: boolean) => {
+    if (checked) setSelectedIds(new Set(filtered.map(a => a.id)));
+    else setSelectedIds(new Set());
+  };
+
+  const handleBulkAction = async (action: string, ids: string[]) => {
+    let success = 0;
+    for (const id of ids) {
+      try {
+        if (action === 'active') {
+          await supabase.from("announcements").update({ is_active: true, status: "active" }).eq("id", id);
+        } else if (action === 'inactive') {
+          await supabase.from("announcements").update({ is_active: false }).eq("id", id);
+        } else if (action === 'archived') {
+          await supabase.from("announcements").update({ status: "archived", is_active: false }).eq("id", id);
+        } else if (action === 'delete') {
+          await supabase.from("announcements").delete().eq("id", id);
+        }
+        success++;
+      } catch { /* skip failed */ }
+    }
+    setSelectedIds(new Set());
+    fetchData();
+    return { success, failed: ids.length - success };
+  };
 
   return (
     <div className="space-y-6">

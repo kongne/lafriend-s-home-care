@@ -137,8 +137,6 @@ export const ProjectManagement = () => {
   }>({ isOpen: false, title: "", description: "", onConfirm: async () => {} });
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const allSelected = paginated.length > 0 && paginated.every(p => selectedIds.has(p.id));
-  const someSelected = selectedIds.size > 0 && !allSelected;
 
   const toggleSelect = (id: string, checked: boolean) => {
     setSelectedIds(prev => {
@@ -146,30 +144,6 @@ export const ProjectManagement = () => {
       if (checked) next.add(id); else next.delete(id);
       return next;
     });
-  };
-
-  const toggleSelectAll = (checked: boolean) => {
-    if (checked) setSelectedIds(new Set(paginated.map(p => p.id)));
-    else setSelectedIds(new Set());
-  };
-
-  const handleBulkAction = async (action: string, ids: string[]) => {
-    let success = 0;
-    for (const id of ids) {
-      try {
-        if (['published', 'draft', 'archived'].includes(action)) {
-          await supabase.from("projects").update({ status: action }).eq("id", id);
-          await writeAuditLog("change_project_status", { project_id: id, status: action });
-        } else if (action === 'delete') {
-          await supabase.from("projects").delete().eq("id", id);
-          await writeAuditLog("delete_project", { project_id: id });
-        }
-        success++;
-      } catch { /* skip failed */ }
-    }
-    setSelectedIds(new Set());
-    fetchProjects();
-    return { success, failed: ids.length - success };
   };
 
   useEffect(() => { fetchProjects(); }, []);
@@ -504,6 +478,33 @@ export const ProjectManagement = () => {
 
   const totalPages = Math.ceil(filteredProjects.length / ITEMS_PER_PAGE);
   const paginated = filteredProjects.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
+  const allSelected = paginated.length > 0 && paginated.every(p => selectedIds.has(p.id));
+  const someSelected = selectedIds.size > 0 && !allSelected;
+
+  const toggleSelectAll = (checked: boolean) => {
+    if (checked) setSelectedIds(new Set(paginated.map(p => p.id)));
+    else setSelectedIds(new Set());
+  };
+
+  const handleBulkAction = async (action: string, ids: string[]) => {
+    let success = 0;
+    for (const id of ids) {
+      try {
+        if (['published', 'draft', 'archived'].includes(action)) {
+          await supabase.from("projects").update({ status: action }).eq("id", id);
+          await writeAuditLog("change_project_status", { project_id: id, status: action });
+        } else if (action === 'delete') {
+          await supabase.from("projects").delete().eq("id", id);
+          await writeAuditLog("delete_project", { project_id: id });
+        }
+        success++;
+      } catch { /* skip failed */ }
+    }
+    setSelectedIds(new Set());
+    fetchProjects();
+    return { success, failed: ids.length - success };
+  };
 
   useEffect(() => { setCurrentPage(1); }, [searchQuery, statusFilter]);
 

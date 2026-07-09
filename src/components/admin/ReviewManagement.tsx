@@ -92,8 +92,6 @@ export const ReviewManagement = () => {
   });
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const allSelected = paginatedReviews.length > 0 && paginatedReviews.every(r => selectedIds.has(r.id));
-  const someSelected = selectedIds.size > 0 && !allSelected;
 
   const toggleSelect = (id: string, checked: boolean) => {
     setSelectedIds(prev => {
@@ -101,32 +99,6 @@ export const ReviewManagement = () => {
       if (checked) next.add(id); else next.delete(id);
       return next;
     });
-  };
-
-  const toggleSelectAll = (checked: boolean) => {
-    if (checked) setSelectedIds(new Set(paginatedReviews.map(r => r.id)));
-    else setSelectedIds(new Set());
-  };
-
-  const handleBulkAction = async (action: string, ids: string[]) => {
-    let success = 0;
-    for (const id of ids) {
-      try {
-        if (action === 'approved' || action === 'rejected') {
-          const { error } = await supabase.from("reviews" as any).update({ status: action } as any).eq("id", id);
-          if (error) throw error;
-          await writeAuditLog(action === 'approved' ? 'approve_review' : 'reject_review', { review_id: id });
-        } else if (action === 'delete') {
-          const { error } = await supabase.from("reviews").delete().eq("id", id);
-          if (error) throw error;
-          await writeAuditLog('delete_review', { review_id: id });
-        }
-        success++;
-      } catch { /* skip failed */ }
-    }
-    setSelectedIds(new Set());
-    fetchReviews();
-    return { success, failed: ids.length - success };
   };
 
   useEffect(() => {
@@ -407,6 +379,35 @@ export const ReviewManagement = () => {
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
+
+  const allSelected = paginatedReviews.length > 0 && paginatedReviews.every(r => selectedIds.has(r.id));
+  const someSelected = selectedIds.size > 0 && !allSelected;
+
+  const toggleSelectAll = (checked: boolean) => {
+    if (checked) setSelectedIds(new Set(paginatedReviews.map(r => r.id)));
+    else setSelectedIds(new Set());
+  };
+
+  const handleBulkAction = async (action: string, ids: string[]) => {
+    let success = 0;
+    for (const id of ids) {
+      try {
+        if (action === 'approved' || action === 'rejected') {
+          const { error } = await supabase.from("reviews" as any).update({ status: action } as any).eq("id", id);
+          if (error) throw error;
+          await writeAuditLog(action === 'approved' ? 'approve_review' : 'reject_review', { review_id: id });
+        } else if (action === 'delete') {
+          const { error } = await supabase.from("reviews").delete().eq("id", id);
+          if (error) throw error;
+          await writeAuditLog('delete_review', { review_id: id });
+        }
+        success++;
+      } catch { /* skip failed */ }
+    }
+    setSelectedIds(new Set());
+    fetchReviews();
+    return { success, failed: ids.length - success };
+  };
 
   useEffect(() => {
     setCurrentPage(1);
