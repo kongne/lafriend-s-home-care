@@ -52,27 +52,35 @@ export const Testimonials = () => {
   const { data: featuredReviews } = useQuery({
     queryKey: ['landing_featured_reviews'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('reviews' as any)
-        .select(`
-          id,
-          rating,
-          comment,
-          is_pinned,
-          created_at,
-          booking:bookings (
-            full_name,
-            service_type,
-            address
-          )
-        `)
-        .eq('status', 'approved')
-        .eq('is_featured', true)
-        .order('is_pinned', { ascending: false })
-        .order('created_at', { ascending: false });
+      const { data: reviewsData, error: reviewsError } = await supabase
+        .from('reviews')
+        .select('id, rating, comment, created_at, booking_id')
+        .eq('is_public', true)
+        .gte('rating', 4)
+        .order('created_at', { ascending: false })
+        .limit(10);
 
-      if (error) throw error;
-      return data as any;
+      if (reviewsError) throw reviewsError;
+      if (!reviewsData || reviewsData.length === 0) return [];
+
+      const bookingIds = reviewsData.map((r: any) => r.booking_id).filter(Boolean);
+      let bookingsMap: Record<string, any> = {};
+
+      if (bookingIds.length > 0) {
+        const { data: bookingsData, error: bookingsError } = await supabase
+          .from('bookings')
+          .select('id, full_name, service_type, address')
+          .in('id', bookingIds);
+
+        if (!bookingsError && bookingsData) {
+          bookingsMap = Object.fromEntries(bookingsData.map((b: any) => [b.id, b]));
+        }
+      }
+
+      return reviewsData.map((r: any) => ({
+        ...r,
+        booking: bookingsMap[r.booking_id] || null
+      }));
     }
   });
 
@@ -80,24 +88,35 @@ export const Testimonials = () => {
     queryKey: ['landing_testimonials'],
     enabled: !featuredReviews || featuredReviews.length === 0,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('feedback_ratings' as any)
-        .select(`
-          id,
-          rating,
-          comment,
-          bookings (
-            full_name,
-            address
-          )
-        `)
+      const { data: feedbackData, error: feedbackError } = await supabase
+        .from('feedback_ratings')
+        .select('id, rating, comment, created_at, booking_id')
         .not('comment', 'is', null)
         .gte('rating', 4)
         .order('created_at', { ascending: false })
         .limit(5);
 
-      if (error) throw error;
-      return data;
+      if (feedbackError) throw feedbackError;
+      if (!feedbackData || feedbackData.length === 0) return [];
+
+      const bookingIds = feedbackData.map((f: any) => f.booking_id).filter(Boolean);
+      let bookingsMap: Record<string, any> = {};
+
+      if (bookingIds.length > 0) {
+        const { data: bookingsData, error: bookingsError } = await supabase
+          .from('bookings')
+          .select('id, full_name, address')
+          .in('id', bookingIds);
+
+        if (!bookingsError && bookingsData) {
+          bookingsMap = Object.fromEntries(bookingsData.map((b: any) => [b.id, b]));
+        }
+      }
+
+      return feedbackData.map((f: any) => ({
+        ...f,
+        bookings: bookingsMap[f.booking_id] ? [bookingsMap[f.booking_id]] : []
+      }));
     }
   });
 
