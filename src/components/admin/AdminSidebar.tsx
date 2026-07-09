@@ -27,6 +27,14 @@ import {
   MessageSquare,
   ShieldCheck,
   Wrench,
+  Shield,
+  HardDrive,
+  Activity,
+  AlertTriangle,
+  Server,
+  ClipboardList,
+  UserCheck,
+  LayoutDashboard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -71,6 +79,18 @@ const menuItems = [
   { icon: FileText, label: "Rapports", value: "reports", path: "/admin?tab=reports" },
   { icon: ShieldCheck, label: "Vérifications KYC", value: "verifications", path: "/admin/verifications" },
   { icon: ImageIcon, label: "Médiathèque", value: "media", path: "/admin?tab=media" },
+  // Enterprise modules
+  { icon: LayoutDashboard, label: "Super Admin", value: "super-admin", path: "/admin?tab=super-admin" },
+  { icon: Shield, label: "RBAC", value: "rbac", path: "/admin?tab=rbac" },
+  { icon: UserCheck, label: "User Management", value: "user-management", path: "/admin?tab=user-management" },
+  { icon: ClipboardList, label: "Audit Logs", value: "audit-logs", path: "/admin?tab=audit-logs" },
+  { icon: AlertTriangle, label: "Error Logs", value: "error-logs", path: "/admin?tab=error-logs" },
+  { icon: Shield, label: "Security", value: "security", path: "/admin?tab=security" },
+  { icon: Activity, label: "System Health", value: "system-health", path: "/admin?tab=system-health" },
+  { icon: Wrench, label: "Maintenance", value: "maintenance", path: "/admin?tab=maintenance" },
+  { icon: HardDrive, label: "Backup Center", value: "backup-center", path: "/admin?tab=backup-center" },
+  { icon: Clock, label: "Activity Timeline", value: "activity-timeline", path: "/admin?tab=activity-timeline" },
+  { icon: Settings, label: "Settings", value: "enterprise-settings", path: "/admin?tab=enterprise-settings" },
 ];
 
 const SidebarContent = ({ 

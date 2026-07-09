@@ -39,6 +39,18 @@ import { BroadcastNotification } from "@/components/admin/BroadcastNotification"
 import { AnnouncementManagement } from "@/components/admin/AnnouncementManagement";
 import { EmailRemindersManagement } from "@/components/admin/EmailRemindersManagement";
 import { MediaLibrary } from "@/components/admin/MediaLibrary";
+import { RoleManagement } from "@/components/admin/RoleManagement";
+import { UserManager } from "@/components/admin/UserManager";
+import { AuditLogViewer } from "@/components/admin/AuditLogViewer";
+import { ErrorLogCenter } from "@/components/admin/ErrorLogCenter";
+import { SecurityCenter } from "@/components/admin/SecurityCenter";
+import { SystemHealth } from "@/components/admin/SystemHealth";
+import { MaintenanceManager } from "@/components/admin/MaintenanceManager";
+import { BackupCenter } from "@/components/admin/BackupCenter";
+import { ActivityTimeline } from "@/components/admin/ActivityTimeline";
+import { SettingsManager } from "@/components/admin/SettingsManager";
+import { SuperAdminDashboard } from "@/components/admin/SuperAdminDashboard";
+import { PermissionGuard } from "@/components/admin/PermissionGuard";
 import { exportToCSV, bookingColumns, contactColumns, subscriberColumns } from "@/lib/exportCsv";
 import { exportToPDF } from "@/lib/exportPdf";
 import { downloadReport } from "@/lib/adminReports";
@@ -907,6 +919,40 @@ const Admin = () => {
             <MediaLibrary />
           </div>
         );
+
+      // Enterprise modules
+      case "super-admin":
+        return <PermissionGuard permission="dashboard.view"><SuperAdminDashboard /></PermissionGuard>;
+
+      case "rbac":
+        return <PermissionGuard permission="rbac.view"><RoleManagement /></PermissionGuard>;
+
+      case "user-management":
+        return <PermissionGuard permission="users.view"><UserManager /></PermissionGuard>;
+
+      case "audit-logs":
+        return <PermissionGuard permission="audit.view"><AuditLogViewer /></PermissionGuard>;
+
+      case "error-logs":
+        return <PermissionGuard permission="errors.view"><ErrorLogCenter /></PermissionGuard>;
+
+      case "security":
+        return <PermissionGuard permission="security.view"><SecurityCenter /></PermissionGuard>;
+
+      case "system-health":
+        return <PermissionGuard permission="system.logs"><SystemHealth /></PermissionGuard>;
+
+      case "maintenance":
+        return <PermissionGuard permission="maintenance.manage"><MaintenanceManager /></PermissionGuard>;
+
+      case "backup-center":
+        return <PermissionGuard permission="backups.create"><BackupCenter /></PermissionGuard>;
+
+      case "activity-timeline":
+        return <PermissionGuard permission="dashboard.view"><ActivityTimeline /></PermissionGuard>;
+
+      case "enterprise-settings":
+        return <PermissionGuard permission="settings.view"><SettingsManager /></PermissionGuard>;
 
       default:
         return <div className="text-center py-12 text-muted-foreground">Section en construction</div>;
