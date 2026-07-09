@@ -6,11 +6,12 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL;
 END; $$;
 
--- Look up the user by email and assign super_admin role
+-- Look up the user by email and assign super_admin + admin roles
 DO $$
 DECLARE
   _user_id UUID;
-  _role_id UUID;
+  _sa_role_id UUID;
+  _admin_role_id UUID;
 BEGIN
   SELECT id INTO _user_id
   FROM auth.users
@@ -21,12 +22,14 @@ BEGIN
     RETURN;
   END IF;
 
-  -- Try to set role_id if the column exists (enterprise RBAC)
-  SELECT id INTO _role_id FROM public.roles WHERE name = 'super_admin';
+  -- Get role IDs from the new RBAC roles table
+  SELECT id INTO _sa_role_id FROM public.roles WHERE name = 'super_admin';
+  SELECT id INTO _admin_role_id FROM public.roles WHERE name = 'admin';
 
+  -- Assign super_admin (for new RBAC full access)
   BEGIN
     INSERT INTO public.user_roles (user_id, role, role_id)
-    VALUES (_user_id, 'super_admin'::app_role, _role_id)
+    VALUES (_user_id, 'super_admin'::app_role, _sa_role_id)
     ON CONFLICT (user_id, role) DO NOTHING;
   EXCEPTION WHEN undefined_column THEN
     INSERT INTO public.user_roles (user_id, role)
@@ -34,6 +37,17 @@ BEGIN
     ON CONFLICT (user_id, role) DO NOTHING;
   END;
 
-  RAISE NOTICE 'Assigned super_admin to lafriendsservices@gmail.com (%)', _user_id;
+  -- Also assign admin (for existing has_role(auth.uid(), 'admin') checks)
+  BEGIN
+    INSERT INTO public.user_roles (user_id, role, role_id)
+    VALUES (_user_id, 'admin'::app_role, _admin_role_id)
+    ON CONFLICT (user_id, role) DO NOTHING;
+  EXCEPTION WHEN undefined_column THEN
+    INSERT INTO public.user_roles (user_id, role)
+    VALUES (_user_id, 'admin'::app_role)
+    ON CONFLICT (user_id, role) DO NOTHING;
+  END;
+
+  RAISE NOTICE 'Assigned super_admin + admin to lafriendsservices@gmail.com (%)', _user_id;
 END;
 $$;
