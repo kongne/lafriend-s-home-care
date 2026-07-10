@@ -104,11 +104,11 @@ export const TestimonialManagement = () => {
     if (editItem) {
       const { error } = await (supabase as any).from("testimonials").update(payload).eq("id", editItem.id);
       if (error) { logError("Error updating testimonial:", error); toast({ title: "Erreur", description: "Impossible de modifier le témoignage.", variant: "destructive" }); }
-      else { await writeAuditLog("update_testimonial", { testimonial_id: editItem.id }); toast({ title: "Succès", description: "Témoignage modifié." }); }
+      else { await writeAuditLog({ action: "update_testimonial", module: "testimonials", new_value: { testimonial_id: editItem.id } }); toast({ title: "Succès", description: "Témoignage modifié." }); }
     } else {
       const { error } = await (supabase as any).from("testimonials").insert(payload);
       if (error) { logError("Error creating testimonial:", error); toast({ title: "Erreur", description: "Impossible de créer le témoignage.", variant: "destructive" }); }
-      else { await writeAuditLog("create_testimonial", { client_name: form.client_name }); toast({ title: "Succès", description: "Témoignage créé." }); }
+      else { await writeAuditLog({ action: "create_testimonial", module: "testimonials", new_value: { client_name: form.client_name } }); toast({ title: "Succès", description: "Témoignage créé." }); }
     }
     setSaving(false); setDialogOpen(false); fetchTestimonials();
   };
@@ -122,7 +122,7 @@ export const TestimonialManagement = () => {
           onConfirm: async () => {
             const { error } = await (supabase as any).from("testimonials").delete().in("id", ids);
             if (error) { logError("Error deleting testimonials:", error); toast({ title: "Erreur", description: "Échec de la suppression.", variant: "destructive" }); resolve({ success: 0, failed: ids.length }); }
-            else { await writeAuditLog("bulk_delete_testimonials", { count: ids.length }); toast({ title: "Succès", description: `${ids.length} témoignage(s) supprimé(s).` }); fetchTestimonials(); resolve({ success: ids.length, failed: 0 }); }
+            else { await writeAuditLog({ action: "bulk_delete_testimonials", module: "testimonials", new_value: { count: ids.length } }); toast({ title: "Succès", description: `${ids.length} témoignage(s) supprimé(s).` }); fetchTestimonials(); resolve({ success: ids.length, failed: 0 }); }
             setConfirmDialog(c => ({ ...c, isOpen: false }));
           },
         });
@@ -132,7 +132,7 @@ export const TestimonialManagement = () => {
       const active = action === "activate";
       const { error } = await (supabase as any).from("testimonials").update({ is_active: active }).in("id", ids);
       if (error) { logError("Error updating testimonials:", error); toast({ title: "Erreur", description: "Échec de la mise à jour.", variant: "destructive" }); return { success: 0, failed: ids.length }; }
-      await writeAuditLog("bulk_update_testimonials", { action, count: ids.length });
+      await writeAuditLog({ action: "bulk_update_testimonials", module: "testimonials", new_value: { action, count: ids.length } });
       toast({ title: "Succès", description: `${ids.length} témoignage(s) ${active ? "activé(s)" : "désactivé(s)"}.` });
       fetchTestimonials(); return { success: ids.length, failed: 0 };
     }
@@ -146,7 +146,7 @@ export const TestimonialManagement = () => {
       onConfirm: async () => {
         const { error } = await (supabase as any).from("testimonials").delete().eq("id", t.id);
         if (error) { logError("Error deleting testimonial:", error); toast({ title: "Erreur", description: "Échec de la suppression.", variant: "destructive" }); }
-        else { await writeAuditLog("delete_testimonial", { testimonial_id: t.id }); toast({ title: "Succès", description: "Témoignage supprimé." }); fetchTestimonials(); }
+        else { await writeAuditLog({ action: "delete_testimonial", module: "testimonials", new_value: { testimonial_id: t.id } }); toast({ title: "Succès", description: "Témoignage supprimé." }); fetchTestimonials(); }
         setConfirmDialog(c => ({ ...c, isOpen: false }));
       },
     });
