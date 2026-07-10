@@ -35,6 +35,7 @@ import {
   ClipboardList,
   UserCheck,
   LayoutDashboard,
+  Quote,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -91,6 +92,7 @@ const menuItems = [
   { icon: HardDrive, label: "Backup Center", value: "backup-center", path: "/admin?tab=backup-center" },
   { icon: Clock, label: "Activity Timeline", value: "activity-timeline", path: "/admin?tab=activity-timeline" },
   { icon: Settings, label: "Settings", value: "enterprise-settings", path: "/admin?tab=enterprise-settings" },
+  { icon: Quote, label: "Témoignages", value: "testimonials", path: "/admin?tab=testimonials" },
 ];
 
 const SidebarContent = ({ 

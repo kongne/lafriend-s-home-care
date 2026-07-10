@@ -26,7 +26,7 @@ interface BulkActionsProps {
   allSelected: boolean;
   someSelected: boolean;
   onBulkAction: (action: string, ids: string[]) => Promise<{ success: number; failed: number }>;
-  type: 'bookings' | 'contacts' | 'referrals' | 'reminders' | 'announcements' | 'reviews' | 'customer-feedback' | 'feedback' | 'staff' | 'projects';
+  type: 'bookings' | 'contacts' | 'referrals' | 'reminders' | 'announcements' | 'reviews' | 'customer-feedback' | 'feedback' | 'staff' | 'projects' | 'testimonials';
 }
 
 export const BulkActions = ({ 
@@ -113,6 +113,11 @@ export const BulkActions = ({
       { action: 'published', label: 'Publier', icon: CheckCircle, color: 'text-green-500' },
       { action: 'draft', label: 'Passer en brouillon', icon: Clock, color: 'text-gray-500' },
       { action: 'archived', label: 'Archiver', icon: XCircle, color: 'text-amber-500' },
+      { action: 'delete', label: 'Supprimer', icon: Trash2, color: 'text-destructive' },
+    ],
+    testimonials: [
+      { action: 'activate', label: 'Activer', icon: CheckCircle, color: 'text-green-500' },
+      { action: 'deactivate', label: 'Désactiver', icon: XCircle, color: 'text-amber-500' },
       { action: 'delete', label: 'Supprimer', icon: Trash2, color: 'text-destructive' },
     ],
   };

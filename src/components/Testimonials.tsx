@@ -49,8 +49,32 @@ export const Testimonials = () => {
   const [isAnimating, setIsAnimating] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
 
+  const { data: adminTestimonials } = useQuery({
+    queryKey: ['landing_admin_testimonials'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('testimonials')
+        .select('client_name, role, company, content, rating, location, avatar_url')
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true })
+        .limit(10);
+
+      if (error) throw error;
+      return (data || []).map(t => ({
+        name: t.client_name,
+        role: t.role || "Client Vérifié",
+        company: t.company,
+        content: t.content,
+        rating: t.rating || 5,
+        image: t.avatar_url,
+        location: t.location || ""
+      }));
+    }
+  });
+
   const { data: featuredReviews } = useQuery({
     queryKey: ['landing_featured_reviews'],
+    enabled: !adminTestimonials || adminTestimonials.length === 0,
     queryFn: async () => {
       const { data: reviewsData, error: reviewsError } = await supabase
         .from('reviews')
@@ -86,7 +110,7 @@ export const Testimonials = () => {
 
   const { data: fetchedTestimonials } = useQuery({
     queryKey: ['landing_testimonials'],
-    enabled: !featuredReviews || featuredReviews.length === 0,
+    enabled: !adminTestimonials || adminTestimonials.length === 0,
     queryFn: async () => {
       const { data: feedbackData, error: feedbackError } = await supabase
         .from('feedback_ratings')
@@ -120,35 +144,37 @@ export const Testimonials = () => {
     }
   });
 
-  const testimonials = featuredReviews && featuredReviews.length > 0
-    ? featuredReviews.map((fr: any) => {
-        const bookingObj = Array.isArray(fr.booking) ? fr.booking[0] : fr.booking;
-        return {
-          name: bookingObj?.full_name || "Client Vérifié",
-          role: bookingObj?.service_type || "Client",
-          content: fr.comment || "",
-          rating: fr.rating,
-          image: null,
-          location: bookingObj?.address || ""
-        };
-      })
-    : fetchedTestimonials && fetchedTestimonials.length > 0
-      ? fetchedTestimonials.map((ft: any) => ({
-          name: ft.bookings?.[0]?.full_name || ft.bookings?.full_name || "Client Anonyme",
-          role: "Client Vérifié",
-          content: ft.comment,
-          rating: ft.rating,
-          image: null,
-          location: ft.bookings?.[0]?.address || ft.bookings?.address || ""
-        }))
-      : defaultTestimonials.map(dt => ({
-          name: dt.name,
-          role: t(dt.roleKey),
-          content: t(dt.contentKey),
-          rating: dt.rating,
-          image: dt.image,
-          location: dt.location
-        }));
+  const testimonials = adminTestimonials && adminTestimonials.length > 0
+    ? adminTestimonials
+    : featuredReviews && featuredReviews.length > 0
+      ? featuredReviews.map((fr: any) => {
+          const bookingObj = Array.isArray(fr.booking) ? fr.booking[0] : fr.booking;
+          return {
+            name: bookingObj?.full_name || "Client Vérifié",
+            role: bookingObj?.service_type || "Client",
+            content: fr.comment || "",
+            rating: fr.rating,
+            image: null,
+            location: bookingObj?.address || ""
+          };
+        })
+      : fetchedTestimonials && fetchedTestimonials.length > 0
+        ? fetchedTestimonials.map((ft: any) => ({
+            name: ft.bookings?.[0]?.full_name || ft.bookings?.full_name || "Client Anonyme",
+            role: "Client Vérifié",
+            content: ft.comment,
+            rating: ft.rating,
+            image: null,
+            location: ft.bookings?.[0]?.address || ft.bookings?.address || ""
+          }))
+        : defaultTestimonials.map(dt => ({
+            name: dt.name,
+            role: t(dt.roleKey),
+            content: t(dt.contentKey),
+            rating: dt.rating,
+            image: dt.image,
+            location: dt.location
+          }));
 
   const goToSlide = useCallback((index: number) => {
     if (isAnimating) return;

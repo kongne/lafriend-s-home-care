@@ -50,6 +50,7 @@ import { BackupCenter } from "@/components/admin/BackupCenter";
 import { ActivityTimeline } from "@/components/admin/ActivityTimeline";
 import { SettingsManager } from "@/components/admin/SettingsManager";
 import { SuperAdminDashboard } from "@/components/admin/SuperAdminDashboard";
+import { TestimonialManagement } from "@/components/admin/TestimonialManagement";
 import { PermissionGuard } from "@/components/admin/PermissionGuard";
 import { exportToCSV, bookingColumns, contactColumns, subscriberColumns } from "@/lib/exportCsv";
 import { exportToPDF } from "@/lib/exportPdf";
@@ -953,6 +954,9 @@ const Admin = () => {
 
       case "enterprise-settings":
         return <PermissionGuard permission="settings.view"><SettingsManager /></PermissionGuard>;
+
+      case "testimonials":
+        return <PermissionGuard permission="testimonials.view"><TestimonialManagement /></PermissionGuard>;
 
       default:
         return <div className="text-center py-12 text-muted-foreground">Section en construction</div>;
