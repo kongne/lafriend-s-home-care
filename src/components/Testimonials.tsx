@@ -49,28 +49,15 @@ export const Testimonials = () => {
   const [isAnimating, setIsAnimating] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
 
-  const { data: adminTestimonials } = useQuery({
-    queryKey: ['landing_admin_testimonials'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('testimonials')
-        .select('client_name, role, company, content, rating, location, avatar_url')
-        .eq('is_active', true)
-        .order('sort_order', { ascending: true })
-        .limit(10);
-
-      if (error) throw error;
-      return (data || []).map(t => ({
-        name: t.client_name,
-        role: t.role || "Client Vérifié",
-        company: t.company,
-        content: t.content,
-        rating: t.rating || 5,
-        image: t.avatar_url,
-        location: t.location || ""
-      }));
-    }
-  });
+  const adminTestimonials: Array<{
+    name: string;
+    role: string;
+    company?: string | null;
+    content: string;
+    rating: number;
+    image: string | null;
+    location: string;
+  }> | undefined = undefined;
 
   const { data: featuredReviews } = useQuery({
     queryKey: ['landing_featured_reviews'],

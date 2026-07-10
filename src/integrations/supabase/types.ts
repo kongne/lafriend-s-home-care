@@ -95,30 +95,147 @@ export type Database = {
       audit_logs: {
         Row: {
           action: string
+          browser: string | null
           category: string | null
+          country: string | null
           created_at: string
+          description: string | null
+          device: string | null
+          duration_ms: number | null
           id: string
           ip_address: string | null
           metadata: Json | null
+          module: string | null
+          new_value: Json | null
+          old_value: Json | null
+          os: string | null
+          request_id: string | null
+          session_id: string | null
+          severity: string | null
+          status: string | null
+          target_id: string | null
+          target_type: string | null
+          user_agent: string | null
           user_id: string | null
+          user_role: string | null
         }
         Insert: {
           action: string
+          browser?: string | null
           category?: string | null
+          country?: string | null
           created_at?: string
+          description?: string | null
+          device?: string | null
+          duration_ms?: number | null
           id?: string
           ip_address?: string | null
           metadata?: Json | null
+          module?: string | null
+          new_value?: Json | null
+          old_value?: Json | null
+          os?: string | null
+          request_id?: string | null
+          session_id?: string | null
+          severity?: string | null
+          status?: string | null
+          target_id?: string | null
+          target_type?: string | null
+          user_agent?: string | null
           user_id?: string | null
+          user_role?: string | null
         }
         Update: {
           action?: string
+          browser?: string | null
           category?: string | null
+          country?: string | null
           created_at?: string
+          description?: string | null
+          device?: string | null
+          duration_ms?: number | null
           id?: string
           ip_address?: string | null
           metadata?: Json | null
+          module?: string | null
+          new_value?: Json | null
+          old_value?: Json | null
+          os?: string | null
+          request_id?: string | null
+          session_id?: string | null
+          severity?: string | null
+          status?: string | null
+          target_id?: string | null
+          target_type?: string | null
+          user_agent?: string | null
           user_id?: string | null
+          user_role?: string | null
+        }
+        Relationships: []
+      }
+      backup_logs: {
+        Row: {
+          backup_mode: string
+          backup_type: string
+          checksum: string | null
+          completed_at: string | null
+          compressed: boolean
+          created_at: string
+          created_by: string | null
+          database_version: string | null
+          encrypted: boolean
+          error_message: string | null
+          file_name: string | null
+          file_path: string | null
+          file_size: number | null
+          id: string
+          retention_days: number
+          schedule_config: Json | null
+          started_at: string | null
+          status: string
+          storage_location: string
+        }
+        Insert: {
+          backup_mode?: string
+          backup_type?: string
+          checksum?: string | null
+          completed_at?: string | null
+          compressed?: boolean
+          created_at?: string
+          created_by?: string | null
+          database_version?: string | null
+          encrypted?: boolean
+          error_message?: string | null
+          file_name?: string | null
+          file_path?: string | null
+          file_size?: number | null
+          id?: string
+          retention_days?: number
+          schedule_config?: Json | null
+          started_at?: string | null
+          status?: string
+          storage_location?: string
+        }
+        Update: {
+          backup_mode?: string
+          backup_type?: string
+          checksum?: string | null
+          completed_at?: string | null
+          compressed?: boolean
+          created_at?: string
+          created_by?: string | null
+          database_version?: string | null
+          encrypted?: boolean
+          error_message?: string | null
+          file_name?: string | null
+          file_path?: string | null
+          file_size?: number | null
+          id?: string
+          retention_days?: number
+          schedule_config?: Json | null
+          started_at?: string | null
+          status?: string
+          storage_location?: string
         }
         Relationships: []
       }
@@ -554,6 +671,90 @@ export type Database = {
           },
         ]
       }
+      error_logs: {
+        Row: {
+          assigned_to: string | null
+          browser: string | null
+          code: string | null
+          comment: string | null
+          created_at: string
+          environment: string | null
+          error_type: string
+          file: string | null
+          function: string | null
+          id: string
+          ip_address: string | null
+          line: number | null
+          message: string
+          metadata: Json | null
+          method: string | null
+          os: string | null
+          request_id: string | null
+          resolved: boolean
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          stack_trace: string | null
+          status_code: number | null
+          url: string | null
+          user_id: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          browser?: string | null
+          code?: string | null
+          comment?: string | null
+          created_at?: string
+          environment?: string | null
+          error_type?: string
+          file?: string | null
+          function?: string | null
+          id?: string
+          ip_address?: string | null
+          line?: number | null
+          message: string
+          metadata?: Json | null
+          method?: string | null
+          os?: string | null
+          request_id?: string | null
+          resolved?: boolean
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          stack_trace?: string | null
+          status_code?: number | null
+          url?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          browser?: string | null
+          code?: string | null
+          comment?: string | null
+          created_at?: string
+          environment?: string | null
+          error_type?: string
+          file?: string | null
+          function?: string | null
+          id?: string
+          ip_address?: string | null
+          line?: number | null
+          message?: string
+          metadata?: Json | null
+          method?: string | null
+          os?: string | null
+          request_id?: string | null
+          resolved?: boolean
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          stack_trace?: string | null
+          status_code?: number | null
+          url?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       feedback: {
         Row: {
           created_at: string
@@ -827,6 +1028,54 @@ export type Database = {
           },
         ]
       }
+      maintenance_events: {
+        Row: {
+          allowed_ips: string[]
+          allowed_role: string
+          countdown_ends_at: string | null
+          created_at: string
+          created_by: string | null
+          custom_page_html: string | null
+          duration_minutes: number | null
+          ended_at: string | null
+          id: string
+          is_active: boolean
+          maintenance_type: string
+          reason: string | null
+          started_at: string | null
+        }
+        Insert: {
+          allowed_ips?: string[]
+          allowed_role?: string
+          countdown_ends_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          custom_page_html?: string | null
+          duration_minutes?: number | null
+          ended_at?: string | null
+          id?: string
+          is_active?: boolean
+          maintenance_type?: string
+          reason?: string | null
+          started_at?: string | null
+        }
+        Update: {
+          allowed_ips?: string[]
+          allowed_role?: string
+          countdown_ends_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          custom_page_html?: string | null
+          duration_minutes?: number | null
+          ended_at?: string | null
+          id?: string
+          is_active?: boolean
+          maintenance_type?: string
+          reason?: string | null
+          started_at?: string | null
+        }
+        Relationships: []
+      }
       newsletter_subscribers: {
         Row: {
           email: string
@@ -881,6 +1130,33 @@ export type Database = {
           title?: string
           type?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      permissions: {
+        Row: {
+          code: string
+          created_at: string
+          description: string | null
+          id: string
+          module: string
+          name: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          module: string
+          name: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          module?: string
+          name?: string
         }
         Relationships: []
       }
@@ -1057,6 +1333,65 @@ export type Database = {
         }
         Relationships: []
       }
+      restore_logs: {
+        Row: {
+          affected_tables: string[]
+          backup_id: string | null
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          database_version: string | null
+          error_message: string | null
+          estimated_downtime: number
+          id: string
+          restore_type: string
+          rollback_status: string | null
+          started_at: string | null
+          status: string
+          validation_passed: boolean | null
+        }
+        Insert: {
+          affected_tables?: string[]
+          backup_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          database_version?: string | null
+          error_message?: string | null
+          estimated_downtime?: number
+          id?: string
+          restore_type?: string
+          rollback_status?: string | null
+          started_at?: string | null
+          status?: string
+          validation_passed?: boolean | null
+        }
+        Update: {
+          affected_tables?: string[]
+          backup_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          database_version?: string | null
+          error_message?: string | null
+          estimated_downtime?: number
+          id?: string
+          restore_type?: string
+          rollback_status?: string | null
+          started_at?: string | null
+          status?: string
+          validation_passed?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "restore_logs_backup_id_fkey"
+            columns: ["backup_id"]
+            isOneToOne: false
+            referencedRelation: "backup_logs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reviews: {
         Row: {
           booking_id: string
@@ -1090,6 +1425,114 @@ export type Database = {
           staff_id?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      role_permissions: {
+        Row: {
+          created_at: string
+          permission_id: string
+          role_id: string
+        }
+        Insert: {
+          created_at?: string
+          permission_id: string
+          role_id: string
+        }
+        Update: {
+          created_at?: string
+          permission_id?: string
+          role_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_permissions_permission_id_fkey"
+            columns: ["permission_id"]
+            isOneToOne: false
+            referencedRelation: "permissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "role_permissions_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      roles: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_system: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_system?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_system?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      security_events: {
+        Row: {
+          country: string | null
+          created_at: string
+          details: Json | null
+          device: string | null
+          event_type: string
+          id: string
+          ip_address: string | null
+          resolved: boolean
+          resolved_at: string | null
+          session_id: string | null
+          severity: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          country?: string | null
+          created_at?: string
+          details?: Json | null
+          device?: string | null
+          event_type: string
+          id?: string
+          ip_address?: string | null
+          resolved?: boolean
+          resolved_at?: string | null
+          session_id?: string | null
+          severity?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          country?: string | null
+          created_at?: string
+          details?: Json | null
+          device?: string | null
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          resolved?: boolean
+          resolved_at?: string | null
+          session_id?: string | null
+          severity?: string
+          user_agent?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -1629,23 +2072,160 @@ export type Database = {
           },
         ]
       }
+      system_settings: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          key: string
+          module: string
+          updated_at: string
+          value: Json | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          key: string
+          module?: string
+          updated_at?: string
+          value?: Json | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          key?: string
+          module?: string
+          updated_at?: string
+          value?: Json | null
+        }
+        Relationships: []
+      }
+      testimonials: {
+        Row: {
+          avatar_url: string | null
+          client_name: string
+          company: string | null
+          content: string
+          created_at: string
+          id: string
+          is_active: boolean
+          location: string | null
+          rating: number | null
+          role: string | null
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          client_name: string
+          company?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          location?: string | null
+          rating?: number | null
+          role?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          client_name?: string
+          company?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          location?: string | null
+          rating?: number | null
+          role?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
           id: string
           role: Database["public"]["Enums"]["app_role"]
+          role_id: string | null
           user_id: string
         }
         Insert: {
           created_at?: string
           id?: string
           role: Database["public"]["Enums"]["app_role"]
+          role_id?: string | null
           user_id: string
         }
         Update: {
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          role_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_sessions: {
+        Row: {
+          browser: string | null
+          country: string | null
+          created_at: string
+          device: string | null
+          id: string
+          ip_address: string | null
+          is_active: boolean
+          last_activity_at: string
+          logged_in_at: string
+          logged_out_at: string | null
+          os: string | null
+          session_id: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          browser?: string | null
+          country?: string | null
+          created_at?: string
+          device?: string | null
+          id?: string
+          ip_address?: string | null
+          is_active?: boolean
+          last_activity_at?: string
+          logged_in_at?: string
+          logged_out_at?: string | null
+          os?: string | null
+          session_id: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          browser?: string | null
+          country?: string | null
+          created_at?: string
+          device?: string | null
+          id?: string
+          ip_address?: string | null
+          is_active?: boolean
+          last_activity_at?: string
+          logged_in_at?: string
+          logged_out_at?: string | null
+          os?: string | null
+          session_id?: string
+          user_agent?: string | null
           user_id?: string
         }
         Relationships: []
@@ -1702,6 +2282,30 @@ export type Database = {
       calculate_loyalty_tier: { Args: { points: number }; Returns: string }
       check_referral_limit: { Args: { p_user_id: string }; Returns: boolean }
       generate_referral_code: { Args: { p_user_id: string }; Returns: string }
+      get_user_permissions: {
+        Args: { _user_id: string }
+        Returns: {
+          code: string
+          module: string
+          name: string
+        }[]
+      }
+      get_user_roles_with_details: {
+        Args: { _user_id: string }
+        Returns: {
+          assigned_at: string
+          role_id: string
+          role_name: string
+        }[]
+      }
+      has_any_permission: {
+        Args: { _permission_codes: string[]; _user_id: string }
+        Returns: boolean
+      }
+      has_permission: {
+        Args: { _permission_code: string; _user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

@@ -68,7 +68,7 @@ export async function writeAuditLog(
       (roles?.[0] as any)?.role ??
       null;
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('audit_logs')
       .insert({
         user_id: uid,

@@ -79,7 +79,7 @@ function SettingsTab({ module }: { module: string }) {
     );
   };
 
-  const settingsMap: Record<string, { label: string; type: 'text' | 'number' | 'boolean' | 'select' | 'textarea'; options?: string[] }[]> = {
+  const settingsMap: Record<string, { key: string; label: string; type: 'text' | 'number' | 'boolean' | 'select' | 'textarea'; options?: string[] }[]> = {
     general: [
       { key: 'site_name', label: 'Site Name', type: 'text' },
       { key: 'site_description', label: 'Site Description', type: 'textarea' },

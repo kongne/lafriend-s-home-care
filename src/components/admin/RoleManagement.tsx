@@ -95,7 +95,7 @@ export function RoleManagement() {
       setCreateOpen(false);
       setNewName('');
       setNewDesc('');
-      setSelectedRole(role);
+      setSelectedRole(role as any);
     } catch (err: any) { console.error(err); }
   };
 

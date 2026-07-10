@@ -237,7 +237,7 @@ function UserDetailDialog({ user: userProfile, onClose }: { user: UserProfile | 
 
   useEffect(() => {
     if (!userProfile) return;
-    supabase.from('user_sessions').select('*').eq('user_id', userProfile.user_id).order('logged_in_at', { ascending: false }).limit(5).then(({ data }) => {
+    (supabase as any).from('user_sessions').select('*').eq('user_id', userProfile.user_id).order('logged_in_at', { ascending: false }).limit(5).then(({ data }) => {
       if (data) setSessions(data);
     });
   }, [userProfile]);
