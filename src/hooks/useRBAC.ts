@@ -94,7 +94,7 @@ export function usePermissionsList() {
     (supabase as any).from('permissions').select('*').order('module').order('code').then(({ data, error }) => {
       if (mounted && !error && data) {
         setPermissions(data);
-        setModules([...new Set(data.map(p => p.module))]);
+        setModules([...new Set(data.map((p: any) => p.module as string))] as string[]);
       }
     }).finally(() => { if (mounted) setLoading(false); });
     return () => { mounted = false; };
@@ -141,9 +141,10 @@ export function useUserRoles(userId: string | null) {
   useEffect(() => {
     if (!userId) { setUserRoles([]); setLoading(false); return; }
     let mounted = true;
-    supabase.rpc('get_user_roles_with_details', { _user_id: userId }).then(({ data, error }) => {
+    (supabase as any).rpc('get_user_roles_with_details', { _user_id: userId }).then(({ data, error }: any) => {
       if (mounted && !error && data) setUserRoles(data);
-    }).finally(() => { if (mounted) setLoading(false); });
+      if (mounted) setLoading(false);
+    });
     return () => { mounted = false; };
   }, [userId]);
 
