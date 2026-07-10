@@ -28,6 +28,7 @@ const SERVICE_BASE_PRICE: Record<string, number> = {
   car: 8000,
   nanny: 35000,
   cook: 30000,
+  industrial: 60000,
   other: 20000,
 };
 
@@ -39,6 +40,7 @@ const SERVICE_LABEL: Record<string, string> = {
   car: "Lavage de Voiture",
   nanny: "Placement de Nounou",
   cook: "Service de Cuisinière",
+  industrial: "Nettoyage Industriel",
   other: "Autre service",
 };
 
@@ -291,7 +293,9 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
             preferredDate: validation.data.preferredDate,
             preferredTime: validation.data.preferredTime,
             address: validation.data.address,
-            language: 'fr'
+            language: 'fr',
+            estimatedPrice: totalFcfa,
+            selectedAddons: bookingAddons,
           }
         });
         if (emailErr || !(emailData as { ok?: boolean })?.ok) {
@@ -312,6 +316,8 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
               service_type: serviceLabel,
               preferred_date: validation.data.preferredDate,
               preferred_time: validation.data.preferredTime,
+              estimated_price: totalFcfa,
+              distance_km: distance,
             }
           }
         });

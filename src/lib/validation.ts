@@ -56,7 +56,7 @@ export const bookingSchema = z.object({
     .min(5, "Adresse trop courte")
     .max(500, "Adresse trop longue")
     .transform(sanitizeInput),
-  serviceType: z.enum(["residential", "commercial", "construction", "windows", "car", "nanny", "cook", "other"] as const, {
+  serviceType: z.enum(["residential", "commercial", "construction", "windows", "car", "nanny", "cook", "industrial", "other"] as const, {
     message: "Veuillez sélectionner un service"
   }),
   preferredDate: z.string()

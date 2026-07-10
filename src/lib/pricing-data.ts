@@ -1,4 +1,4 @@
-export type ServiceKey = "residential" | "commercial" | "construction" | "windows" | "car";
+export type ServiceKey = "residential" | "commercial" | "construction" | "windows" | "car" | "nanny" | "cook" | "industrial" | "other";
 export type FrequencyKey = "once" | "weekly" | "biweekly" | "monthly";
 export type ExtraKey = "windows" | "deep" | "ironing" | "fridge" | "balcony";
 
@@ -8,6 +8,10 @@ export const BASE: Record<ServiceKey, { base: number; perUnit: number; unitLabel
   construction: { base: 40000, perUnit: 1800, unitLabel: { fr: "m²",       en: "sqm" } },
   windows:      { base: 8000,  perUnit: 1500, unitLabel: { fr: "fenêtres", en: "windows" } },
   car:          { base: 8000,  perUnit: 2500, unitLabel: { fr: "options",  en: "options" } },
+  nanny:        { base: 35000, perUnit: 0,    unitLabel: { fr: "mois",     en: "month" } },
+  cook:         { base: 30000, perUnit: 0,    unitLabel: { fr: "mois",     en: "month" } },
+  industrial:   { base: 60000, perUnit: 1800, unitLabel: { fr: "m²",       en: "sqm" } },
+  other:        { base: 20000, perUnit: 0,    unitLabel: { fr: "forfait",  en: "flat" } },
 };
 
 export const FREQUENCY: Record<FrequencyKey, { multiplier: number; label: { fr: string; en: string } }> = {
@@ -26,9 +30,13 @@ export const EXTRAS: Record<ExtraKey, { price: number; label: { fr: string; en: 
 };
 
 export const SERVICE_LABELS: Record<ServiceKey, { fr: string; en: string }> = {
-  residential:  { fr: "Résidentiel",      en: "Residential" },
-  commercial:   { fr: "Commercial",       en: "Commercial" },
-  construction: { fr: "Post-chantier",    en: "Post-construction" },
-  windows:      { fr: "Vitres",           en: "Windows" },
-  car:          { fr: "Auto",             en: "Car wash" },
+  residential:  { fr: "Résidentiel",        en: "Residential" },
+  commercial:   { fr: "Commercial",         en: "Commercial" },
+  construction: { fr: "Post-chantier",      en: "Post-construction" },
+  windows:      { fr: "Vitres",             en: "Windows" },
+  car:          { fr: "Auto",               en: "Car wash" },
+  nanny:        { fr: "Nounou",             en: "Nanny placement" },
+  cook:         { fr: "Cuisinière",         en: "Cook service" },
+  industrial:   { fr: "Industriel",         en: "Industrial cleaning" },
+  other:        { fr: "Autre service",      en: "Other service" },
 };

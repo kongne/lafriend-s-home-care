@@ -22,6 +22,11 @@ export interface Booking {
   recurrence_end_date: string | null;
   assigned_staff_id: string | null;
   is_paused: boolean;
+  estimated_price: number | null;
+  selected_addons: { id: string; name: string; price: number | null }[] | null;
+  distance_km: number | null;
+  latitude: string | null;
+  longitude: string | null;
 }
 
 export const bookingsKey = (userId?: string) => ["bookings", userId] as const;

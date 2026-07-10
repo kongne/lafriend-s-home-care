@@ -19,6 +19,8 @@ interface BookingData {
   phone: string;
   address: string;
   email: string;
+  estimated_price?: number;
+  distance_km?: number;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -42,14 +44,16 @@ const handler = async (req: Request): Promise<Response> => {
     const { booking } = await req.json() as { booking: BookingData };
     if (!booking) return respond(false, { error: "Missing booking data" }, req);
 
-    const smsMessage = `🗓️ Nouvelle Réservation!\nClient: ${booking.full_name}\nService: ${booking.service_type}\nDate: ${booking.preferred_date} à ${booking.preferred_time}\nTél: ${booking.phone}`;
+    const pricePart = booking.estimated_price ? `\nPrix: ${booking.estimated_price.toLocaleString("fr-FR")} FCFA` : "";
+    const smsMessage = `🗓️ Nouvelle Réservation!\nClient: ${booking.full_name}\nService: ${booking.service_type}\nDate: ${booking.preferred_date} à ${booking.preferred_time}\nTél: ${booking.phone}${pricePart}`;
 
     const smsResult = await sendSms(OWNER_PHONE, smsMessage);
 
+    const notifMessage = `${booking.full_name} - ${booking.service_type} le ${booking.preferred_date}${booking.estimated_price ? ` (${booking.estimated_price.toLocaleString("fr-FR")} FCFA)` : ""}`;
     const { error: notifError } = await supabase.from("notifications").insert({
       type: "booking",
       title: "Nouvelle Réservation",
-      message: `${booking.full_name} - ${booking.service_type} le ${booking.preferred_date}`,
+      message: notifMessage,
       link: "/admin?tab=bookings",
       is_read: false,
     });

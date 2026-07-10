@@ -26,7 +26,7 @@ export default defineTool({
     }
     const { data, error } = await supabaseForUser(ctx)
       .from("bookings")
-      .select("id, service_type, status, preferred_date, preferred_time, address, full_name, created_at")
+      .select("id, service_type, status, preferred_date, preferred_time, address, full_name, estimated_price, selected_addons, distance_km, created_at")
       .eq("user_id", ctx.getUserId())
       .order("preferred_date", { ascending: false })
       .limit(limit ?? 20);

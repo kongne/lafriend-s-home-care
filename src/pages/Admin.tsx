@@ -662,6 +662,8 @@ const Admin = () => {
                     <TableHead>Client</TableHead>
                     <TableHead className="hidden md:table-cell">Contact</TableHead>
                     <TableHead className="hidden lg:table-cell">Service</TableHead>
+                    <TableHead className="hidden xl:table-cell">Prix</TableHead>
+                    <TableHead className="hidden xl:table-cell">Options</TableHead>
                     <TableHead className="hidden sm:table-cell">Date</TableHead>
                     <TableHead>Statut</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
@@ -670,7 +672,7 @@ const Admin = () => {
                 <TableBody>
                   {paginatedBookings.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
+                      <TableCell colSpan={9} className="h-32 text-center text-muted-foreground">
                         <CalendarDays className="h-8 w-8 mx-auto mb-2 opacity-50" />
                         Aucune réservation
                       </TableCell>
@@ -694,6 +696,16 @@ const Admin = () => {
                         <div className="text-xs text-muted-foreground truncate max-w-[200px]">{booking.address}</div>
                       </TableCell>
                       <TableCell className="hidden lg:table-cell text-sm">{booking.service_type}</TableCell>
+                      <TableCell className="hidden xl:table-cell text-sm whitespace-nowrap">
+                        {booking.estimated_price != null ? `${booking.estimated_price.toLocaleString("fr-FR")} FCFA` : "-"}
+                      </TableCell>
+                      <TableCell className="hidden xl:table-cell max-w-[160px]">
+                        <div className="text-xs truncate" title={(booking.selected_addons || []).map(a => a.name).join(", ")}>
+                          {(booking.selected_addons || []).length > 0
+                            ? (booking.selected_addons || []).map(a => a.name).join(", ")
+                            : "-"}
+                        </div>
+                      </TableCell>
                       <TableCell className="hidden sm:table-cell whitespace-nowrap text-sm">
                         {booking.preferred_date}<br /><span className="text-xs text-muted-foreground">{booking.preferred_time}</span>
                       </TableCell>

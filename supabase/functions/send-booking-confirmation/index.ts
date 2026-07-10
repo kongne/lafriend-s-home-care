@@ -22,6 +22,8 @@ const requestSchema = z.object({
   language: z.enum(["fr", "en"]).default("fr"),
   staffName: z.string().max(100).optional().transform((v?: string) => v ? sanitizeString(v) : undefined),
   staffPhone: z.string().max(50).optional().transform((v?: string) => v ? sanitizeString(v) : undefined),
+  estimatedPrice: z.number().optional(),
+  selectedAddons: z.array(z.object({ name: z.string(), price: z.number() })).optional(),
 });
 
 const handler = async (req: Request): Promise<Response> => {
@@ -41,7 +43,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const validatedData = requestSchema.parse(parsedBody);
-    const { clientEmail, clientName, serviceType, preferredDate, preferredTime, address, language, staffName, staffPhone } = validatedData;
+    const { clientEmail, clientName, serviceType, preferredDate, preferredTime, address, language, staffName, staffPhone, estimatedPrice, selectedAddons } = validatedData;
     const isFrench = language === 'fr';
 
     const details = [
@@ -50,6 +52,13 @@ const handler = async (req: Request): Promise<Response> => {
       { label: isFrench ? "Heure" : "Time", value: preferredTime },
       { label: isFrench ? "Adresse" : "Address", value: address },
     ];
+    if (estimatedPrice) {
+      details.push({ label: isFrench ? "Prix estimé" : "Estimated price", value: `${estimatedPrice.toLocaleString("fr-FR")} FCFA` });
+    }
+    if (selectedAddons && selectedAddons.length > 0) {
+      const addonNames = selectedAddons.map(a => a.name).join(", ");
+      details.push({ label: isFrench ? "Options" : "Add-ons", value: addonNames });
+    }
     if (staffName) {
       details.push({ label: isFrench ? "Technicien" : "Technician", value: staffName + (staffPhone ? ` (${staffPhone})` : "") });
     }

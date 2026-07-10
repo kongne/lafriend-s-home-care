@@ -27,9 +27,9 @@ interface AnalyticsDashboardProps {
 
 const MONTHS_FR = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sep", "Oct", "Nov", "Déc"];
 const SERVICE_PRICES: Record<string, number> = {
-  "Nettoyage Standard": 50000, "Nettoyage Approfondi": 80000,
-  "Nettoyage de Déménagement": 120000, "Nettoyage de Bureau": 100000,
-  "Lavage de Vitres": 40000, "Nettoyage de Tapis": 60000,
+  residential: 25000, commercial: 50000, construction: 80000,
+  windows: 15000, car: 8000, nanny: 35000, cook: 30000,
+  industrial: 60000, other: 20000,
 };
 const COLORS = ['hsl(var(--accent))', 'hsl(var(--primary))', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 const STATUS_COLORS: Record<string, string> = {

@@ -18,8 +18,15 @@ export const exportToCSV = <T extends object>(
     return columns.map(col => {
       const value = item[col.key];
       if (value === null || value === undefined) return '""';
-      // Escape quotes and wrap in quotes
-      const stringValue = String(value).replace(/"/g, '""');
+      let stringValue: string;
+      if (Array.isArray(value)) {
+        stringValue = value.map(v => typeof v === 'object' && v !== null ? v.name || JSON.stringify(v) : String(v)).join(", ");
+      } else if (typeof value === 'object') {
+        stringValue = JSON.stringify(value);
+      } else {
+        stringValue = String(value);
+      }
+      stringValue = stringValue.replace(/"/g, '""');
       return `"${stringValue}"`;
     }).join(",");
   });
@@ -48,6 +55,9 @@ export const bookingColumns = [
   { key: "phone" as const, label: "Téléphone" },
   { key: "address" as const, label: "Adresse" },
   { key: "service_type" as const, label: "Service" },
+  { key: "estimated_price" as const, label: "Prix estimé" },
+  { key: "selected_addons" as const, label: "Options" },
+  { key: "distance_km" as const, label: "Distance (km)" },
   { key: "preferred_date" as const, label: "Date" },
   { key: "preferred_time" as const, label: "Heure" },
   { key: "status" as const, label: "Statut" },
