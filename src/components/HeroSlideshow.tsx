@@ -78,11 +78,11 @@ export const HeroSlideshow = () => {
       ))}
 
       {/* Navigation Arrows */}
-      <Button variant="ghost" size="icon" onClick={prevSlide} className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 z-20 bg-card/30 hover:bg-card/50 text-primary-foreground h-12 w-12 rounded-full" aria-label="Previous slide">
-        <ChevronLeft className="h-6 w-6" />
+      <Button variant="ghost" size="icon" onClick={prevSlide} className="absolute left-2 sm:left-4 md:left-8 top-1/2 -translate-y-1/2 z-20 bg-card/30 hover:bg-card/50 text-primary-foreground h-8 w-8 sm:h-12 sm:w-12 rounded-full" aria-label="Previous slide">
+        <ChevronLeft className="h-4 w-4 sm:h-6 sm:w-6" />
       </Button>
-      <Button variant="ghost" size="icon" onClick={nextSlide} className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 z-20 bg-card/30 hover:bg-card/50 text-primary-foreground h-12 w-12 rounded-full" aria-label="Next slide">
-        <ChevronRight className="h-6 w-6" />
+      <Button variant="ghost" size="icon" onClick={nextSlide} className="absolute right-2 sm:right-4 md:right-8 top-1/2 -translate-y-1/2 z-20 bg-card/30 hover:bg-card/50 text-primary-foreground h-8 w-8 sm:h-12 sm:w-12 rounded-full" aria-label="Next slide">
+        <ChevronRight className="h-4 w-4 sm:h-6 sm:w-6" />
       </Button>
 
       {/* Content */}
@@ -92,7 +92,7 @@ export const HeroSlideshow = () => {
             <p className="text-sm uppercase tracking-wider text-accent font-semibold">
               {t("hero.tagline")}
             </p>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight">
+            <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight">
               {t(slides[currentSlide].titleKey)}
             </h1>
             <p className="text-base sm:text-lg md:text-xl text-primary-foreground/90 max-w-2xl">

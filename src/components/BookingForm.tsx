@@ -493,7 +493,7 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
             </div>
 
             {formData.serviceType && hours > 0 && (
-              <div className="bg-gradient-to-r from-accent/10 to-accent/5 border border-accent/30 rounded-lg p-4 space-y-2 animate-in fade-in slide-in-from-top-2">
+              <div className="bg-gradient-to-r from-accent/10 to-accent/5 border border-accent/30 rounded-lg p-4 space-y-2 animate-in fade-in slide-in-from-top-2 overflow-hidden">
                 <div className="flex items-center gap-2 text-sm font-medium text-foreground">
                   <Calculator className="h-4 w-4 text-accent" />
                   Estimation du prix
@@ -564,10 +564,10 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
                         className="mt-1 h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
                       />
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="font-medium text-sm text-foreground">{addon.name}</span>
+                        <div className="flex items-center justify-between gap-2 overflow-hidden">
+                          <span className="font-medium text-sm text-foreground truncate min-w-0">{addon.name}</span>
                           {addon.price != null && (
-                            <span className="font-semibold text-sm text-purple-600 dark:text-purple-400 whitespace-nowrap">
+                            <span className="font-semibold text-sm text-purple-600 dark:text-purple-400 whitespace-nowrap shrink-0">
                               +{formatPrice(addon.price)}
                             </span>
                           )}
@@ -619,7 +619,7 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
                       <span>0 pts</span>
                       <span>{maxRedeemable} pts max</span>
                     </div>
-                    <div className="grid grid-cols-2 gap-2 text-sm pt-1">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm pt-1">
                       <div className="bg-background/60 rounded p-2">
                         <p className="text-muted-foreground text-xs">Points utilisés</p>
                         <p className="font-bold">{pointsToRedeem} pts</p>
@@ -706,8 +706,8 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
               {errors.phone && <p className="text-sm text-destructive">{errors.phone}</p>}
             </div>
             <div className="space-y-2">
-              <div className="flex items-end gap-2">
-                <div className="flex-1">
+              <div className="flex flex-col sm:flex-row items-end gap-2">
+                <div className="w-full sm:flex-1">
                   <Label htmlFor="address">Adresse</Label>
                   <Input id="address" name="address" placeholder="Entrez votre adresse" value={formData.address} onChange={handleChange} required maxLength={200} className={errors.address ? "border-destructive" : ""} />
                 </div>
@@ -773,7 +773,7 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
             </div>
 
             {formData.serviceType && hours > 0 && (
-              <div className="bg-gradient-to-r from-accent/10 to-accent/5 border border-accent/30 rounded-lg p-4 space-y-2 text-sm">
+              <div className="bg-gradient-to-r from-accent/10 to-accent/5 border border-accent/30 rounded-lg p-4 space-y-2 text-sm overflow-hidden">
                 <button
                   type="button"
                   className="flex items-center justify-between w-full font-semibold mb-1"
