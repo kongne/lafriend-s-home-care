@@ -38,7 +38,7 @@ export function BackupCenter() {
     setProgress(0);
     const interval = setInterval(() => setProgress(p => Math.min(p + 10, 90)), 500);
     try {
-      const { data, error } = await supabase.from('backup_logs').insert({
+      const { data, error } = await (supabase as any).from('backup_logs').insert({
         backup_type: 'manual',
         backup_mode: backupType,
         status: 'running',
@@ -51,7 +51,7 @@ export function BackupCenter() {
       }).select().single();
       if (error) throw error;
       await new Promise(r => setTimeout(r, 2000));
-      await supabase.from('backup_logs').update({
+      await (supabase as any).from('backup_logs').update({
         status: 'completed', file_size: Math.floor(Math.random() * 100000000) + 50000000,
         file_name: `backup_${format(new Date(), 'yyyy-MM-dd_HHmm')}.sql.gz`,
         completed_at: new Date().toISOString(),
@@ -73,7 +73,7 @@ export function BackupCenter() {
 
   const handleDeleteBackup = async (id: string) => {
     const backup = backups.find(b => b.id === id);
-    await supabase.from('backup_logs').delete().eq('id', id);
+    await (supabase as any).from('backup_logs').delete().eq('id', id);
     await writeAuditLog({
       action: 'backup_deleted', module: 'backups',
       description: `Deleted backup ${backup?.file_name || id.slice(0, 8)}`,

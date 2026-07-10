@@ -7,7 +7,7 @@ export async function fetchUserPermissions(userId: string): Promise<Set<string>>
   if (permissionsCache && Date.now() - permissionsCache.timestamp < CACHE_TTL) {
     return permissionsCache.codes;
   }
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .rpc('get_user_permissions', { _user_id: userId });
   if (error || !data) {
     console.error('Failed to fetch permissions:', error);
@@ -23,14 +23,14 @@ export function invalidatePermissionsCache() {
 }
 
 export async function checkPermission(userId: string, permissionCode: string): Promise<boolean> {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .rpc('has_permission', { _user_id: userId, _permission_code: permissionCode });
   if (error) return false;
   return !!data;
 }
 
 export async function checkAnyPermission(userId: string, permissionCodes: string[]): Promise<boolean> {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .rpc('has_any_permission', { _user_id: userId, _permission_codes: permissionCodes });
   if (error) return false;
   return !!data;
