@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { useSystemSettings } from '@/hooks/useRBAC';
 import { useAuth } from '@/hooks/useAuth';
 import { writeAuditLog } from '@/lib/audit';
-import { Settings, Globe, CreditCard, Bell, Shield, Palette, DollarSign, Languages, Server, Wrench, Building, CalendarDays, Activity, RefreshCw } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
+import { Settings, Globe, CreditCard, Bell, Shield, Palette, DollarSign, Languages, Server, Wrench, Building, CalendarDays, Activity, RefreshCw, CheckCircle2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const modules = [
   { id: 'general', label: 'General', icon: Settings },
@@ -34,11 +34,13 @@ const modules = [
 
 function SettingsTab({ module }: { module: string }) {
   const { user } = useAuth();
+  const { toast } = useToast();
   const { settings, loading, updateSetting, getSetting } = useSystemSettings(module);
-  const [saving, setSaving] = useState(false);
+  const [savingKey, setSavingKey] = useState<string | null>(null);
+  const debounceTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
-  const handleUpdate = async (key: string, value: any) => {
-    setSaving(true);
+  const handleUpdate = useCallback(async (key: string, value: any) => {
+    setSavingKey(key);
     try {
       await updateSetting(key, value);
       await writeAuditLog({
@@ -46,34 +48,46 @@ function SettingsTab({ module }: { module: string }) {
         description: `Updated setting '${key}' in ${module}`,
         new_value: { module, key, value }, severity: 'info',
       }, user?.id);
-    } finally { setSaving(false); }
-  };
+      toast({ title: "Sauvegardé", description: `"${key}" a été mis à jour.`, duration: 2000 });
+    } catch {
+      toast({ title: "Erreur", description: `Échec de la sauvegarde de "${key}".`, variant: "destructive" });
+    } finally { setSavingKey(null); }
+  }, [module, updateSetting, user?.id, toast]);
+
+  const debouncedUpdate = useCallback((key: string, value: any, delay = 600) => {
+    if (debounceTimers.current[key]) clearTimeout(debounceTimers.current[key]);
+    debounceTimers.current[key] = setTimeout(() => handleUpdate(key, value), delay);
+  }, [handleUpdate]);
 
   if (loading) return <div className="p-8 text-center text-muted-foreground">Loading settings...</div>;
 
   const renderField = (key: string, label: string, type: 'text' | 'number' | 'boolean' | 'select' | 'textarea', options?: string[]) => {
     const value = getSetting(key);
+    const isSaving = savingKey === key;
     return (
       <div key={key} className="flex items-center justify-between py-3 border-b last:border-0">
         <div>
           <label className="text-sm font-medium">{label}</label>
           <p className="text-xs text-muted-foreground">{key}</p>
         </div>
-        <div className="w-48">
-          {type === 'boolean' ? (
-            <Switch checked={!!value} onCheckedChange={v => handleUpdate(key, v)} />
-          ) : type === 'select' && options ? (
-            <Select value={String(value || '')} onValueChange={v => handleUpdate(key, v)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {options.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          ) : type === 'textarea' ? (
-            <Textarea value={String(value || '')} onChange={e => handleUpdate(key, e.target.value)} rows={2} className="text-xs" />
-          ) : (
-            <Input type={type} value={String(value || '')} onChange={e => handleUpdate(key, type === 'number' ? Number(e.target.value) : e.target.value)} className="text-xs" />
-          )}
+        <div className="flex items-center gap-2">
+          <div className="w-48">
+            {type === 'boolean' ? (
+              <Switch checked={!!value} onCheckedChange={v => handleUpdate(key, v)} disabled={isSaving} />
+            ) : type === 'select' && options ? (
+              <Select value={String(value || '')} onValueChange={v => handleUpdate(key, v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {options.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            ) : type === 'textarea' ? (
+              <Textarea value={String(value || '')} onChange={e => debouncedUpdate(key, e.target.value)} rows={2} className="text-xs" />
+            ) : (
+              <Input type={type} value={String(value || '')} onChange={e => debouncedUpdate(key, type === 'number' ? Number(e.target.value) : e.target.value)} className="text-xs" />
+            )}
+          </div>
+          {isSaving ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground shrink-0" /> : <CheckCircle2 className="h-4 w-4 text-green-500 opacity-0 shrink-0" />}
         </div>
       </div>
     );
