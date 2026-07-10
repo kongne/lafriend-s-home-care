@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { AnalyticsDashboard } from "@/components/admin/AnalyticsDashboard";
-import { BulkActions, SelectableItem } from "@/components/admin/BulkActions";
+import { BulkActions } from "@/components/admin/BulkActions";
 import { AdminSidebar, MobileSidebarTrigger } from "@/components/admin/AdminSidebar";
 import { AdminHeader } from "@/components/admin/AdminHeader";
 import { KPICard } from "@/components/admin/KPICard";
@@ -56,22 +56,13 @@ import { exportToPDF } from "@/lib/exportPdf";
 import { downloadReport } from "@/lib/adminReports";
 import { staffEmailSchema } from "@/lib/validation";
 import { cn } from "@/lib/utils";
-import { 
-  CalendarDays, 
-  Mail, 
-  Users, 
-  Loader2,
-  Trash2,
-  Plus,
-  RefreshCw,
-  Download,
-  BarChart3,
-  Send,
-  FileText,
-  TrendingUp,
-  Clock,
-  CheckCircle2,
-  Calendar,
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from "@/components/ui/table";
+import {
+  CalendarDays, Mail, Users, Loader2, Trash2, Plus, RefreshCw,
+  Download, BarChart3, Send, FileText, TrendingUp, Clock, CheckCircle2,
+  Calendar, MoreHorizontal, Eye, Phone, MessageCircle,
 } from "lucide-react";
 
 interface Booking {
@@ -613,60 +604,84 @@ const Admin = () => {
               </div>
             </div>
             
-            {filteredBookings.map((booking) => (
-              <SelectableItem key={booking.id} id={booking.id} selected={selectedBookings.includes(booking.id)} onSelect={toggleBookingSelection}>
-                <Card>
-                  <CardHeader className="pb-2">
-                    <div className="flex justify-between items-start">
-                      <CardTitle className="text-lg">{booking.full_name}</CardTitle>
-                      {getStatusBadge(booking.status)}
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="mb-4 grid grid-cols-1 gap-2 text-sm sm:grid-cols-2 lg:grid-cols-4">
-                      <div><strong>Email:</strong> {booking.email}</div>
-                      <div><strong>Tél:</strong> {booking.phone}</div>
-                      <div><strong>Service:</strong> {booking.service_type}</div>
-                      <div><strong>Date:</strong> {booking.preferred_date} à {booking.preferred_time}</div>
-                      <div className="sm:col-span-2 lg:col-span-4"><strong>Adresse:</strong> {booking.address}</div>
-                      {(booking.selected_addons?.length ?? 0) > 0 && (
-                        <div className="sm:col-span-2 lg:col-span-4">
-                          <strong>Options :</strong> {booking.selected_addons!.map(a => a.name).join(", ")}
+            <div className="overflow-x-auto rounded-lg border bg-card">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50">
+                    <TableHead className="w-10">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 rounded border-gray-300"
+                        checked={selectedBookings.length === filteredBookings.length && filteredBookings.length > 0}
+                        onChange={(e) => setSelectedBookings(e.target.checked ? filteredBookings.map(b => b.id) : [])}
+                      />
+                    </TableHead>
+                    <TableHead>Client</TableHead>
+                    <TableHead className="hidden md:table-cell">Contact</TableHead>
+                    <TableHead className="hidden lg:table-cell">Service</TableHead>
+                    <TableHead className="hidden sm:table-cell">Date</TableHead>
+                    <TableHead>Statut</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredBookings.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
+                        <CalendarDays className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                        Aucune réservation
+                      </TableCell>
+                    </TableRow>
+                  ) : filteredBookings.map((booking) => (
+                    <TableRow key={booking.id} className={selectedBookings.includes(booking.id) ? "bg-accent/10" : ""}>
+                      <TableCell>
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 rounded border-gray-300"
+                          checked={selectedBookings.includes(booking.id)}
+                          onChange={() => toggleBookingSelection(booking.id)}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-medium text-sm">{booking.full_name}</div>
+                        <div className="text-xs text-muted-foreground truncate max-w-[160px]">{booking.email}</div>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        <div className="text-sm">{booking.phone}</div>
+                        <div className="text-xs text-muted-foreground truncate max-w-[200px]">{booking.address}</div>
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell text-sm">{booking.service_type}</TableCell>
+                      <TableCell className="hidden sm:table-cell whitespace-nowrap text-sm">
+                        {booking.preferred_date}<br /><span className="text-xs text-muted-foreground">{booking.preferred_time}</span>
+                      </TableCell>
+                      <TableCell>{getStatusBadge(booking.status)}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button size="icon" variant="ghost" className="h-8 w-8" title="WhatsApp" onClick={() => window.open(`https://wa.me/${booking.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Bonjour ${booking.full_name}, concernant votre réservation du ${booking.preferred_date}...`)}`, "_blank")}>
+                            <MessageCircle className="h-4 w-4 text-green-600" />
+                          </Button>
+                          {booking.status === 'pending' && (
+                            <Button size="icon" variant="ghost" className="h-8 w-8 text-green-600" title="Confirmer" onClick={() => updateBookingStatus(booking.id, "confirmed")}>
+                              <CheckCircle2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {booking.status === 'confirmed' && (
+                            <Button size="icon" variant="ghost" className="h-8 w-8 text-blue-600" title="Marquer terminé" onClick={() => updateBookingStatus(booking.id, "completed")}>
+                              <Calendar className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {booking.status !== 'cancelled' && (
+                            <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" title="Annuler" onClick={() => updateBookingStatus(booking.id, "cancelled")}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
                         </div>
-                      )}
-                      {booking.estimated_price != null && (
-                        <div className="sm:col-span-2 lg:col-span-4">
-                          <strong>Estimation :</strong> {fmtPrice(booking.estimated_price)}
-                        </div>
-                      )}
-                      {booking.message && <div className="sm:col-span-2 lg:col-span-4"><strong>Message:</strong> {booking.message}</div>}
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <Button size="sm" variant="outline" onClick={() => updateBookingStatus(booking.id, "confirmed")}>Confirmer</Button>
-                      <Button size="sm" variant="outline" onClick={() => updateBookingStatus(booking.id, "completed")}>Terminé</Button>
-                      <Button size="sm" variant="destructive" onClick={() => updateBookingStatus(booking.id, "cancelled")}>Annuler</Button>
-                      <Button size="sm" variant="outline" className="text-green-600 border-green-600" onClick={() => window.open(`https://wa.me/${booking.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Bonjour ${booking.full_name}, concernant votre réservation du ${booking.preferred_date}...`)}`, "_blank")}>
-                        WhatsApp
-                      </Button>
-                      {booking.status === 'confirmed' && (
-                        <Button size="sm" variant="secondary" onClick={() => sendBookingConfirmation(booking)} disabled={sendingConfirmation === booking.id}>
-                          {sendingConfirmation === booking.id ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
-                          Envoyer confirmation
-                        </Button>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </SelectableItem>
-            ))}
-            {filteredBookings.length === 0 && (
-              <Card>
-                <CardContent className="py-12 text-center text-muted-foreground">
-                  <CalendarDays className="h-10 w-10 mx-auto mb-3 opacity-50" />
-                  <p>Aucune réservation</p>
-                </CardContent>
-              </Card>
-            )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </div>
         );
 
@@ -689,46 +704,75 @@ const Admin = () => {
                 <Button variant="outline" size="sm" onClick={() => void exportToPDF(filteredContacts, "messages", contactColumns, "Messages")}><FileText className="h-4 w-4 mr-2" />PDF</Button>
               </div>
             </div>
-            {filteredContacts.map((contact) => (
-              <SelectableItem key={contact.id} id={contact.id} selected={selectedContacts.includes(contact.id)} onSelect={toggleContactSelection}>
-                <Card>
-                  <CardHeader className="pb-2">
-                    <div className="flex justify-between items-start">
-                      <CardTitle className="text-lg">{contact.subject}</CardTitle>
-                      {getStatusBadge(contact.status)}
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="mb-4 grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
-                      <div><strong>De:</strong> {contact.full_name}</div>
-                      <div><strong>Email:</strong> {contact.email}</div>
-                      {contact.phone && <div><strong>Tél:</strong> {contact.phone}</div>}
-                      <div className="col-span-2"><strong>Message:</strong> {contact.message}</div>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <Button size="sm" variant="outline" onClick={() => updateContactStatus(contact.id, "read")}>Marquer lu</Button>
-                      <Button size="sm" variant="outline" onClick={() => updateContactStatus(contact.id, "replied")}>Répondu</Button>
-                      <Button size="sm" variant="outline" onClick={() => window.open(`mailto:${contact.email}?subject=Re: ${encodeURIComponent(contact.subject)}`, "_blank")}>
-                        <Mail className="h-3 w-3 mr-1" />Répondre
-                      </Button>
-                      {contact.phone && (
-                        <Button size="sm" variant="outline" className="text-green-600" onClick={() => window.open(`https://wa.me/${contact.phone!.replace(/\D/g, '')}?text=${encodeURIComponent(`Bonjour ${contact.full_name}, concernant votre message "${contact.subject}"...`)}`, "_blank")}>
-                          WhatsApp
-                        </Button>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </SelectableItem>
-            ))}
-            {filteredContacts.length === 0 && (
-              <Card>
-                <CardContent className="py-12 text-center text-muted-foreground">
-                  <Mail className="h-10 w-10 mx-auto mb-3 opacity-50" />
-                  <p>Aucun message</p>
-                </CardContent>
-              </Card>
-            )}
+            <div className="overflow-x-auto rounded-lg border bg-card">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50">
+                    <TableHead className="w-10">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 rounded border-gray-300"
+                        checked={selectedContacts.length === filteredContacts.length && filteredContacts.length > 0}
+                        onChange={(e) => setSelectedContacts(e.target.checked ? filteredContacts.map(c => c.id) : [])}
+                      />
+                    </TableHead>
+                    <TableHead>De</TableHead>
+                    <TableHead className="hidden sm:table-cell">Sujet</TableHead>
+                    <TableHead className="hidden md:table-cell">Contact</TableHead>
+                    <TableHead>Statut</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredContacts.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
+                        <Mail className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                        Aucun message
+                      </TableCell>
+                    </TableRow>
+                  ) : filteredContacts.map((contact) => (
+                    <TableRow key={contact.id} className={selectedContacts.includes(contact.id) ? "bg-accent/10" : ""}>
+                      <TableCell>
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 rounded border-gray-300"
+                          checked={selectedContacts.includes(contact.id)}
+                          onChange={() => toggleContactSelection(contact.id)}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-medium text-sm">{contact.full_name}</div>
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell max-w-[200px]">
+                        <div className="text-sm truncate">{contact.subject}</div>
+                        <div className="text-xs text-muted-foreground truncate">{contact.message}</div>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        <div className="text-sm">{contact.email}</div>
+                        {contact.phone && <div className="text-xs text-muted-foreground">{contact.phone}</div>}
+                      </TableCell>
+                      <TableCell>{getStatusBadge(contact.status)}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button size="icon" variant="ghost" className="h-8 w-8" title="Marquer lu" onClick={() => updateContactStatus(contact.id, "read")}>
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button size="icon" variant="ghost" className="h-8 w-8" title="Répondre par email" onClick={() => window.open(`mailto:${contact.email}?subject=Re: ${encodeURIComponent(contact.subject)}`, "_blank")}>
+                            <Mail className="h-4 w-4" />
+                          </Button>
+                          {contact.phone && (
+                            <Button size="icon" variant="ghost" className="h-8 w-8 text-green-600" title="WhatsApp" onClick={() => window.open(`https://wa.me/${contact.phone!.replace(/\D/g, '')}?text=${encodeURIComponent(`Bonjour ${contact.full_name}, concernant votre message "${contact.subject}"...`)}`, "_blank")}>
+                              <MessageCircle className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </div>
         );
 
