@@ -102,11 +102,11 @@ export const TestimonialManagement = () => {
     setSaving(true);
     const payload = { ...form, role: form.role || null, company: form.company || null, avatar_url: form.avatar_url || null, location: form.location || null, rating: form.rating || null };
     if (editItem) {
-      const { error } = await supabase.from("testimonials").update(payload).eq("id", editItem.id);
+      const { error } = await (supabase as any).from("testimonials").update(payload).eq("id", editItem.id);
       if (error) { logError("Error updating testimonial:", error); toast({ title: "Erreur", description: "Impossible de modifier le témoignage.", variant: "destructive" }); }
       else { await writeAuditLog("update_testimonial", { testimonial_id: editItem.id }); toast({ title: "Succès", description: "Témoignage modifié." }); }
     } else {
-      const { error } = await supabase.from("testimonials").insert(payload);
+      const { error } = await (supabase as any).from("testimonials").insert(payload);
       if (error) { logError("Error creating testimonial:", error); toast({ title: "Erreur", description: "Impossible de créer le témoignage.", variant: "destructive" }); }
       else { await writeAuditLog("create_testimonial", { client_name: form.client_name }); toast({ title: "Succès", description: "Témoignage créé." }); }
     }
@@ -120,7 +120,7 @@ export const TestimonialManagement = () => {
           isOpen: true, title: "Supprimer les témoignages",
           description: `Supprimer ${ids.length} témoignage(s) ? Cette action est irréversible.`,
           onConfirm: async () => {
-            const { error } = await supabase.from("testimonials").delete().in("id", ids);
+            const { error } = await (supabase as any).from("testimonials").delete().in("id", ids);
             if (error) { logError("Error deleting testimonials:", error); toast({ title: "Erreur", description: "Échec de la suppression.", variant: "destructive" }); resolve({ success: 0, failed: ids.length }); }
             else { await writeAuditLog("bulk_delete_testimonials", { count: ids.length }); toast({ title: "Succès", description: `${ids.length} témoignage(s) supprimé(s).` }); fetchTestimonials(); resolve({ success: ids.length, failed: 0 }); }
             setConfirmDialog(c => ({ ...c, isOpen: false }));
@@ -130,7 +130,7 @@ export const TestimonialManagement = () => {
     }
     if (action === "activate" || action === "deactivate") {
       const active = action === "activate";
-      const { error } = await supabase.from("testimonials").update({ is_active: active }).in("id", ids);
+      const { error } = await (supabase as any).from("testimonials").update({ is_active: active }).in("id", ids);
       if (error) { logError("Error updating testimonials:", error); toast({ title: "Erreur", description: "Échec de la mise à jour.", variant: "destructive" }); return { success: 0, failed: ids.length }; }
       await writeAuditLog("bulk_update_testimonials", { action, count: ids.length });
       toast({ title: "Succès", description: `${ids.length} témoignage(s) ${active ? "activé(s)" : "désactivé(s)"}.` });
@@ -144,7 +144,7 @@ export const TestimonialManagement = () => {
       isOpen: true, title: "Supprimer le témoignage",
       description: `Supprimer le témoignage de "${t.client_name}" ? Cette action est irréversible.`,
       onConfirm: async () => {
-        const { error } = await supabase.from("testimonials").delete().eq("id", t.id);
+        const { error } = await (supabase as any).from("testimonials").delete().eq("id", t.id);
         if (error) { logError("Error deleting testimonial:", error); toast({ title: "Erreur", description: "Échec de la suppression.", variant: "destructive" }); }
         else { await writeAuditLog("delete_testimonial", { testimonial_id: t.id }); toast({ title: "Succès", description: "Témoignage supprimé." }); fetchTestimonials(); }
         setConfirmDialog(c => ({ ...c, isOpen: false }));
@@ -159,8 +159,8 @@ export const TestimonialManagement = () => {
     if (swapIdx < 0 || swapIdx >= sorted.length) return;
     const swap = sorted[swapIdx];
     const temp = t.sort_order;
-    const { error: err1 } = await supabase.from("testimonials").update({ sort_order: swap.sort_order }).eq("id", t.id);
-    const { error: err2 } = await supabase.from("testimonials").update({ sort_order: temp }).eq("id", swap.id);
+    const { error: err1 } = await (supabase as any).from("testimonials").update({ sort_order: swap.sort_order }).eq("id", t.id);
+    const { error: err2 } = await (supabase as any).from("testimonials").update({ sort_order: temp }).eq("id", swap.id);
     if (err1 || err2) { logError("Error reordering:", err1 || err2); toast({ title: "Erreur", description: "Impossible de réordonner.", variant: "destructive" }); }
     else fetchTestimonials();
   };

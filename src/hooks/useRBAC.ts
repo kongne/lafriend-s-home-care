@@ -64,19 +64,19 @@ export function useRoles() {
   useEffect(() => { fetch(); }, [fetch]);
 
   const createRole = async (name: string, description: string) => {
-    const { data, error } = await supabase.from('roles').insert({ name, description }).select().single();
+    const { data, error } = await (supabase as any).from('roles').insert({ name, description }).select().single();
     if (!error && data) { setRoles(p => [...p, data]); return data; }
     throw error;
   };
 
   const updateRole = async (id: string, updates: Partial<Role>) => {
-    const { data, error } = await supabase.from('roles').update(updates).eq('id', id).select().single();
+    const { data, error } = await (supabase as any).from('roles').update(updates).eq('id', id).select().single();
     if (!error && data) { setRoles(p => p.map(r => r.id === id ? data : r)); return data; }
     throw error;
   };
 
   const deleteRole = async (id: string) => {
-    const { error } = await supabase.from('roles').delete().eq('id', id);
+    const { error } = await (supabase as any).from('roles').delete().eq('id', id);
     if (!error) { setRoles(p => p.filter(r => r.id !== id)); }
     throw error;
   };
@@ -91,7 +91,7 @@ export function usePermissionsList() {
 
   useEffect(() => {
     let mounted = true;
-    supabase.from('permissions').select('*').order('module').order('code').then(({ data, error }) => {
+    (supabase as any).from('permissions').select('*').order('module').order('code').then(({ data, error }) => {
       if (mounted && !error && data) {
         setPermissions(data);
         setModules([...new Set(data.map(p => p.module))]);
@@ -111,7 +111,7 @@ export function useRolePermissions(roleId: string | null) {
   useEffect(() => {
     if (!roleId) { setAssignedIds(new Set()); setLoading(false); return; }
     let mounted = true;
-    supabase.from('role_permissions').select('permission_id').eq('role_id', roleId).then(({ data, error }) => {
+    (supabase as any).from('role_permissions').select('permission_id').eq('role_id', roleId).then(({ data, error }) => {
       if (mounted && !error && data) {
         setAssignedIds(new Set(data.map(rp => rp.permission_id)));
       }
@@ -122,10 +122,10 @@ export function useRolePermissions(roleId: string | null) {
   const togglePermission = async (permissionId: string, assign: boolean) => {
     if (!roleId) return;
     if (assign) {
-      await supabase.from('role_permissions').insert({ role_id: roleId, permission_id: permissionId });
+      await (supabase as any).from('role_permissions').insert({ role_id: roleId, permission_id: permissionId });
       setAssignedIds(p => new Set(p).add(permissionId));
     } else {
-      await supabase.from('role_permissions').delete()
+      await (supabase as any).from('role_permissions').delete()
         .eq('role_id', roleId).eq('permission_id', permissionId);
       setAssignedIds(p => { const n = new Set(p); n.delete(permissionId); return n; });
     }
@@ -149,7 +149,7 @@ export function useUserRoles(userId: string | null) {
 
   const assignRole = async (roleId: string) => {
     if (!userId) return;
-    await supabase.from('user_roles').upsert(
+    await (supabase as any).from('user_roles').upsert(
       { user_id: userId, role_id: roleId },
       { onConflict: 'user_id,role_id', ignoreDuplicates: false }
     );
@@ -158,7 +158,7 @@ export function useUserRoles(userId: string | null) {
 
   const removeRole = async (roleId: string) => {
     if (!userId) return;
-    await supabase.from('user_roles').delete().eq('user_id', userId).eq('role_id', roleId);
+    await (supabase as any).from('user_roles').delete().eq('user_id', userId).eq('role_id', roleId);
     setUserRoles(p => p.filter(r => r.role_id !== roleId));
   };
 
@@ -173,7 +173,7 @@ export function useAuditLogs(filters?: { module?: string; action?: string; sever
   useEffect(() => {
     let mounted = true;
     setLoading(true);
-    let query = supabase.from('audit_logs').select('*', { count: 'exact' }).order('created_at', { ascending: false }).limit(filters?.limit ?? 50);
+    let query = (supabase as any).from('audit_logs').select('*', { count: 'exact' }).order('created_at', { ascending: false }).limit(filters?.limit ?? 50);
     if (filters?.module) query = query.eq('module', filters.module);
     if (filters?.action) query = query.eq('action', filters.action);
     if (filters?.severity) query = query.eq('severity', filters.severity);
@@ -194,7 +194,7 @@ export function useErrorLogs(filters?: { resolved?: boolean; type?: string; seve
   useEffect(() => {
     let mounted = true;
     setLoading(true);
-    let query = supabase.from('error_logs').select('*').order('created_at', { ascending: false }).limit(filters?.limit ?? 50);
+    let query = (supabase as any).from('error_logs').select('*').order('created_at', { ascending: false }).limit(filters?.limit ?? 50);
     if (filters?.resolved !== undefined) query = query.eq('resolved', filters.resolved);
     if (filters?.type) query = query.eq('error_type', filters.type);
     if (filters?.severity) query = query.eq('severity', filters.severity);
@@ -214,7 +214,7 @@ export function useSecurityEvents(filters?: { resolved?: boolean; type?: string;
   useEffect(() => {
     let mounted = true;
     setLoading(true);
-    let query = supabase.from('security_events').select('*').order('created_at', { ascending: false }).limit(filters?.limit ?? 50);
+    let query = (supabase as any).from('security_events').select('*').order('created_at', { ascending: false }).limit(filters?.limit ?? 50);
     if (filters?.resolved !== undefined) query = query.eq('resolved', filters.resolved);
     if (filters?.type) query = query.eq('event_type', filters.type);
     if (filters?.severity) query = query.eq('severity', filters.severity);
@@ -233,14 +233,14 @@ export function useMaintenanceMode() {
 
   useEffect(() => {
     let mounted = true;
-    supabase.from('maintenance_events').select('*').order('created_at', { ascending: false }).limit(1).then(({ data, error }) => {
+    (supabase as any).from('maintenance_events').select('*').order('created_at', { ascending: false }).limit(1).then(({ data, error }) => {
       if (mounted && !error && data && data.length > 0) setEvent(data[0]);
     }).finally(() => { if (mounted) setLoading(false); });
     return () => { mounted = false; };
   }, []);
 
   const enable = async (reason: string, type: 'scheduled' | 'emergency' = 'scheduled') => {
-    const { data, error } = await supabase.from('maintenance_events').insert({
+    const { data, error } = await (supabase as any).from('maintenance_events').insert({
       is_active: true, reason, maintenance_type: type,
     }).select().single();
     if (!error && data) setEvent(data);
@@ -249,7 +249,7 @@ export function useMaintenanceMode() {
 
   const disable = async () => {
     if (!event) return;
-    const { error } = await supabase.from('maintenance_events').update({
+    const { error } = await (supabase as any).from('maintenance_events').update({
       is_active: false, ended_at: new Date().toISOString(),
     }).eq('id', event.id);
     if (!error) setEvent(null);
@@ -265,7 +265,7 @@ export function useBackupLogs(limit = 20) {
 
   const fetch = async () => {
     setLoading(true);
-    const { data, error } = await supabase.from('backup_logs').select('*').order('created_at', { ascending: false }).limit(limit);
+    const { data, error } = await (supabase as any).from('backup_logs').select('*').order('created_at', { ascending: false }).limit(limit);
     if (!error && data) setLogs(data);
     setLoading(false);
   };
@@ -281,7 +281,7 @@ export function useRestoreLogs(limit = 20) {
 
   useEffect(() => {
     setLoading(true);
-    supabase.from('restore_logs').select('*, backup:backup_id(*)').order('created_at', { ascending: false }).limit(limit).then(({ data, error }) => {
+    (supabase as any).from('restore_logs').select('*, backup:backup_id(*)').order('created_at', { ascending: false }).limit(limit).then(({ data, error }) => {
       if (!error && data) setLogs(data);
     }).finally(() => setLoading(false));
   }, [limit]);
@@ -296,14 +296,14 @@ export function useUserSessions(userId: string | null) {
   useEffect(() => {
     if (!userId) { setSessions([]); setLoading(false); return; }
     let mounted = true;
-    supabase.from('user_sessions').select('*').eq('user_id', userId).order('logged_in_at', { ascending: false }).then(({ data, error }) => {
+    (supabase as any).from('user_sessions').select('*').eq('user_id', userId).order('logged_in_at', { ascending: false }).then(({ data, error }) => {
       if (mounted && !error && data) setSessions(data);
     }).finally(() => { if (mounted) setLoading(false); });
     return () => { mounted = false; };
   }, [userId]);
 
   const forceLogout = async (sessionId: string) => {
-    await supabase.from('user_sessions').update({ is_active: false, logged_out_at: new Date().toISOString() }).eq('id', sessionId);
+    await (supabase as any).from('user_sessions').update({ is_active: false, logged_out_at: new Date().toISOString() }).eq('id', sessionId);
     setSessions(p => p.map(s => s.id === sessionId ? { ...s, is_active: false, logged_out_at: new Date().toISOString() } : s));
   };
 
@@ -316,7 +316,7 @@ export function useSystemSettings(module?: string) {
 
   const fetch = async () => {
     setLoading(true);
-    let query = supabase.from('system_settings').select('*');
+    let query = (supabase as any).from('system_settings').select('*');
     if (module) query = query.eq('module', module);
     const { data, error } = await query;
     if (!error && data) {
@@ -330,7 +330,7 @@ export function useSystemSettings(module?: string) {
   useEffect(() => { fetch(); }, [module]);
 
   const updateSetting = async (key: string, value: any) => {
-    await supabase.from('system_settings').upsert(
+    await (supabase as any).from('system_settings').upsert(
       { module: module ?? 'general', key, value: JSON.parse(JSON.stringify(value)) },
       { onConflict: 'module,key' }
     );
