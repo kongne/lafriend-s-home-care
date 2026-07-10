@@ -49,7 +49,7 @@ export function ErrorLogCenter() {
   );
 
   const handleResolve = async (id: string) => {
-    await supabase.from('error_logs').update({ resolved: true, resolved_at: new Date().toISOString(), resolved_by: user?.id }).eq('id', id);
+    await (supabase as any).from('error_logs').update({ resolved: true, resolved_at: new Date().toISOString(), resolved_by: user?.id }).eq('id', id);
     await writeAuditLog({ action: 'error_resolved', module: 'errors', description: `Resolved error log ${id.slice(0, 8)}`, severity: 'info' }, user?.id);
   };
 
