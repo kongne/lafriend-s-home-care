@@ -53,7 +53,7 @@ export function useRoles() {
 
   const fetch = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('roles')
       .select('*')
       .order('name');
