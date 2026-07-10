@@ -10,11 +10,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Loader2, FileText, CheckCircle } from "lucide-react";
-import { contactSchema } from "@/lib/validation";
+import { Loader2, FileText, CheckCircle, MapPin } from "lucide-react";
 import { rateLimit } from "@/lib/validation";
 import { error as logError } from "@/lib/logger";
 import { Seo } from "@/components/Seo";
+import { LocationSearch } from "@/components/LocationSearch";
 
 const QuoteRequest = () => {
   const { toast } = useToast();
@@ -29,12 +29,24 @@ const QuoteRequest = () => {
     customService: "",
     propertySize: "",
     frequency: "",
+    address: "",
+    latitude: "",
+    longitude: "",
     message: "",
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleLocationSelect = (location: { address: string; lat: number; lng: number }) => {
+    setFormData(prev => ({
+      ...prev,
+      address: location.address,
+      latitude: String(location.lat),
+      longitude: String(location.lng),
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -53,10 +65,14 @@ const QuoteRequest = () => {
         : formData.serviceType;
 
       const subject = `Demande de devis - ${serviceLabel}`;
+      const locationInfo = formData.address
+        ? `\nAdresse: ${formData.address}${formData.latitude ? ` (${formData.latitude}, ${formData.longitude})` : ""}`
+        : "";
       const message = [
         `Service: ${serviceLabel}`,
         formData.propertySize && `Taille: ${formData.propertySize}`,
         formData.frequency && `Fréquence: ${formData.frequency}`,
+        locationInfo || null,
         formData.message && `\nDétails: ${formData.message}`,
       ].filter(Boolean).join("\n");
 
@@ -147,6 +163,11 @@ const QuoteRequest = () => {
               <div className="space-y-2">
                 <Label htmlFor="phone">Téléphone</Label>
                 <Input id="phone" name="phone" type="tel" value={formData.phone} onChange={handleChange} maxLength={20} placeholder="+237 XXX XXX XXX" />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Adresse / Localisation</Label>
+                <LocationSearch onLocationSelect={handleLocationSelect} selectedLocation={formData.address ? { address: formData.address, lat: parseFloat(formData.latitude || "0"), lng: parseFloat(formData.longitude || "0") } : null} />
               </div>
 
               <div className="space-y-2">
