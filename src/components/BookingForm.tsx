@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -76,6 +76,8 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
   const [latitude, setLatitude] = useState("");
   const [longitude, setLongitude] = useState("");
   const [showBreakdown, setShowBreakdown] = useState(false);
+  const [availableAddons, setAvailableAddons] = useState<{ id: string; name: string; description: string | null; price: number | null }[]>([]);
+  const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -112,6 +114,21 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
       .then(({ data }) => setKycStatus((data?.status as typeof kycStatus) || "none"));
   }, [user?.id]);
 
+  useEffect(() => {
+    if (!formData.serviceType || formData.serviceType === "other") {
+      setAvailableAddons([]);
+      setSelectedAddons([]);
+      return;
+    }
+    void supabase.from("services").select("id").eq("slug", formData.serviceType).maybeSingle()
+      .then(async ({ data: svc }) => {
+        if (!svc) return;
+        const { data: addons } = await supabase.from("service_addons").select("id,name,description,price").eq("service_id", svc.id);
+        setAvailableAddons(addons || []);
+        setSelectedAddons([]);
+      });
+  }, [formData.serviceType]);
+
   const hours = parseInt(formData.estimatedHours || "0", 10) || 0;
   const basePrice = SERVICE_BASE_PRICE[formData.serviceType] || 0;
   const subtotal = basePrice * Math.max(1, hours / 2);
@@ -121,8 +138,12 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
   const pointsDiscount = pointsToRedeem * 10; // 1 pt = 10 FCFA
   const distance = parseFloat(formData.distance || "0") || 0;
   const distanceFee = distance > 10 ? (distance - 10) * 500 : 0;
+  const addonTotal = selectedAddons.reduce((sum, id) => {
+    const addon = availableAddons.find(a => a.id === id);
+    return sum + (addon?.price || 0);
+  }, 0);
   const estimatedTotal = Math.max(0, Math.round(subtotal - discount - pointsDiscount));
-  const totalFcfa = estimatedTotal + distanceFee;
+  const totalFcfa = estimatedTotal + distanceFee + addonTotal;
   const maxRedeemable = Math.min(loyaltyPoints, Math.floor(Math.max(0, subtotal - discount) / 10));
   const rate = EXCHANGE_RATES[currency] || 1;
   const exchangeFeeRate = currency !== "XAF" ? EXCHANGE_FEES[currency] || 0 : 0;
@@ -130,6 +151,7 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
   const convertedDiscount = discount * rate;
   const convertedPointsDiscount = pointsDiscount * rate;
   const convertedDistanceFee = distanceFee * rate;
+  const convertedAddonTotal = addonTotal * rate;
   const convertedTotal = totalFcfa * rate;
   const exchangeFee = convertedTotal * exchangeFeeRate;
   const grandTotalConverted = convertedTotal + exchangeFee;
@@ -221,6 +243,11 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
         ? formData.customService
         : SERVICE_LABEL[formData.serviceType] || validation.data.serviceType;
 
+      const bookingAddons = selectedAddons.map(id => {
+        const a = availableAddons.find(addon => addon.id === id);
+        return a ? { id: a.id, name: a.name, price: a.price } : null;
+      }).filter(Boolean);
+
       const { data: insertedBooking, error } = await supabase.from("bookings").insert({
         user_id: user?.id || null,
         full_name: validation.data.fullName,
@@ -237,6 +264,8 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
         distance_km: distance,
         latitude: latitude || null,
         longitude: longitude || null,
+        estimated_price: totalFcfa,
+        selected_addons: bookingAddons,
       } as any).select("id").single();
 
       if (error) throw error;
@@ -318,6 +347,8 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
     setLongitude("");
     setPointsToRedeem(0);
     setShowBreakdown(false);
+    setAvailableAddons([]);
+    setSelectedAddons([]);
     setFormData({
       fullName: "", email: "", phone: "", address: "", serviceType: "",
       customService: "", estimatedHours: "2", preferredDate: "", preferredTime: "",
@@ -346,9 +377,23 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
             <span className="text-muted-foreground">Date</span>
             <span className="font-medium">{formData.preferredDate} • {formData.preferredTime}</span>
           </div>
+          {selectedAddons.length > 0 && (
+            <div className="border-t pt-2">
+              <p className="text-xs text-muted-foreground mb-1">Options sélectionnées :</p>
+              {selectedAddons.map(id => {
+                const a = availableAddons.find(addon => addon.id === id);
+                return a ? (
+                  <div key={a.id} className="flex justify-between text-xs">
+                    <span>{a.name}</span>
+                    <span className="font-medium">+{formatPrice(a.price || 0)}</span>
+                  </div>
+                ) : null;
+              })}
+            </div>
+          )}
           <div className="flex justify-between border-t pt-2">
-            <span className="text-muted-foreground">Estimation</span>
-            <span className="font-bold text-accent">{formatPrice(estimatedTotal)}</span>
+            <span className="text-muted-foreground">Estimation totale</span>
+            <span className="font-bold text-accent">{formatPrice(estimatedTotal + addonTotal)}</span>
           </div>
           {pointsToRedeem > 0 && (
             <p className="text-xs text-green-600 text-right">{pointsToRedeem} pts utilisés (-{formatPrice(pointsDiscount)})</p>
@@ -488,6 +533,65 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
                   </div>
                 )}
                 <p className="text-xs text-muted-foreground">* Estimation indicative — confirmation après visite.</p>
+              </div>
+            )}
+
+            {availableAddons.length > 0 && (
+              <div className="bg-gradient-to-br from-purple-500/5 to-accent/10 border border-purple-300/40 rounded-lg p-4 space-y-3 animate-in fade-in slide-in-from-top-2">
+                <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <Sparkles className="h-4 w-4 text-purple-500" />
+                  Options supplémentaires
+                </div>
+                {availableAddons.map(addon => {
+                  const isSelected = selectedAddons.includes(addon.id);
+                  return (
+                    <label
+                      key={addon.id}
+                      className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                        isSelected
+                          ? "bg-purple-100 dark:bg-purple-950/40 border-purple-400"
+                          : "bg-background/60 border-muted hover:border-purple-300"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => {
+                          setSelectedAddons(prev =>
+                            isSelected ? prev.filter(id => id !== addon.id) : [...prev, addon.id]
+                          );
+                        }}
+                        className="mt-1 h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-medium text-sm text-foreground">{addon.name}</span>
+                          {addon.price != null && (
+                            <span className="font-semibold text-sm text-purple-600 dark:text-purple-400 whitespace-nowrap">
+                              +{formatPrice(addon.price)}
+                            </span>
+                          )}
+                        </div>
+                        {addon.description && (
+                          <p className="text-xs text-muted-foreground mt-0.5">{addon.description}</p>
+                        )}
+                      </div>
+                    </label>
+                  );
+                })}
+                {addonTotal > 0 && (
+                  <div className="flex justify-between text-sm border-t border-purple-300/30 pt-2">
+                    <span className="text-muted-foreground">Total options</span>
+                    <span className="font-semibold text-purple-600 dark:text-purple-400">
+                      +{formatPrice(addonTotal)}
+                      {currency !== "XAF" && (
+                        <span className="text-xs text-muted-foreground">
+                          {" "}({formatConverted(Math.round(convertedAddonTotal * 100) / 100)})
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                )}
               </div>
             )}
 
@@ -697,6 +801,12 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
                       <div className="flex justify-between text-green-600">
                         <span>Remise abonnement</span>
                         <span>-{formatPrice(Math.round(discount))} {currency !== "XAF" && <span className="text-xs text-muted-foreground">({formatConverted(Math.round(convertedDiscount * 100) / 100)})</span>}</span>
+                      </div>
+                    )}
+                    {addonTotal > 0 && (
+                      <div className="flex justify-between text-purple-600">
+                        <span>Options ({selectedAddons.length})</span>
+                        <span>+{formatPrice(addonTotal)} {currency !== "XAF" && <span className="text-xs text-muted-foreground">({formatConverted(Math.round(convertedAddonTotal * 100) / 100)})</span>}</span>
                       </div>
                     )}
                     {pointsToRedeem > 0 && (

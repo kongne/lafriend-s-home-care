@@ -89,6 +89,11 @@ interface Booking {
   created_at: string;
   is_recurring?: boolean;
   recurrence_type?: string | null;
+  estimated_price?: number | null;
+  selected_addons?: { id: string; name: string; price: number | null }[] | null;
+  distance_km?: number | null;
+  latitude?: string | null;
+  longitude?: string | null;
 }
 
 interface ContactSubmission {
@@ -135,6 +140,7 @@ const Admin = () => {
   const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
   const [sendingConfirmation, setSendingConfirmation] = useState<string | null>(null);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const fmtPrice = (n: number) => n.toLocaleString("fr-FR") + " FCFA";
   const [searchQuery, setSearchQuery] = useState("");
   const [dashboardTimeRange, setDashboardTimeRange] = useState<"7d" | "30d" | "90d" | "12m">("12m");
 
@@ -623,6 +629,16 @@ const Admin = () => {
                       <div><strong>Service:</strong> {booking.service_type}</div>
                       <div><strong>Date:</strong> {booking.preferred_date} à {booking.preferred_time}</div>
                       <div className="sm:col-span-2 lg:col-span-4"><strong>Adresse:</strong> {booking.address}</div>
+                      {(booking.selected_addons?.length ?? 0) > 0 && (
+                        <div className="sm:col-span-2 lg:col-span-4">
+                          <strong>Options :</strong> {booking.selected_addons!.map(a => a.name).join(", ")}
+                        </div>
+                      )}
+                      {booking.estimated_price != null && (
+                        <div className="sm:col-span-2 lg:col-span-4">
+                          <strong>Estimation :</strong> {fmtPrice(booking.estimated_price)}
+                        </div>
+                      )}
                       {booking.message && <div className="sm:col-span-2 lg:col-span-4"><strong>Message:</strong> {booking.message}</div>}
                     </div>
                     <div className="flex flex-wrap gap-2">
