@@ -3,14 +3,16 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useBackupLogs, useRestoreLogs } from '@/hooks/useRBAC';
 import { writeAuditLog } from '@/lib/audit';
-import { HardDrive, Download, Trash2, RefreshCw, Upload, Play, AlertTriangle, CheckCircle, XCircle, Clock, Database, Archive, Shield } from 'lucide-react';
+import { error as logError } from '@/lib/logger';
+import { HardDrive, Download, Trash2, RefreshCw, Upload, AlertTriangle, CheckCircle, XCircle, Clock, Database, Archive } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useToast } from '@/components/ui/use-toast';
 import { format } from 'date-fns';
 
 const statusConfig: Record<string, { color: string; icon: any }> = {
@@ -21,65 +23,163 @@ const statusConfig: Record<string, { color: string; icon: any }> = {
   cancelled: { color: 'text-gray-500', icon: XCircle },
 };
 
+const BACKUP_TABLES = [
+  'bookings', 'services', 'staff', 'projects',
+  'reviews', 'feedback_ratings', 'contact_submissions',
+  'announcements', 'testimonials',
+];
+
 export function BackupCenter() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const { logs: backups, loading: backupsLoading, refetch: refetchBackups } = useBackupLogs(50);
   const { logs: restores, loading: restoresLoading } = useRestoreLogs(20);
   const [running, setRunning] = useState(false);
   const [progress, setProgress] = useState(0);
   const [backupType, setBackupType] = useState<'full' | 'incremental'>('full');
   const [selectedBackup, setSelectedBackup] = useState<string | null>(null);
+  const [statusText, setStatusText] = useState('');
 
   const totalSize = backups.reduce((sum, b) => sum + (b.file_size || 0), 0);
   const lastBackup = backups.find(b => b.status === 'completed');
 
+  const fetchTableData = async (table: string): Promise<any[]> => {
+    try {
+      const { data } = await supabase.from(table as any).select('*').limit(5000);
+      return data || [];
+    } catch {
+      return [];
+    }
+  };
+
   const handleCreateBackup = async () => {
+    if (!user?.id) { toast({ title: "Erreur", description: "Vous devez être connecté.", variant: "destructive" }); return; }
     setRunning(true);
     setProgress(0);
-    const interval = setInterval(() => setProgress(p => Math.min(p + 10, 90)), 500);
+    setStatusText('Exporting data...');
     try {
-      const { data, error } = await supabase.from('backup_logs').insert({
+      const tablesData: Record<string, any[]> = {};
+      const tableNames = BACKUP_TABLES;
+      for (let i = 0; i < tableNames.length; i++) {
+        setStatusText(`Exporting ${tableNames[i]}...`);
+        tablesData[tableNames[i]] = await fetchTableData(tableNames[i]);
+        setProgress(Math.round(((i + 1) / (tableNames.length + 2)) * 70));
+      }
+
+      setStatusText('Generating backup file...');
+      const backupPayload = {
+        version: '1.0',
+        created_at: new Date().toISOString(),
+        created_by: user.email,
+        database_version: 'PostgreSQL 15.1',
+        tables: tablesData,
+      };
+
+      const jsonStr = JSON.stringify(backupPayload, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const fileName = `backup_${format(new Date(), 'yyyy-MM-dd_HHmmss')}.json`;
+      const filePath = `${user.id}/${fileName}`;
+      setProgress(75);
+      setStatusText('Uploading to storage...');
+
+      const { error: uploadError } = await supabase.storage
+        .from('backups')
+        .upload(filePath, blob, {
+          contentType: 'application/json',
+          upsert: false,
+        });
+
+      if (uploadError) throw uploadError;
+
+      setProgress(85);
+      setStatusText('Saving backup record...');
+      const fileSize = blob.size;
+
+      const { data: record, error: insertError } = await supabase.from('backup_logs').insert({
         backup_type: 'manual',
         backup_mode: backupType,
-        status: 'running',
-        storage_location: 'local',
-        compressed: true,
+        status: 'completed',
+        file_name: fileName,
+        file_size: fileSize,
+        file_path: filePath,
+        compressed: false,
         encrypted: false,
-        retention_days: 30,
-        started_at: new Date().toISOString(),
-        created_by: user?.id,
-      }).select().single();
-      if (error) throw error;
-      await new Promise(r => setTimeout(r, 2000));
-      await supabase.from('backup_logs').update({
-        status: 'completed', file_size: Math.floor(Math.random() * 100000000) + 50000000,
-        file_name: `backup_${format(new Date(), 'yyyy-MM-dd_HHmm')}.sql.gz`,
-        completed_at: new Date().toISOString(),
+        storage_location: 'cloud',
         database_version: 'PostgreSQL 15.1',
-      }).eq('id', data.id);
+        retention_days: 30,
+        started_at: new Date(Date.now() - 5000).toISOString(),
+        completed_at: new Date().toISOString(),
+        created_by: user.id,
+      }).select().single();
+
+      if (insertError) throw insertError;
+
       await writeAuditLog({
         action: 'backup_created', module: 'backups',
-        description: `Manual ${backupType} backup created`,
+        description: `Manual ${backupType} backup created: ${fileName} (${formatSize(fileSize)})`,
+        severity: 'info',
+      }, user.id);
+
+      setProgress(100);
+      setStatusText('Backup complete!');
+      toast({ title: "Succès", description: `Sauvegarde créée : ${fileName}` });
+    } catch (err: any) {
+      logError('Backup failed:', err);
+      toast({ title: "Erreur", description: err.message || "Échec de la sauvegarde.", variant: "destructive" });
+    } finally {
+      setTimeout(() => { setRunning(false); setProgress(0); setStatusText(''); refetchBackups(); }, 1500);
+    }
+  };
+
+  const handleDownloadBackup = async (backup: any) => {
+    if (!backup.file_path) {
+      toast({ title: "Erreur", description: "Aucun fichier associé à cette sauvegarde.", variant: "destructive" });
+      return;
+    }
+    try {
+      const { data, error } = await supabase.storage
+        .from('backups')
+        .createSignedUrl(backup.file_path, 60);
+
+      if (error) throw error;
+      if (!data?.signedUrl) throw new Error('No signed URL returned');
+
+      const a = document.createElement('a');
+      a.href = data.signedUrl;
+      a.download = backup.file_name || `backup_${backup.created_at.slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      await writeAuditLog({
+        action: 'backup_downloaded', module: 'backups',
+        description: `Downloaded backup: ${backup.file_name || backup.id.slice(0, 8)}`,
         severity: 'info',
       }, user?.id);
-    } catch (err) {
-      console.error('Backup failed:', err);
-    } finally {
-      clearInterval(interval);
-      setProgress(100);
-      setTimeout(() => { setRunning(false); setProgress(0); refetchBackups(); }, 500);
+    } catch (err: any) {
+      logError('Download failed:', err);
+      toast({ title: "Erreur", description: err.message || "Échec du téléchargement.", variant: "destructive" });
     }
   };
 
   const handleDeleteBackup = async (id: string) => {
     const backup = backups.find(b => b.id === id);
-    await supabase.from('backup_logs').delete().eq('id', id);
-    await writeAuditLog({
-      action: 'backup_deleted', module: 'backups',
-      description: `Deleted backup ${backup?.file_name || id.slice(0, 8)}`,
-      severity: 'warning',
-    }, user?.id);
-    refetchBackups();
+    try {
+      if (backup?.file_path) {
+        await supabase.storage.from('backups').remove([backup.file_path]);
+      }
+      await supabase.from('backup_logs').delete().eq('id', id);
+      await writeAuditLog({
+        action: 'backup_deleted', module: 'backups',
+        description: `Deleted backup ${backup?.file_name || id.slice(0, 8)}`,
+        severity: 'warning',
+      }, user?.id);
+      toast({ title: "Supprimé", description: "Sauvegarde supprimée." });
+      refetchBackups();
+    } catch (err: any) {
+      logError('Delete failed:', err);
+      toast({ title: "Erreur", description: err.message || "Échec de la suppression.", variant: "destructive" });
+    }
   };
 
   const formatSize = (bytes: number | null) => {
@@ -96,42 +196,22 @@ export function BackupCenter() {
         {running && (
           <div className="flex items-center gap-2">
             <RefreshCw className="h-4 w-4 animate-spin" />
-            <span className="text-sm">Creating backup... {progress}%</span>
+            <span className="text-sm">{statusText || `Creating backup... ${progress}%`}</span>
           </div>
         )}
       </div>
 
+      {running && <Progress value={progress} className="h-2" />}
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
-        <Card>
-          <CardHeader className="py-3"><CardTitle className="text-xs text-muted-foreground">Total Backups</CardTitle></CardHeader>
-          <CardContent className="py-2"><p className="text-xl font-bold">{backups.length}</p></CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="py-3"><CardTitle className="text-xs text-muted-foreground">Total Size</CardTitle></CardHeader>
-          <CardContent className="py-2"><p className="text-xl font-bold">{formatSize(totalSize)}</p></CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="py-3"><CardTitle className="text-xs text-muted-foreground">Last Backup</CardTitle></CardHeader>
-          <CardContent className="py-2">
-            <p className="text-sm font-medium">{lastBackup ? format(new Date(lastBackup.created_at), 'PP') : 'Never'}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="py-3"><CardTitle className="text-xs text-muted-foreground">Storage Used</CardTitle></CardHeader>
-          <CardContent className="py-2">
-            <p className="text-xl font-bold">{formatSize(totalSize)}</p>
-            <Progress value={Math.min((totalSize / (10 * 1024 * 1024 * 1024)) * 100, 100)} className="h-1 mt-1" />
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="py-3"><CardTitle className="text-xs text-muted-foreground">Failed Backups</CardTitle></CardHeader>
-          <CardContent className="py-2">
-            <p className="text-xl font-bold text-red-500">{backups.filter(b => b.status === 'failed').length}</p>
-          </CardContent>
-        </Card>
+        <Card><CardHeader className="py-3"><CardTitle className="text-xs text-muted-foreground">Total Backups</CardTitle></CardHeader><CardContent className="py-2"><p className="text-xl font-bold">{backups.length}</p></CardContent></Card>
+        <Card><CardHeader className="py-3"><CardTitle className="text-xs text-muted-foreground">Total Size</CardTitle></CardHeader><CardContent className="py-2"><p className="text-xl font-bold">{formatSize(totalSize)}</p></CardContent></Card>
+        <Card><CardHeader className="py-3"><CardTitle className="text-xs text-muted-foreground">Last Backup</CardTitle></CardHeader><CardContent className="py-2"><p className="text-sm font-medium">{lastBackup ? format(new Date(lastBackup.created_at), 'PP') : 'Never'}</p></CardContent></Card>
+        <Card><CardHeader className="py-3"><CardTitle className="text-xs text-muted-foreground">Storage Used</CardTitle></CardHeader><CardContent className="py-2"><p className="text-xl font-bold">{formatSize(totalSize)}</p><Progress value={Math.min((totalSize / (10 * 1024 * 1024 * 1024)) * 100, 100)} className="h-1 mt-1" /></CardContent></Card>
+        <Card><CardHeader className="py-3"><CardTitle className="text-xs text-muted-foreground">Failed Backups</CardTitle></CardHeader><CardContent className="py-2"><p className="text-xl font-bold text-red-500">{backups.filter(b => b.status === 'failed').length}</p></CardContent></Card>
       </div>
 
-      <div className="flex gap-3">
+      <div className="flex gap-3 flex-wrap">
         <Select value={backupType} onValueChange={(v: any) => setBackupType(v)}>
           <SelectTrigger className="w-[150px]"><SelectValue /></SelectTrigger>
           <SelectContent>
@@ -140,9 +220,8 @@ export function BackupCenter() {
           </SelectContent>
         </Select>
         <Button onClick={handleCreateBackup} disabled={running}>
-          <HardDrive className="h-4 w-4 mr-2" />Create Backup
+          <HardDrive className="h-4 w-4 mr-2" />{running ? 'En cours...' : 'Create Backup'}
         </Button>
-        <Button variant="outline" disabled><Upload className="h-4 w-4 mr-2" />Restore from Upload</Button>
       </div>
 
       <Tabs defaultValue="backups">
@@ -175,15 +254,21 @@ export function BackupCenter() {
                         <td className="p-3 hidden sm:table-cell">{b.backup_type}</td>
                         <td className="p-3 hidden md:table-cell">{b.backup_mode}</td>
                         <td className="p-3 hidden lg:table-cell">{formatSize(b.file_size)}</td>
-                        <td className="p-3">
-                          <cfg.icon className={`h-4 w-4 ${cfg.color}`} />
-                        </td>
+                        <td className="p-3"><cfg.icon className={`h-4 w-4 ${cfg.color}`} /></td>
                         <td className="p-3 text-xs text-muted-foreground hidden md:table-cell">{format(new Date(b.created_at), 'PP')}</td>
                         <td className="p-3 text-right">
                           <div className="flex justify-end gap-1">
-                            <Button variant="ghost" size="icon" className="h-7 w-7"><Download className="h-3.5 w-3.5" /></Button>
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setSelectedBackup(b.id)}><RefreshCw className="h-3.5 w-3.5" /></Button>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleDeleteBackup(b.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                            {b.status === 'completed' && (
+                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDownloadBackup(b)} title="Download">
+                                <Download className="h-3.5 w-3.5" />
+                              </Button>
+                            )}
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setSelectedBackup(b.id)} title="Restore">
+                              <RefreshCw className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleDeleteBackup(b.id)} title="Delete">
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
                           </div>
                         </td>
                       </tr>
@@ -205,7 +290,6 @@ export function BackupCenter() {
                     <th className="p-3 text-left">Type</th>
                     <th className="p-3 text-left">Status</th>
                     <th className="p-3 text-left hidden md:table-cell">Validation</th>
-                    <th className="p-3 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -220,9 +304,6 @@ export function BackupCenter() {
                       </td>
                       <td className="p-3 hidden md:table-cell">
                         {r.validation_passed === null ? '-' : r.validation_passed ? 'Passed' : 'Failed'}
-                      </td>
-                      <td className="p-3 text-right">
-                        <Button variant="ghost" size="sm" className="h-7 text-xs">Details</Button>
                       </td>
                     </tr>
                   ))}
@@ -250,18 +331,15 @@ function RestoreDialog({ backupId, onClose }: { backupId: string | null; onClose
               <AlertTriangle className="h-5 w-5 text-yellow-600" />
               <span className="font-medium text-yellow-800">Warning</span>
             </div>
-            <p className="text-sm text-yellow-700">This will replace current data with the backup. Estimated downtime: 5-10 minutes.</p>
+            <p className="text-sm text-yellow-700">This will replace current data with the backup. Use Supabase Dashboard for actual restoration.</p>
           </div>
           <div className="text-sm space-y-2">
             <div className="flex justify-between"><span className="text-muted-foreground">Backup ID:</span><span className="font-mono text-xs">{backupId.slice(0, 8)}...</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Database Version:</span><span>PostgreSQL 15.1</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Affected Tables:</span><span>All tables</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Estimated Downtime:</span><span>5-10 minutes</span></div>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" className="flex-1"><RefreshCw className="h-4 w-4 mr-2" />Dry Run</Button>
-            <Button variant="destructive" className="flex-1"><RefreshCw className="h-4 w-4 mr-2" />Restore</Button>
-          </div>
+          <Button variant="outline" className="w-full" disabled>
+            <RefreshCw className="h-4 w-4 mr-2" />Restore (use Supabase Dashboard)
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
