@@ -461,7 +461,15 @@ export const Gallery = () => {
           <div className="mt-10 text-center">
             <Button
               variant="outline"
-              onClick={() => navigate("/#contact")}
+              onClick={() => {
+                if (window.location.pathname === '/') {
+                  document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
+                } else {
+                  navigate("/"); setTimeout(() => {
+                    document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
+                  }, 100);
+                }
+              }}
               className="font-semibold"
             >
               <SlidersHorizontal className="h-4 w-4 mr-2" />
