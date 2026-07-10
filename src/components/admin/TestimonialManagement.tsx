@@ -54,7 +54,7 @@ export const TestimonialManagement = () => {
 
   const fetchTestimonials = async () => {
     setLoading(true);
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("testimonials")
       .select("*")
       .order("sort_order", { ascending: true })
