@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Home, Building2, HardHat, Sparkles, Car, FileText, Loader2, Search, X, LayoutGrid } from "lucide-react";
+import { Home, Building2, HardHat, Sparkles, Car, FileText, Loader2, Search, X, LayoutGrid, Heart, Utensils, HelpCircle, Factory } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
@@ -20,6 +20,7 @@ interface DBService {
 
 const SERVICE_ICONS: Record<string, any> = {
   residential: Home, commercial: Building2, construction: HardHat, windows: Sparkles, car: Car,
+  nanny: Heart, cook: Utensils, other: HelpCircle, industrial: Factory,
 };
 
 const fallbackServices = [
@@ -28,10 +29,13 @@ const fallbackServices = [
   { id: "construction", icon: HardHat, titleKey: 'services.construction', descKey: 'services.construction.desc', features: ['services.construction.f1', 'services.construction.f2', 'services.construction.f3'], category: "construction" },
   { id: "windows", icon: Sparkles, titleKey: 'services.windows', descKey: 'services.windows.desc', features: ['services.windows.f1', 'services.windows.f2', 'services.windows.f3'], category: "windows" },
   { id: "car", icon: Car, titleKey: 'services.car', descKey: 'services.car.desc', features: ['services.car.f1', 'services.car.f2', 'services.car.f3'], category: "car" },
-  { id: "custom", icon: Home, titleKey: 'services.custom', descKey: 'services.custom.desc', features: ['services.custom.f1', 'services.custom.f2', 'services.custom.f3'], category: "other" },
+  { id: "nanny", icon: Heart, titleKey: 'services.nanny', descKey: 'services.nanny.desc', features: ['services.nanny.f1', 'services.nanny.f2', 'services.nanny.f3'], category: "nanny" },
+  { id: "cook", icon: Utensils, titleKey: 'services.cook', descKey: 'services.cook.desc', features: ['services.cook.f1', 'services.cook.f2', 'services.cook.f3'], category: "cook" },
+  { id: "industrial", icon: Factory, titleKey: 'services.industrial', descKey: 'services.industrial.desc', features: ['services.industrial.f1', 'services.industrial.f2', 'services.industrial.f3'], category: "industrial" },
+  { id: "custom", icon: HelpCircle, titleKey: 'services.custom', descKey: 'services.custom.desc', features: ['services.custom.f1', 'services.custom.f2', 'services.custom.f3'], category: "other" },
 ];
 
-const CATEGORY_ORDER = ["residential", "commercial", "construction", "windows", "car", "other"];
+const CATEGORY_ORDER = ["residential", "commercial", "construction", "windows", "car", "nanny", "cook", "industrial", "other"];
 
 export const Services = () => {
   const { ref, isVisible } = useScrollReveal();

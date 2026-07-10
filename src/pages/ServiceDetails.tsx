@@ -87,6 +87,39 @@ const fallbackData: Record<string, { icon: string; titleKey: string; descKey: st
     ],
     included: ["Lavage extérieur", "Aspiration intérieure", "Nettoyage sièges", "Tableau de bord", "Vitres intérieures"],
   },
+  nanny: {
+    icon: "Heart", titleKey: "services.nanny", descKey: "services.nanny.desc",
+    features: ["services.nanny.f1", "services.nanny.f2", "services.nanny.f3"],
+    highlights: [
+      { labelKey: "Durée", icon: "Clock", value: "Selon besoin" },
+      { labelKey: "Équipe", icon: "Users", value: "1 personne" },
+      { labelKey: "Garantie", icon: "ShieldCheck", value: "100% satisfait" },
+      { labelKey: "À partir de", icon: "DollarSign", value: "35 000 XAF" },
+    ],
+    included: ["Garde d'enfants", "Surveillance", "Aide aux devoirs", "Préparation repas", "Activités éducatives"],
+  },
+  cook: {
+    icon: "Utensils", titleKey: "services.cook", descKey: "services.cook.desc",
+    features: ["services.cook.f1", "services.cook.f2", "services.cook.f3"],
+    highlights: [
+      { labelKey: "Durée", icon: "Clock", value: "Selon besoin" },
+      { labelKey: "Équipe", icon: "Users", value: "1 personne" },
+      { labelKey: "Garantie", icon: "ShieldCheck", value: "100% satisfait" },
+      { labelKey: "À partir de", icon: "DollarSign", value: "30 000 XAF" },
+    ],
+    included: ["Préparation des repas", "Courses alimentaires", "Cuisine diététique", "Menu personnalisé", "Cuisine événementielle"],
+  },
+  industrial: {
+    icon: "Factory", titleKey: "services.industrial", descKey: "services.industrial.desc",
+    features: ["services.industrial.f1", "services.industrial.f2", "services.industrial.f3"],
+    highlights: [
+      { labelKey: "Durée", icon: "Clock", value: "4-8 heures" },
+      { labelKey: "Équipe", icon: "Users", value: "3-5 personnes" },
+      { labelKey: "Garantie", icon: "ShieldCheck", value: "Normes ISO" },
+      { labelKey: "À partir de", icon: "DollarSign", value: "100 000 XAF" },
+    ],
+    included: ["Nettoyage industriel", "Dégraissage sols", "Nettoyage machines", "Désinfection", "Gestion des déchets"],
+  },
 };
 
 const ServiceDetails = () => {
