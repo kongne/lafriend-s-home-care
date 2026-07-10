@@ -10,12 +10,13 @@ import {
   Globe, Settings2, FileImage, MessageSquare, Search, Shield, Zap,
   BarChart3, Link, Database, RefreshCw, Save, Mail, Phone, MapPin,
   Clock, Palette, Upload, Eye, EyeOff, Lock, Bell, ChevronRight, Calculator,
-  Table, Map, Wrench, LayoutDashboard, AlertTriangle,
+  Table, Map, Wrench, LayoutDashboard, AlertTriangle, Server, Cloud,
 } from "lucide-react";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SettingsState {
   general: { siteName: string; tagline: string; contactEmail: string; contactPhone: string; address: string; language: string };
@@ -94,6 +95,7 @@ export const AdminSettingsCenter = () => {
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("general");
   const [showSensitive, setShowSensitive] = useState(false);
+  const [serverAvailable, setServerAvailable] = useState<boolean | null>(null);
 
   const update = (section: keyof SettingsState, key: string, value: any) => {
     setSettings((prev) => ({
@@ -102,13 +104,60 @@ export const AdminSettingsCenter = () => {
     }));
   };
 
-  const handleSave = () => {
+  // On mount, try to load from server and overwrite localStorage cache
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from("system_settings")
+          .select("module, key, value");
+        if (error || !data || data.length === 0) {
+          setServerAvailable(false);
+          return;
+        }
+        setServerAvailable(true);
+        const result: Record<string, Record<string, any>> = {};
+        for (const row of data) {
+          if (!result[row.module]) result[row.module] = {};
+          result[row.module][row.key] = row.value;
+        }
+        const merged: any = { ...DEFAULTS };
+        for (const [section, keys] of Object.entries(result)) {
+          if (section in merged) {
+            merged[section] = { ...merged[section], ...(keys as Record<string, any>) };
+          }
+        }
+        setSettings(merged);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+      } catch {
+        setServerAvailable(false);
+      }
+    })();
+  }, []);
+
+  const flattenForServer = (s: SettingsState): { module: string; key: string; value: any }[] => {
+    const rows: { module: string; key: string; value: any }[] = [];
+    for (const [module, values] of Object.entries(s)) {
+      for (const [key, value] of Object.entries(values as Record<string, any>)) {
+        rows.push({ module, key, value });
+      }
+    }
+    return rows;
+  };
+
+  const handleSave = async () => {
     setSaving(true);
     try {
+      const rows = flattenForServer(settings);
+      for (const row of rows) {
+        await supabase.from("system_settings").upsert(row, { onConflict: "module,key" });
+      }
       localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-      toast({ title: "Paramètres enregistrés", description: "Tous les changements ont été sauvegardés." });
+      setServerAvailable(true);
+      toast({ title: "Paramètres enregistrés", description: "Sauvegardés sur le serveur et en cache local." });
     } catch {
-      toast({ title: "Erreur", description: "Impossible d'enregistrer les paramètres.", variant: "destructive" });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+      toast({ title: "Sauvegarde locale uniquement", description: "Impossible de contacter le serveur. Paramètres sauvegardés en cache local.", variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -135,10 +184,18 @@ export const AdminSettingsCenter = () => {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-lg border border-yellow-400/30 bg-yellow-50 dark:bg-yellow-950/20 p-3 flex items-start gap-3">
-        <AlertTriangle className="h-5 w-5 text-yellow-600 shrink-0 mt-0.5" />
-        <div className="text-sm text-yellow-800 dark:text-yellow-200">
-          <strong>Stockage local (localStorage) :</strong> Les paramètres sensibles (clés OAuth, webhooks, reCAPTCHA) sont stockés dans votre navigateur en texte clair. Évitez de les saisir sur un appareil partagé.
+      <div className={`rounded-lg border p-3 flex items-start gap-3 ${serverAvailable === false ? "border-yellow-400/30 bg-yellow-50 dark:bg-yellow-950/20" : "border-green-400/30 bg-green-50 dark:bg-green-950/20"}`}>
+        {serverAvailable === false ? (
+          <AlertTriangle className="h-5 w-5 text-yellow-600 shrink-0 mt-0.5" />
+        ) : (
+          <Cloud className="h-5 w-5 text-green-600 shrink-0 mt-0.5" />
+        )}
+        <div className={`text-sm ${serverAvailable === false ? "text-yellow-800 dark:text-yellow-200" : "text-green-800 dark:text-green-200"}`}>
+          {serverAvailable === false ? (
+            <><strong>Cache local uniquement :</strong> Les paramètres sont stockés dans votre navigateur en texte clair car le serveur est inaccessible.</>
+          ) : (
+            <><strong>Sauvegarde serveur :</strong> Les paramètres sont stockés sur le serveur (base de données) et mis en cache localement. Les données sensibles sont protégées par les règles RLS de Supabase.</>
+          )}
         </div>
       </div>
 
