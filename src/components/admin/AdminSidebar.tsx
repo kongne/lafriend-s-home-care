@@ -73,7 +73,6 @@ const menuItems = [
   { icon: Megaphone, label: "Diffusion", value: "broadcast", path: "/admin?tab=broadcast" },
   { icon: Bell, label: "Bannière Annonces", value: "announcements", path: "/admin?tab=announcements" },
   { icon: Star, label: "Avis Clients", value: "feedback", path: "/admin?tab=feedback" },
-  { icon: Star, label: "Modération Avis", value: "reviews", path: "/admin?tab=reviews" },
   { icon: ImageIcon, label: "Projets Galerie", value: "projects", path: "/admin?tab=projects" },
   { icon: Receipt, label: "Reçus", value: "receipts", path: "/admin?tab=receipts" },
   { icon: Clock, label: "Rappels", value: "reminders", path: "/admin?tab=reminders" },
@@ -90,7 +89,6 @@ const menuItems = [
   { icon: Activity, label: "System Health", value: "system-health", path: "/admin?tab=system-health" },
   { icon: Wrench, label: "Maintenance", value: "maintenance", path: "/admin?tab=maintenance" },
   { icon: HardDrive, label: "Backup Center", value: "backup-center", path: "/admin?tab=backup-center" },
-  { icon: Clock, label: "Activity Timeline", value: "activity-timeline", path: "/admin?tab=activity-timeline" },
   { icon: Settings, label: "Settings", value: "enterprise-settings", path: "/admin?tab=enterprise-settings" },
   { icon: Quote, label: "Témoignages", value: "testimonials", path: "/admin?tab=testimonials" },
 ];

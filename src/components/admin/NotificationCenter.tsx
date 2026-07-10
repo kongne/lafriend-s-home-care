@@ -52,7 +52,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow, format, isAfter, subDays, startOfDay } from "date-fns";
@@ -389,9 +389,18 @@ export const NotificationCenter = () => {
     }
   };
 
+  const isValidUrl = (url: string): boolean => {
+    try {
+      const parsed = new URL(url);
+      return parsed.protocol !== 'javascript:';
+    } catch { return false; }
+  };
+
   const handleNotificationClick = (notification: Notification) => {
     markAsRead(notification.id);
-    if (notification.link) window.location.href = notification.link;
+    if (notification.link && isValidUrl(notification.link)) {
+      window.location.href = notification.link;
+    }
   };
 
   const renderNotificationItem = (notification: Notification) => (

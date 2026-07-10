@@ -9,9 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
-import { AdminAnalytics } from "@/components/admin/AdminAnalytics";
-import { EnhancedAnalytics } from "@/components/admin/EnhancedAnalytics";
+import { useToast } from "@/hooks/use-toast";
+import { AnalyticsDashboard } from "@/components/admin/AnalyticsDashboard";
 import { BulkActions, SelectableItem } from "@/components/admin/BulkActions";
 import { AdminSidebar, MobileSidebarTrigger } from "@/components/admin/AdminSidebar";
 import { AdminHeader } from "@/components/admin/AdminHeader";
@@ -31,8 +30,8 @@ import { FeedbackManagement } from "@/components/admin/FeedbackManagement";
 import { ReceiptGenerator } from "@/components/admin/ReceiptGenerator";
 import { ReviewManagement } from "@/components/admin/ReviewManagement";
 import { ProjectManagement } from "@/components/admin/ProjectManagement";
-import { CustomerFeedbackManagement } from "@/components/admin/CustomerFeedbackManagement";
-import { DashboardAnalytics } from "@/components/admin/DashboardAnalytics";
+import { ContactMessageManagement } from "@/components/admin/ContactMessageManagement";
+
 import { ServiceManagement } from "@/components/admin/ServiceManagement";
 
 import { BroadcastNotification } from "@/components/admin/BroadcastNotification";
@@ -41,13 +40,13 @@ import { EmailRemindersManagement } from "@/components/admin/EmailRemindersManag
 import { MediaLibrary } from "@/components/admin/MediaLibrary";
 import { RoleManagement } from "@/components/admin/RoleManagement";
 import { UserManager } from "@/components/admin/UserManager";
-import { AuditLogViewer } from "@/components/admin/AuditLogViewer";
+import { ActivityAuditViewer } from "@/components/admin/ActivityAuditViewer";
 import { ErrorLogCenter } from "@/components/admin/ErrorLogCenter";
 import { SecurityCenter } from "@/components/admin/SecurityCenter";
 import { SystemHealth } from "@/components/admin/SystemHealth";
 import { MaintenanceManager } from "@/components/admin/MaintenanceManager";
 import { BackupCenter } from "@/components/admin/BackupCenter";
-import { ActivityTimeline } from "@/components/admin/ActivityTimeline";
+
 import { SettingsManager } from "@/components/admin/SettingsManager";
 import { SuperAdminDashboard } from "@/components/admin/SuperAdminDashboard";
 import { TestimonialManagement } from "@/components/admin/TestimonialManagement";
@@ -565,8 +564,7 @@ const Admin = () => {
               </Select>
             </div>
 
-            {/* Dashboard Analytics */}
-            <DashboardAnalytics timeRange={dashboardTimeRange} />
+            <AnalyticsDashboard timeRange={dashboardTimeRange} bookings={bookings} contacts={contacts} />
 
             {/* Quick Actions */}
             <QuickActions 
@@ -574,9 +572,6 @@ const Admin = () => {
               onExportBookings={() => void exportToPDF(bookings, "reservations", bookingColumns, "Réservations")}
               onExportContacts={() => void exportToPDF(contacts, "messages", contactColumns, "Messages")}
             />
-
-            {/* Enhanced Analytics with Revenue Tracking */}
-            <EnhancedAnalytics bookings={bookings} contacts={contacts} />
 
             {/* Activity & Tasks */}
             <div className="grid lg:grid-cols-2 gap-6">
@@ -858,12 +853,9 @@ const Admin = () => {
         return <FeedbackManagement />;
 
       case "customer-feedback":
-        return <CustomerFeedbackManagement />;
+        return <ContactMessageManagement />;
 
       case "reviews-management":
-        return <ReviewManagement />;
-
-      case "reviews":
         return <ReviewManagement />;
 
       case "services-management":
@@ -932,7 +924,8 @@ const Admin = () => {
         return <PermissionGuard permission="users.view"><UserManager /></PermissionGuard>;
 
       case "audit-logs":
-        return <PermissionGuard permission="audit.view"><AuditLogViewer /></PermissionGuard>;
+      case "activity-timeline":
+        return <PermissionGuard permission="audit.view"><ActivityAuditViewer /></PermissionGuard>;
 
       case "error-logs":
         return <PermissionGuard permission="errors.view"><ErrorLogCenter /></PermissionGuard>;
@@ -948,9 +941,6 @@ const Admin = () => {
 
       case "backup-center":
         return <PermissionGuard permission="backups.create"><BackupCenter /></PermissionGuard>;
-
-      case "activity-timeline":
-        return <PermissionGuard permission="dashboard.view"><ActivityTimeline /></PermissionGuard>;
 
       case "enterprise-settings":
         return <PermissionGuard permission="settings.view"><SettingsManager /></PermissionGuard>;

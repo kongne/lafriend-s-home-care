@@ -1,12 +1,5 @@
+import { escapeHtml } from "@/lib/html";
 import type { Booking } from "@/hooks/portal/useBookings";
-
-const escapeHtml = (v: unknown): string =>
-  String(v ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
 
 const SERVICE_BASE_PRICE: Record<string, number> = {
   "Nettoyage Résidentiel": 25000,

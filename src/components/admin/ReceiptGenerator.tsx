@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2, Receipt } from "lucide-react";
-import LaFriendsLogo from "@/assets/LaFriends.png";
 import { estimateBookingPrice } from "@/lib/invoice";
+import { escapeHtml } from "@/lib/html";
+import { getLogoBase64 } from "@/lib/logo";
 
 interface Booking {
   id: string;
@@ -15,33 +16,8 @@ interface Booking {
   preferred_time: string;
 }
 
-const escapeHtml = (v: unknown): string =>
-  String(v ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-
 const formatCurrency = (amount: number): string =>
   amount.toLocaleString("fr-FR") + " FCFA";
-
-const getLogoBase64 = (): Promise<string> => {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const ctx = canvas.getContext("2d");
-      ctx?.drawImage(img, 0, 0);
-      resolve(canvas.toDataURL("image/png"));
-    };
-    img.onerror = () => resolve("");
-    img.src = LaFriendsLogo;
-  });
-};
 
 interface ReceiptGeneratorProps {
   booking: Booking;

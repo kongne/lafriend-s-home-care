@@ -110,9 +110,19 @@ export const AnnouncementBar = () => {
     return `${minutes}m ${seconds}s`;
   };
 
+  const isValidUrl = (url: string): boolean => {
+    try {
+      const parsed = new URL(url);
+      return parsed.protocol !== 'javascript:';
+    } catch { return false; }
+  };
+
   const visible = announcements.filter(a =>
     matchesPage(a) && matchesLanguage(a) && matchesUser(a) && !getDismissed().includes(a.id)
-  );
+  ).map(a => ({
+    ...a,
+    link_url: a.link_url && isValidUrl(a.link_url) ? a.link_url : null,
+  }));
 
   if (visible.length === 0) return null;
 

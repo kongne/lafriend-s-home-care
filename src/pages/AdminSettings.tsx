@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -11,18 +11,34 @@ import { useNavigate } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { AdminSettingsCenter } from "@/components/admin/AdminSettingsCenter";
-import { User, Settings2, ChevronLeft } from "lucide-react";
+import { User, Settings2, ChevronLeft, ShieldAlert } from "lucide-react";
 
 const AdminSettings = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [checkingRole, setCheckingRole] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [email, setEmail] = useState(user?.email || "");
   const [tab, setTab] = useState("account");
+
+  useEffect(() => {
+    const checkAdmin = async () => {
+      if (!user) { setCheckingRole(false); return; }
+      const { data } = await supabase.rpc("has_role", { _user_id: user.id, _role: "admin" });
+      if (!data) { navigate("/"); return; }
+      setIsAdmin(true);
+      setCheckingRole(false);
+    };
+    checkAdmin();
+  }, [user, navigate]);
+
+  if (checkingRole) return null;
+  if (!isAdmin) return null;
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();

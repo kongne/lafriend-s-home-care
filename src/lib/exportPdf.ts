@@ -1,39 +1,13 @@
 // Simple PDF export using browser print functionality with logo
 // For production, consider using libraries like jsPDF or react-pdf
 
-import LaFriendsLogo from "@/assets/LaFriends.png";
+import { escapeHtml } from "@/lib/html";
+import { getLogoBase64 } from "@/lib/logo";
 
 interface Column {
   key: string;
   label: string;
 }
-
-// Escape any string for safe HTML embedding
-const escapeHtml = (v: unknown): string =>
-  String(v ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-
-// Convert image to base64 for embedding in print window
-const getLogoBase64 = (): Promise<string> => {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const ctx = canvas.getContext("2d");
-      ctx?.drawImage(img, 0, 0);
-      resolve(canvas.toDataURL("image/png"));
-    };
-    img.onerror = () => resolve("");
-    img.src = LaFriendsLogo;
-  });
-};
 
 export const exportToPDF = async <T extends object>(
   data: T[],

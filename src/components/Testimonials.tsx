@@ -254,50 +254,7 @@ export const Testimonials = () => {
         </Card>
       </div>
 
-      {/* Grid of mini-reviews */}
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
-        {testimonials.slice(0, 4).map((testimonial, index) => (
-          <Card
-            key={index}
-            className={`bg-card/50 border-accent/10 p-4 md:p-5 transition-all duration-500 hover:bg-card hover:border-accent/30 ${
-              isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
-            }`}
-            style={{ transitionDelay: `${index * 100}ms` }}
-          >
-            <div className="flex items-center gap-2 mb-3">
-              {testimonial.image ? (
-                <img
-                  src={testimonial.image}
-                  alt={testimonial.name}
-                  className="w-10 h-10 rounded-full object-cover"
-                  loading="lazy"
-                  decoding="async"
-                  width={40}
-                  height={40}
-                />
-              ) : (
-                <div className="w-10 h-10 rounded-full bg-background/50 flex items-center justify-center">
-                  <User className="w-5 h-5 text-foreground/50" />
-                </div>
-              )}
-              <div className="min-w-0">
-                <p className="font-semibold text-foreground text-sm truncate">{testimonial.name}</p>
-                <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider text-accent font-medium">
-                  <Sparkles className="w-3 h-3" /> {t('trust.verified')}
-                </span>
-              </div>
-            </div>
-            <div className="flex gap-0.5 mb-2">
-              {[...Array(testimonial.rating)].map((_, i) => (
-                <Star key={i} className="w-3.5 h-3.5 fill-accent text-accent" />
-              ))}
-            </div>
-            <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed">
-              "{testimonial.content}"
-            </p>
-          </Card>
-        ))}
-      </div>
+
 
       </div>
 

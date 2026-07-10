@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -80,7 +80,7 @@ const STATUS_PREV: Record<string, string> = {
   replied: "read",
 };
 
-export const CustomerFeedbackManagement = () => {
+export const ContactMessageManagement = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
@@ -503,4 +503,4 @@ export const CustomerFeedbackManagement = () => {
   );
 };
 
-export default CustomerFeedbackManagement;
+export default ContactMessageManagement;

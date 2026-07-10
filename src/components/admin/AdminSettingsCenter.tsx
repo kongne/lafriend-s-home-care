@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,8 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Globe, Settings2, FileImage, MessageSquare, Search, Shield, Zap,
   BarChart3, Link, Database, RefreshCw, Save, Mail, Phone, MapPin,
-  Clock, Palette, Upload, Eye, Lock, Bell, ChevronRight, Calculator,
-  Table, Map, Wrench, LayoutDashboard,
+  Clock, Palette, Upload, Eye, EyeOff, Lock, Bell, ChevronRight, Calculator,
+  Table, Map, Wrench, LayoutDashboard, AlertTriangle,
 } from "lucide-react";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -86,11 +86,14 @@ const Field = ({ label, description, children }: { label: string; description?: 
   </div>
 );
 
+const SENSITIVE_FIELDS = ["recaptchaKey", "googleOAuth", "facebookOAuth", "webhookUrl"];
+
 export const AdminSettingsCenter = () => {
   const { toast } = useToast();
   const [settings, setSettings] = useState<SettingsState>(loadSettings);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("general");
+  const [showSensitive, setShowSensitive] = useState(false);
 
   const update = (section: keyof SettingsState, key: string, value: any) => {
     setSettings((prev) => ({
@@ -132,12 +135,22 @@ export const AdminSettingsCenter = () => {
 
   return (
     <div className="space-y-6">
+      <div className="rounded-lg border border-yellow-400/30 bg-yellow-50 dark:bg-yellow-950/20 p-3 flex items-start gap-3">
+        <AlertTriangle className="h-5 w-5 text-yellow-600 shrink-0 mt-0.5" />
+        <div className="text-sm text-yellow-800 dark:text-yellow-200">
+          <strong>Stockage local (localStorage) :</strong> Les paramètres sensibles (clés OAuth, webhooks, reCAPTCHA) sont stockés dans votre navigateur en texte clair. Évitez de les saisir sur un appareil partagé.
+        </div>
+      </div>
+
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold">Centre de Configuration</h2>
           <p className="text-sm text-muted-foreground mt-1">Gérez tous les paramètres de votre plateforme</p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => setShowSensitive(!showSensitive)} title="Afficher/masquer les champs sensibles">
+            {showSensitive ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </Button>
           <Button variant="outline" size="sm" onClick={() => { setSettings(loadSettings()); }}>
             <RefreshCw className="h-4 w-4 mr-1" /> Actualiser
           </Button>
@@ -325,7 +338,7 @@ export const AdminSettingsCenter = () => {
           {/* Security */}
           <TabsContent value="security" className="space-y-6">
             <SectionCard title="Sécurité" description="Paramètres de sécurité">
-              <Field label="Clé reCAPTCHA"><Input value={settings.security.recaptchaKey} onChange={(e) => update("security", "recaptchaKey", e.target.value)} /></Field>
+              <Field label="Clé reCAPTCHA"><Input type={showSensitive ? "text" : "password"} value={settings.security.recaptchaKey} onChange={(e) => update("security", "recaptchaKey", e.target.value)} /></Field>
               <Field label="Limite de requêtes (par minute)"><Input type="number" value={settings.security.rateLimitMax} onChange={(e) => update("security", "rateLimitMax", e.target.value)} /></Field>
               <Field label="Délai d'inactivité (minutes)"><Input type="number" value={settings.security.sessionTimeout} onChange={(e) => update("security", "sessionTimeout", e.target.value)} /></Field>
             </SectionCard>
@@ -386,9 +399,9 @@ export const AdminSettingsCenter = () => {
           {/* Integrations */}
           <TabsContent value="integrations" className="space-y-6">
             <SectionCard title="Intégrations" description="Configuration des services tiers">
-              <Field label="Google OAuth Client ID"><Input value={settings.integrations.googleOAuth} onChange={(e) => update("integrations", "googleOAuth", e.target.value)} /></Field>
-              <Field label="Facebook OAuth App ID"><Input value={settings.integrations.facebookOAuth} onChange={(e) => update("integrations", "facebookOAuth", e.target.value)} /></Field>
-              <Field label="Webhook URL" description="URL pour les notifications externes"><Input value={settings.integrations.webhookUrl} onChange={(e) => update("integrations", "webhookUrl", e.target.value)} /></Field>
+              <Field label="Google OAuth Client ID"><Input type={showSensitive ? "text" : "password"} value={settings.integrations.googleOAuth} onChange={(e) => update("integrations", "googleOAuth", e.target.value)} /></Field>
+              <Field label="Facebook OAuth App ID"><Input type={showSensitive ? "text" : "password"} value={settings.integrations.facebookOAuth} onChange={(e) => update("integrations", "facebookOAuth", e.target.value)} /></Field>
+              <Field label="Webhook URL" description="URL pour les notifications externes"><Input type={showSensitive ? "text" : "password"} value={settings.integrations.webhookUrl} onChange={(e) => update("integrations", "webhookUrl", e.target.value)} /></Field>
             </SectionCard>
             <div className="flex justify-end">
               <Button variant="ghost" size="sm" onClick={() => resetSection("integrations")}>Réinitialiser cette section</Button>

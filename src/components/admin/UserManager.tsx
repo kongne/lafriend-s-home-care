@@ -50,11 +50,11 @@ export function UserManager() {
     if (!error && profilesData) {
       const enriched = await Promise.all(
         profilesData.map(async (p: any) => {
-          const { data: authUser } = await supabase.auth.admin.getUserById(p.user_id);
+          const { data: email } = await supabase.rpc("admin_get_user_email", { _user_id: p.user_id });
           return {
             ...p,
-            email: (authUser as any)?.user?.email || 'unknown',
-            last_sign_in: (authUser as any)?.user?.last_sign_in_at || null,
+            email: email || 'unknown',
+            last_sign_in: null,
           } as UserProfile;
         })
       );
@@ -92,9 +92,9 @@ export function UserManager() {
     for (const uid of ids) {
       try {
         if (bulkAction === 'lock') {
-          await supabase.auth.admin.updateUserById(uid, { ban_duration: '24h' });
+          await supabase.rpc("admin_toggle_user_ban", { _user_id: uid, _lock: true });
         } else if (bulkAction === 'unlock') {
-          await supabase.auth.admin.updateUserById(uid, { ban_duration: 'none' });
+          await supabase.rpc("admin_toggle_user_ban", { _user_id: uid, _lock: false });
         }
       } catch (err) { console.error(err); }
     }
@@ -104,7 +104,7 @@ export function UserManager() {
   };
 
   const handleLockToggle = async (uid: string, lock: boolean) => {
-    await supabase.auth.admin.updateUserById(uid, { ban_duration: lock ? '24h' : 'none' });
+    await supabase.rpc("admin_toggle_user_ban", { _user_id: uid, _lock: lock });
     await writeAuditLog({ action: lock ? 'user_locked' : 'user_unlocked', module: 'users', description: `${lock ? 'Locked' : 'Unlocked'} user ${uid.slice(0, 8)}` }, user?.id);
     fetchProfiles();
   };

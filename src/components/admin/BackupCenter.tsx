@@ -12,7 +12,7 @@ import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from "@/hooks/use-toast";
 import { format } from 'date-fns';
 
 const statusConfig: Record<string, { color: string; icon: any }> = {

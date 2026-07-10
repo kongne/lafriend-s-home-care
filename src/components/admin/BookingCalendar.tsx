@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, GripVertical, Repeat } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 interface Booking {
   id: string;
