@@ -66,11 +66,19 @@ export const Navbar = () => {
   };
 
   const handleSignOut = async () => {
-    await signOut();
-    toast({
-      title: t('nav.logout'),
-      description: "À bientôt !",
-    });
+    try {
+      await signOut();
+      toast({
+        title: t('nav.logout'),
+        description: "À bientôt !",
+      });
+    } catch {
+      toast({
+        title: "Erreur",
+        description: "Impossible de fermer la session. Veuillez réessayer.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (

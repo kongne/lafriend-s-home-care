@@ -35,16 +35,20 @@ export const SessionTimeoutDialog = () => {
   };
 
   const { warningOpen, remaining, dismissWarningAndReset } = useIdleLogout({
-    // Auto-logout after ~1 minute of inactivity (30s idle + 30s warning countdown).
-    idleMs: 30 * 1000,
-    warningMs: 30 * 1000,
+    // Auto-logout after ~6 minutes of inactivity (5 min idle + 60s warning countdown).
+    idleMs: 5 * 60 * 1000,
+    warningMs: 60 * 1000,
     onTimeout: handleTimeout,
     enabled: !!user,
   });
 
   const handleLogoutNow = async () => {
     dismissWarningAndReset();
-    await signOut();
+    try {
+      await signOut();
+    } catch {
+      // continue to navigate even if signOut fails
+    }
     navigate("/auth", { replace: true });
   };
 

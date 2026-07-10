@@ -2,7 +2,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "@/lib/query-client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/hooks/useAuth";
@@ -29,16 +30,6 @@ const OAuthConsent = lazy(() => import("./pages/OAuthConsent"));
 const EstimatePage = lazy(() => import("./pages/EstimatePage"));
 const ComparePage = lazy(() => import("./pages/ComparePage"));
 const CoveragePage = lazy(() => import("./pages/CoveragePage"));
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 30_000,
-      refetchOnWindowFocus: false,
-      retry: 1,
-    },
-  },
-});
 
 const RouteSkeleton = () => (
   <div className="mx-auto w-full max-w-6xl px-4 py-8">

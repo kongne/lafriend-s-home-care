@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef, createContext, useContext, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { invalidatePermissionsCache } from '@/lib/rbac';
+import { queryClient } from '@/lib/query-client';
 
 interface AuthContextType {
   user: User | null;
@@ -93,7 +95,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    invalidatePermissionsCache();
+    queryClient.clear();
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
   };
 
   const signInWithOAuth = async (provider: 'google' | 'facebook') => {

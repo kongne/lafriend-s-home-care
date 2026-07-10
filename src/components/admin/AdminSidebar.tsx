@@ -112,7 +112,11 @@ const SidebarContent = ({
   const currentTab = searchParams.get("tab") || "analytics";
 
   const handleSignOut = async () => {
-    await onSignOut();
+    try {
+      await onSignOut();
+    } catch {
+      // continue to navigate even if signOut fails
+    }
     navigate("/");
   };
 
