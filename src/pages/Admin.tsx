@@ -134,6 +134,10 @@ const Admin = () => {
   const fmtPrice = (n: number) => n.toLocaleString("fr-FR") + " FCFA";
   const [searchQuery, setSearchQuery] = useState("");
   const [dashboardTimeRange, setDashboardTimeRange] = useState<"7d" | "30d" | "90d" | "12m">("12m");
+  const [bookingsPage, setBookingsPage] = useState(1);
+  const [bookingsPerPage, setBookingsPerPage] = useState(10);
+  const [contactsPage, setContactsPage] = useState(1);
+  const [contactsPerPage, setContactsPerPage] = useState(10);
 
   const activeTab = searchParams.get("tab") || "analytics";
 
@@ -216,6 +220,23 @@ const Admin = () => {
       c.subject.toLowerCase().includes(q)
     );
   }, [contacts, searchQuery]);
+
+  const totalBookingPages = Math.max(1, Math.ceil(filteredBookings.length / bookingsPerPage));
+  const totalContactPages = Math.max(1, Math.ceil(filteredContacts.length / contactsPerPage));
+  const paginatedBookings = useMemo(() => {
+    const start = (bookingsPage - 1) * bookingsPerPage;
+    return filteredBookings.slice(start, start + bookingsPerPage);
+  }, [filteredBookings, bookingsPage, bookingsPerPage]);
+  const paginatedContacts = useMemo(() => {
+    const start = (contactsPage - 1) * contactsPerPage;
+    return filteredContacts.slice(start, start + contactsPerPage);
+  }, [filteredContacts, contactsPage, contactsPerPage]);
+  // Reset page when search changes
+  useEffect(() => { setBookingsPage(1); }, [searchQuery]);
+  useEffect(() => { setContactsPage(1); }, [searchQuery]);
+  // Clamp page if filtered count drops below current page
+  useEffect(() => { if (bookingsPage > totalBookingPages) setBookingsPage(totalBookingPages); }, [bookingsPage, totalBookingPages]);
+  useEffect(() => { if (contactsPage > totalContactPages) setContactsPage(totalContactPages); }, [contactsPage, totalContactPages]);
 
   // Real-time subscriptions for new bookings and contacts
   useEffect(() => {
@@ -605,6 +626,22 @@ const Admin = () => {
             </div>
             
             <div className="overflow-x-auto rounded-lg border bg-card">
+              <div className="flex items-center justify-between gap-4 px-4 py-2 border-b bg-muted/30">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <span className="hidden sm:inline">{filteredBookings.length} réservation(s)</span>
+                  <span className="sm:hidden">{filteredBookings.length}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="text-xs text-muted-foreground hidden sm:inline">Lignes:</label>
+                  <select
+                    className="h-8 rounded border border-input bg-background px-2 text-xs"
+                    value={bookingsPerPage}
+                    onChange={(e) => { setBookingsPerPage(Number(e.target.value)); setBookingsPage(1); }}
+                  >
+                    {[10, 20, 30, 40, 50].map(n => <option key={n} value={n}>{n}</option>)}
+                  </select>
+                </div>
+              </div>
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/50">
@@ -625,14 +662,14 @@ const Admin = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredBookings.length === 0 ? (
+                  {paginatedBookings.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
                         <CalendarDays className="h-8 w-8 mx-auto mb-2 opacity-50" />
                         Aucune réservation
                       </TableCell>
                     </TableRow>
-                  ) : filteredBookings.map((booking) => (
+                  ) : paginatedBookings.map((booking) => (
                     <TableRow key={booking.id} className={selectedBookings.includes(booking.id) ? "bg-accent/10" : ""}>
                       <TableCell>
                         <input
@@ -681,10 +718,40 @@ const Admin = () => {
                   ))}
                 </TableBody>
               </Table>
+              <div className="flex items-center justify-between gap-4 px-4 py-3 border-t bg-muted/30">
+                <div className="flex items-center gap-1 text-sm">
+                  <button
+                    className="h-8 px-3 rounded border border-input bg-background text-xs font-medium hover:bg-accent/10 disabled:opacity-40"
+                    disabled={bookingsPage <= 1}
+                    onClick={() => setBookingsPage(p => Math.max(1, p - 1))}
+                  >Précédent</button>
+                  {Array.from({ length: Math.min(totalBookingPages, 5) }, (_, i) => {
+                    const start = Math.max(1, Math.min(bookingsPage - 2, totalBookingPages - 4));
+                    const page = start + i;
+                    if (page > totalBookingPages) return null;
+                    return (
+                      <button
+                        key={page}
+                        className={`h-8 min-w-8 rounded text-xs font-medium ${
+                          page === bookingsPage
+                            ? "bg-accent text-accent-foreground"
+                            : "border border-input bg-background hover:bg-accent/10"
+                        }`}
+                        onClick={() => setBookingsPage(page)}
+                      >{page}</button>
+                    );
+                  })}
+                  <button
+                    className="h-8 px-3 rounded border border-input bg-background text-xs font-medium hover:bg-accent/10 disabled:opacity-40"
+                    disabled={bookingsPage >= totalBookingPages}
+                    onClick={() => setBookingsPage(p => Math.min(totalBookingPages, p + 1))}
+                  >Suivant</button>
+                </div>
+              </div>
             </div>
           </div>
         );
-
+ 
       case "calendar":
         return (
           <BookingCalendar 
@@ -705,6 +772,22 @@ const Admin = () => {
               </div>
             </div>
             <div className="overflow-x-auto rounded-lg border bg-card">
+              <div className="flex items-center justify-between gap-4 px-4 py-2 border-b bg-muted/30">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <span className="hidden sm:inline">{filteredContacts.length} message(s)</span>
+                  <span className="sm:hidden">{filteredContacts.length}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="text-xs text-muted-foreground hidden sm:inline">Lignes:</label>
+                  <select
+                    className="h-8 rounded border border-input bg-background px-2 text-xs"
+                    value={contactsPerPage}
+                    onChange={(e) => { setContactsPerPage(Number(e.target.value)); setContactsPage(1); }}
+                  >
+                    {[10, 20, 30, 40, 50].map(n => <option key={n} value={n}>{n}</option>)}
+                  </select>
+                </div>
+              </div>
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/50">
@@ -724,14 +807,14 @@ const Admin = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredContacts.length === 0 ? (
+                  {paginatedContacts.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
                         <Mail className="h-8 w-8 mx-auto mb-2 opacity-50" />
                         Aucun message
                       </TableCell>
                     </TableRow>
-                  ) : filteredContacts.map((contact) => (
+                  ) : paginatedContacts.map((contact) => (
                     <TableRow key={contact.id} className={selectedContacts.includes(contact.id) ? "bg-accent/10" : ""}>
                       <TableCell>
                         <input
@@ -772,10 +855,40 @@ const Admin = () => {
                   ))}
                 </TableBody>
               </Table>
+              <div className="flex items-center justify-between gap-4 px-4 py-3 border-t bg-muted/30">
+                <div className="flex items-center gap-1 text-sm">
+                  <button
+                    className="h-8 px-3 rounded border border-input bg-background text-xs font-medium hover:bg-accent/10 disabled:opacity-40"
+                    disabled={contactsPage <= 1}
+                    onClick={() => setContactsPage(p => Math.max(1, p - 1))}
+                  >Précédent</button>
+                  {Array.from({ length: Math.min(totalContactPages, 5) }, (_, i) => {
+                    const start = Math.max(1, Math.min(contactsPage - 2, totalContactPages - 4));
+                    const page = start + i;
+                    if (page > totalContactPages) return null;
+                    return (
+                      <button
+                        key={page}
+                        className={`h-8 min-w-8 rounded text-xs font-medium ${
+                          page === contactsPage
+                            ? "bg-accent text-accent-foreground"
+                            : "border border-input bg-background hover:bg-accent/10"
+                        }`}
+                        onClick={() => setContactsPage(page)}
+                      >{page}</button>
+                    );
+                  })}
+                  <button
+                    className="h-8 px-3 rounded border border-input bg-background text-xs font-medium hover:bg-accent/10 disabled:opacity-40"
+                    disabled={contactsPage >= totalContactPages}
+                    onClick={() => setContactsPage(p => Math.min(totalContactPages, p + 1))}
+                  >Suivant</button>
+                </div>
+              </div>
             </div>
           </div>
         );
-
+ 
       case "subscribers":
         return (
           <div className="space-y-4">
