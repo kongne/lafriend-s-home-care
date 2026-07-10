@@ -18,6 +18,7 @@ function corsHeaders(req: Request): Record<string, string> {
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
   "Access-Control-Max-Age": "86400",
 };
+}
 
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
