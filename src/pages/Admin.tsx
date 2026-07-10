@@ -616,11 +616,17 @@ const Admin = () => {
                 type="bookings"
               />
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => exportToCSV(filteredBookings, "reservations", bookingColumns)}>
-                  <Download className="h-4 w-4 mr-2" />CSV
+                <Button variant="outline" size="sm" onClick={() => {
+                  const data = selectedBookings.length > 0 ? filteredBookings.filter(b => selectedBookings.includes(b.id)) : filteredBookings;
+                  exportToCSV(data, "reservations", bookingColumns);
+                }}>
+                  <Download className="h-4 w-4 mr-2" />CSV{selectedBookings.length > 0 && ` (${selectedBookings.length})`}
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => void exportToPDF(filteredBookings, "reservations", bookingColumns, "Réservations")}>
-                  <FileText className="h-4 w-4 mr-2" />PDF
+                <Button variant="outline" size="sm" onClick={() => {
+                  const data = selectedBookings.length > 0 ? filteredBookings.filter(b => selectedBookings.includes(b.id)) : filteredBookings;
+                  void exportToPDF(data, "reservations", bookingColumns, "Réservations");
+                }}>
+                  <FileText className="h-4 w-4 mr-2" />PDF{selectedBookings.length > 0 && ` (${selectedBookings.length})`}
                 </Button>
               </div>
             </div>
@@ -767,8 +773,14 @@ const Admin = () => {
             <div className="flex flex-wrap justify-between items-center gap-4">
               <BulkActions selectedIds={selectedContacts} onSelectAll={(checked) => setSelectedContacts(checked ? filteredContacts.map(c => c.id) : [])} allSelected={selectedContacts.length === filteredContacts.length && filteredContacts.length > 0} someSelected={selectedContacts.length > 0 && selectedContacts.length < filteredContacts.length} onBulkAction={handleBulkContactAction} type="contacts" />
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => exportToCSV(filteredContacts, "messages", contactColumns)}><Download className="h-4 w-4 mr-2" />CSV</Button>
-                <Button variant="outline" size="sm" onClick={() => void exportToPDF(filteredContacts, "messages", contactColumns, "Messages")}><FileText className="h-4 w-4 mr-2" />PDF</Button>
+                <Button variant="outline" size="sm" onClick={() => {
+                  const data = selectedContacts.length > 0 ? filteredContacts.filter(c => selectedContacts.includes(c.id)) : filteredContacts;
+                  exportToCSV(data, "messages", contactColumns);
+                }}><Download className="h-4 w-4 mr-2" />CSV{selectedContacts.length > 0 && ` (${selectedContacts.length})`}</Button>
+                <Button variant="outline" size="sm" onClick={() => {
+                  const data = selectedContacts.length > 0 ? filteredContacts.filter(c => selectedContacts.includes(c.id)) : filteredContacts;
+                  void exportToPDF(data, "messages", contactColumns, "Messages");
+                }}><FileText className="h-4 w-4 mr-2" />PDF{selectedContacts.length > 0 && ` (${selectedContacts.length})`}</Button>
               </div>
             </div>
             <div className="overflow-x-auto rounded-lg border bg-card">
