@@ -56,9 +56,42 @@ export function BackupCenter() {
     if (!user?.id) { toast({ title: "Erreur", description: "Vous devez être connecté.", variant: "destructive" }); return; }
     setRunning(true);
     setProgress(0);
-    setStatusText('Exporting data...');
+    setStatusText('Exportation des données...');
     try {
-      const { data, error } = await (supabase as any).from('backup_logs').insert({
+      const tablesData: Record<string, any[]> = {};
+      for (let i = 0; i < BACKUP_TABLES.length; i++) {
+        setStatusText(`Exportation de ${BACKUP_TABLES[i]}...`);
+        tablesData[BACKUP_TABLES[i]] = await fetchTableData(BACKUP_TABLES[i]);
+        setProgress(Math.round(((i + 1) / (BACKUP_TABLES.length + 2)) * 70));
+      }
+
+      setStatusText('Génération du fichier...');
+      const backupPayload = {
+        version: '1.0',
+        created_at: new Date().toISOString(),
+        created_by: user.email,
+        database_version: 'PostgreSQL 15.1',
+        tables: tablesData,
+      };
+
+      const jsonStr = JSON.stringify(backupPayload, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const fileName = `backup_${format(new Date(), 'yyyy-MM-dd_HHmmss')}.json`;
+      const filePath = `${user.id}/${fileName}`;
+      const fileSize = blob.size;
+      setProgress(75);
+      setStatusText('Upload vers le stockage...');
+
+      const { error: uploadError } = await supabase.storage
+        .from('backups')
+        .upload(filePath, blob, { contentType: 'application/json', upsert: false });
+
+      if (uploadError) throw uploadError;
+
+      setProgress(85);
+      setStatusText('Enregistrement de la sauvegarde...');
+
+      const { error: insertError } = await supabase.from('backup_logs').insert({
         backup_type: 'manual',
         backup_mode: backupType,
         status: 'completed',
@@ -67,33 +100,24 @@ export function BackupCenter() {
         file_path: filePath,
         compressed: false,
         encrypted: false,
-        retention_days: 30,
-        started_at: new Date().toISOString(),
-        created_by: user?.id,
-      }).select().single();
-      if (error) throw error;
-      await new Promise(r => setTimeout(r, 2000));
-      await (supabase as any).from('backup_logs').update({
-        status: 'completed', file_size: Math.floor(Math.random() * 100000000) + 50000000,
-        file_name: `backup_${format(new Date(), 'yyyy-MM-dd_HHmm')}.sql.gz`,
-        completed_at: new Date().toISOString(),
+        storage_location: 'cloud',
         database_version: 'PostgreSQL 15.1',
         retention_days: 30,
         started_at: new Date(Date.now() - 5000).toISOString(),
         completed_at: new Date().toISOString(),
         created_by: user.id,
-      }).select().single();
+      });
 
       if (insertError) throw insertError;
 
       await writeAuditLog({
         action: 'backup_created', module: 'backups',
-        description: `Manual ${backupType} backup created: ${fileName} (${formatSize(fileSize)})`,
+        description: `Sauvegarde ${backupType} créée : ${fileName} (${formatSize(fileSize)})`,
         severity: 'info',
       }, user.id);
 
       setProgress(100);
-      setStatusText('Backup complete!');
+      setStatusText('Sauvegarde terminée !');
       toast({ title: "Succès", description: `Sauvegarde créée : ${fileName}` });
     } catch (err: any) {
       logError('Backup failed:', err);
@@ -136,13 +160,22 @@ export function BackupCenter() {
 
   const handleDeleteBackup = async (id: string) => {
     const backup = backups.find(b => b.id === id);
-    await (supabase as any).from('backup_logs').delete().eq('id', id);
-    await writeAuditLog({
-      action: 'backup_deleted', module: 'backups',
-      description: `Deleted backup ${backup?.file_name || id.slice(0, 8)}`,
-      severity: 'warning',
-    }, user?.id);
-    refetchBackups();
+    try {
+      if (backup?.file_path) {
+        await supabase.storage.from('backups').remove([backup.file_path]);
+      }
+      await supabase.from('backup_logs').delete().eq('id', id);
+      await writeAuditLog({
+        action: 'backup_deleted', module: 'backups',
+        description: `Sauvegarde supprimée : ${backup?.file_name || id.slice(0, 8)}`,
+        severity: 'warning',
+      }, user?.id);
+      toast({ title: "Supprimé", description: "Sauvegarde supprimée." });
+      refetchBackups();
+    } catch (err: any) {
+      logError('Delete failed:', err);
+      toast({ title: "Erreur", description: err.message || "Échec de la suppression.", variant: "destructive" });
+    }
   };
 
   const formatSize = (bytes: number | null) => {
