@@ -37,9 +37,11 @@ export function ActivityTimeline() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.from('audit_logs').select('*').order('created_at', { ascending: false }).limit(50).then(({ data, error }) => {
-      if (!error && data) setLogs(data);
-    }).finally(() => setLoading(false));
+    (async () => {
+      const { data, error } = await supabase.from('audit_logs').select('*').order('created_at', { ascending: false }).limit(50);
+      if (!error && data) setLogs(data as unknown as AuditLog[]);
+      setLoading(false);
+    })();
   }, []);
 
   const grouped: Record<string, AuditLog[]> = {};
