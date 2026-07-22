@@ -13,5 +13,5 @@ export const warn = (...args: unknown[]) => {
 };
 
 export const error = (...args: unknown[]) => {
-  if (isDev) console.error(...args);
+  console.error(...args);
 };

@@ -189,18 +189,22 @@ export const BookingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (user?.id && kycStatus !== "approved") {
+    if (user?.id && kycStatus === "rejected") {
       toast({
-        title: "Vérification d'identité requise",
+        title: "Vérification rejetée",
         description:
-          kycStatus === "pending"
-            ? "Votre identité est en cours de vérification (24-48h). Vous pourrez confirmer votre réservation dès qu'elle sera validée."
-            : kycStatus === "rejected"
-              ? "Votre vérification a été rejetée. Veuillez recommencer le processus depuis votre espace."
-              : "Veuillez d'abord vérifier votre identité avant de confirmer une réservation.",
+          "Votre vérification a été rejetée. Veuillez recommencer le processus depuis votre espace.",
         variant: "destructive",
       });
       return;
+    }
+    if (user?.id && kycStatus === "pending") {
+      toast({
+        title: "Vérification en cours",
+        description:
+          "Votre identité est en cours de vérification (24-48h). Vous pouvez confirmer votre réservation, elle sera traitée après validation.",
+        variant: "default",
+      });
     }
 
     const rateLimitKey = user?.id || 'anonymous';

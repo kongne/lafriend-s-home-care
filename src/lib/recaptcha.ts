@@ -74,13 +74,14 @@ export const verifyRecaptchaToken = async (
     return data;
   } catch (error) {
     console.error('Error verifying reCAPTCHA token:', error);
+    // Fail open when verification service is unreachable so booking is not blocked
     return {
-      success: false,
-      score: 0,
-      action: '',
-      challenge_ts: '',
-      hostname: '',
-      error_codes: ['verification_error'],
+      success: true,
+      score: 0.1,
+      action: action,
+      challenge_ts: new Date().toISOString(),
+      hostname: window.location.hostname,
+      error_codes: ['verification_service_unreachable'],
     };
   }
 };
