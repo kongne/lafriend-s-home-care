@@ -97,7 +97,7 @@ export const AnnouncementManagement = () => {
 
   const [formTitle, setFormTitle] = useState("");
   const [formMessage, setFormMessage] = useState("");
-  const [formIcon, setFormIcon] = useState("");
+  const [formIcon, setFormIcon] = useState("none");
   const [formBg, setFormBg] = useState("bg-primary");
   const [formText, setFormText] = useState("text-primary-foreground");
   const [formLinkUrl, setFormLinkUrl] = useState("");
@@ -146,7 +146,7 @@ export const AnnouncementManagement = () => {
 
   const openCreate = () => {
     setEditId(null);
-    setFormTitle(""); setFormMessage(""); setFormIcon("");
+    setFormTitle(""); setFormMessage(""); setFormIcon("none");
     setFormBg("bg-primary"); setFormText("text-primary-foreground");
     setFormLinkUrl(""); setFormLinkText("");
     setFormCountdown(false); setFormCountdownEnd("");
@@ -159,7 +159,7 @@ export const AnnouncementManagement = () => {
 
   const openEdit = (a: Announcement) => {
     setEditId(a.id);
-    setFormTitle(a.title); setFormMessage(a.message); setFormIcon(a.icon || "");
+    setFormTitle(a.title); setFormMessage(a.message); setFormIcon(a.icon || "use");
     setFormBg(a.background_color); setFormText(a.text_color);
     setFormLinkUrl(a.link_url || ""); setFormLinkText(a.link_text || "");
     setFormCountdown(a.show_countdown); setFormCountdownEnd(a.countdown_ends_at || "");
