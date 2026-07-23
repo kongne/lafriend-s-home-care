@@ -54,7 +54,7 @@ const PAGE_OPTIONS = [
 ];
 
 const ICON_OPTIONS = [
-  { value: "", label: "Aucune" },
+  { value: "none", label: "Aucune" },
   { value: "Megaphone", label: "Mégaphone" },
   { value: "Bell", label: "Cloche" },
   { value: "Clock", label: "Horloge" },
