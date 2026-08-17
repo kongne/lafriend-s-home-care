@@ -30,6 +30,7 @@ const OAuthConsent = lazy(() => import("./pages/OAuthConsent"));
 const EstimatePage = lazy(() => import("./pages/EstimatePage"));
 const ComparePage = lazy(() => import("./pages/ComparePage"));
 const CoveragePage = lazy(() => import("./pages/CoveragePage"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 
 const RouteSkeleton = () => (
   <div className="mx-auto w-full max-w-6xl px-4 py-8">
@@ -84,6 +85,7 @@ const App = () => (
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={routeElement(Auth)} />
+                <Route path="/auth/reset-password" element={routeElement(ResetPassword)} />
                 <Route path="/admin" element={routeElement(Admin)} />
                 <Route path="/admin/settings" element={routeElement(AdminSettings)} />
                 <Route path="/admin/verifications" element={routeElement(AdminVerifications)} />
