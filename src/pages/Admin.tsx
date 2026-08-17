@@ -291,15 +291,23 @@ const Admin = () => {
 
   const checkAdminRole = async () => {
     try {
-      const { data, error } = await supabase.rpc('has_role', {
+      const { data: hasAdminRole, error: roleError } = await supabase.rpc('has_role', {
         _user_id: user!.id,
         _role: 'admin'
       });
-      if (error) throw error;
-      if (!data) {
-        toast({ title: "Accès refusé", description: "Vous n'avez pas les permissions d'administrateur.", variant: "destructive" });
-        navigate("/");
-        return;
+      if (roleError) throw roleError;
+
+      if (!hasAdminRole) {
+        const { data: hasAnyPerm, error: permError } = await supabase.rpc('has_any_permission', {
+          _user_id: user!.id,
+          _permission_codes: ['bookings.view', 'users.view', 'rbac.view', 'audit.view', 'dashboard.view']
+        });
+        if (permError) throw permError;
+        if (!hasAnyPerm) {
+          toast({ title: "Accès refusé", description: "Vous n'avez pas les permissions d'administrateur.", variant: "destructive" });
+          navigate("/");
+          return;
+        }
       }
       setIsAdmin(true);
       fetchAllData();

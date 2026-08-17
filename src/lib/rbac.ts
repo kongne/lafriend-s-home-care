@@ -1,10 +1,10 @@
 import { supabase } from "@/integrations/supabase/client";
 
-let permissionsCache: { codes: Set<string>; timestamp: number } | null = null;
+let permissionsCache: { userId: string; codes: Set<string>; timestamp: number } | null = null;
 const CACHE_TTL = 30000;
 
 export async function fetchUserPermissions(userId: string): Promise<Set<string>> {
-  if (permissionsCache && Date.now() - permissionsCache.timestamp < CACHE_TTL) {
+  if (permissionsCache && permissionsCache.userId === userId && Date.now() - permissionsCache.timestamp < CACHE_TTL) {
     return permissionsCache.codes;
   }
   const { data, error } = await (supabase as any)
@@ -14,7 +14,7 @@ export async function fetchUserPermissions(userId: string): Promise<Set<string>>
     return new Set();
   }
   const codes = new Set<string>(data.map((p: any) => p.code));
-  permissionsCache = { codes, timestamp: Date.now() };
+  permissionsCache = { userId, codes, timestamp: Date.now() };
   return codes;
 }
 
@@ -34,33 +34,4 @@ export async function checkAnyPermission(userId: string, permissionCodes: string
     .rpc('has_any_permission', { _user_id: userId, _permission_codes: permissionCodes });
   if (error) return false;
   return !!data;
-}
-
-export function moduleToPrefix(module: string): string {
-  const map: Record<string, string> = {
-    'users': 'users',
-    'bookings': 'bookings',
-    'payments': 'payments',
-    'reviews': 'reviews',
-    'services': 'services',
-    'staff': 'staff',
-    'projects': 'projects',
-    'feedback': 'feedback',
-    'announcements': 'announcements',
-    'reports': 'reports',
-    'settings': 'settings',
-    'rbac': 'rbac',
-    'audit': 'audit',
-    'backups': 'backups',
-    'maintenance': 'maintenance',
-    'security': 'security',
-    'notifications': 'notifications',
-    'errors': 'errors',
-    'system': 'system',
-  };
-  return map[module] || module;
-}
-
-export function buildPermissionCode(module: string, action: string): string {
-  return `${moduleToPrefix(module)}.${action}`;
 }

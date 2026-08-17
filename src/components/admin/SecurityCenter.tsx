@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useSecurityEvents } from '@/hooks/useRBAC';
@@ -11,23 +11,45 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Progress } from '@/components/ui/progress';
 import { format } from 'date-fns';
 
+const SECURITY_CHECKS = [
+  { label: 'CSRF Protection', status: true, weight: 10 },
+  { label: 'CSP Headers', status: false, weight: 8 },
+  { label: 'HTTPS', status: true, weight: 15 },
+  { label: 'Rate Limiting', status: false, weight: 8 },
+  { label: 'MFA Status', status: false, weight: 12 },
+  { label: 'Session Timeout', status: true, weight: 10 },
+  { label: 'JWT Validation', status: true, weight: 15 },
+  { label: 'Security Headers', status: false, weight: 8 },
+];
+
 export function SecurityCenter() {
   const { user } = useAuth();
-  const [securityScore, setSecurityScore] = useState(78);
-  const [scoreLoading, setScoreLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [activeSessions, setActiveSessions] = useState<number | null>(null);
 
   const { events, loading } = useSecurityEvents({ resolved: false, limit: 100 });
+
+  useEffect(() => {
+    (supabase as any).from('user_sessions').select('id', { count: 'exact', head: true }).eq('is_active', true).then(({ count }) => {
+      setActiveSessions(count || 0);
+    });
+  }, []);
+
+  const securityScore = useMemo(() => {
+    let score = 0;
+    SECURITY_CHECKS.forEach(c => { if (c.status) score += c.weight; });
+    const failedLogins = events.filter(e => e.event_type === 'failed_login').length;
+    const criticalEvents = events.filter(e => e.severity === 'critical' || e.severity === 'error').length;
+    score -= Math.min(failedLogins * 2, 10);
+    score -= Math.min(criticalEvents * 3, 12);
+    return Math.max(0, Math.min(100, score));
+  }, [events]);
 
   const filtered = events.filter(e =>
     !search || e.event_type?.toLowerCase().includes(search.toLowerCase()) || e.ip_address?.includes(search)
   );
-
-  useEffect(() => {
-    setTimeout(() => { setSecurityScore(78); setScoreLoading(false); }, 500);
-  }, []);
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'text-green-500';
@@ -46,6 +68,9 @@ export function SecurityCenter() {
     error: 'bg-red-100 text-red-800', critical: 'bg-red-200 text-red-900',
   };
 
+  const failedLoginCount = events.filter(e => e.event_type === 'failed_login').length;
+  const suspiciousCount = events.filter(e => e.severity === 'critical' || e.severity === 'error').length;
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -62,7 +87,7 @@ export function SecurityCenter() {
             <CardTitle className="text-sm">Failed Logins</CardTitle>
           </CardHeader>
           <CardContent className="py-2">
-            <p className="text-2xl font-bold">{events.filter(e => e.event_type === 'failed_login').length}</p>
+            <p className="text-2xl font-bold">{failedLoginCount}</p>
           </CardContent>
         </Card>
         <Card>
@@ -71,7 +96,7 @@ export function SecurityCenter() {
             <CardTitle className="text-sm">Suspicious Activities</CardTitle>
           </CardHeader>
           <CardContent className="py-2">
-            <p className="text-2xl font-bold">{events.filter(e => e.severity === 'critical' || e.severity === 'error').length}</p>
+            <p className="text-2xl font-bold">{suspiciousCount}</p>
           </CardContent>
         </Card>
         <Card>
@@ -80,7 +105,7 @@ export function SecurityCenter() {
             <CardTitle className="text-sm">Active Sessions</CardTitle>
           </CardHeader>
           <CardContent className="py-2">
-            <p className="text-2xl font-bold">-</p>
+            <p className="text-2xl font-bold">{activeSessions !== null ? activeSessions : '-'}</p>
           </CardContent>
         </Card>
         <Card>
@@ -100,18 +125,22 @@ export function SecurityCenter() {
           <CardHeader className="py-3"><CardTitle className="text-sm">Recommendations</CardTitle></CardHeader>
           <CardContent className="space-y-2">
             {[
-              { text: 'Enable MFA for all admin accounts', severity: 'high' },
-              { text: 'Review inactive user accounts (12 users not logged in 90+ days)', severity: 'medium' },
-              { text: 'Configure rate limiting for auth endpoints', severity: 'high' },
-              { text: 'Enable CSP headers for XSS protection', severity: 'medium' },
-              { text: 'Review open permissions on user roles', severity: 'low' },
-              { text: 'Set session timeout to 30 minutes', severity: 'medium' },
+              { text: 'Enable MFA for all admin accounts', severity: 'high', done: false },
+              { text: 'Review inactive user accounts (12 users not logged in 90+ days)', severity: 'medium', done: false },
+              { text: 'Configure rate limiting for auth endpoints', severity: 'high', done: false },
+              { text: 'Enable CSP headers for XSS protection', severity: 'medium', done: false },
+              { text: 'Review open permissions on user roles', severity: 'low', done: false },
+              { text: 'Set session timeout to 30 minutes', severity: 'medium', done: true },
             ].map((r, i) => (
-              <div key={i} className="flex items-start gap-2 p-2 bg-muted rounded text-sm">
-                <AlertTriangle className={`h-4 w-4 mt-0.5 shrink-0 ${
-                  r.severity === 'high' ? 'text-red-500' : r.severity === 'medium' ? 'text-yellow-500' : 'text-blue-500'
-                }`} />
-                <span className="text-xs">{r.text}</span>
+              <div key={i} className={`flex items-start gap-2 p-2 bg-muted rounded text-sm ${r.done ? 'opacity-50' : ''}`}>
+                {r.done ? (
+                  <CheckCircle className="h-4 w-4 mt-0.5 shrink-0 text-green-500" />
+                ) : (
+                  <AlertTriangle className={`h-4 w-4 mt-0.5 shrink-0 ${
+                    r.severity === 'high' ? 'text-red-500' : r.severity === 'medium' ? 'text-yellow-500' : 'text-blue-500'
+                  }`} />
+                )}
+                <span className={`text-xs ${r.done ? 'line-through' : ''}`}>{r.text}</span>
               </div>
             ))}
           </CardContent>
@@ -158,16 +187,7 @@ export function SecurityCenter() {
         <CardHeader className="py-3"><CardTitle className="text-sm">Security Status</CardTitle></CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {[
-              { label: 'CSRF Protection', status: true },
-              { label: 'CSP Headers', status: false },
-              { label: 'HTTPS', status: true },
-              { label: 'Rate Limiting', status: false },
-              { label: 'MFA Status', status: false },
-              { label: 'Session Timeout', status: true },
-              { label: 'JWT Validation', status: true },
-              { label: 'Security Headers', status: false },
-            ].map(s => (
+            {SECURITY_CHECKS.map(s => (
               <div key={s.label} className="flex items-center gap-2 p-2 bg-muted rounded">
                 {s.status ? <CheckCircle className="h-4 w-4 text-green-500" /> : <XCircle className="h-4 w-4 text-red-500" />}
                 <span className="text-xs">{s.label}</span>

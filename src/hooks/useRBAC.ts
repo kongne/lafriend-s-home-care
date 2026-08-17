@@ -77,8 +77,8 @@ export function useRoles() {
 
   const deleteRole = async (id: string) => {
     const { error } = await (supabase as any).from('roles').delete().eq('id', id);
-    if (!error) { setRoles(p => p.filter(r => r.id !== id)); }
-    throw error;
+    if (error) throw error;
+    setRoles(p => p.filter(r => r.id !== id));
   };
 
   return { roles, loading, refetch: fetch, createRole, updateRole, deleteRole };
