@@ -2263,6 +2263,138 @@ export type Database = {
         }
         Relationships: []
       }
+      webhook_deliveries: {
+        Row: {
+          attempt_number: number
+          created_at: string
+          duration_ms: number | null
+          endpoint_id: string
+          error_message: string | null
+          event_id: string
+          http_status: number | null
+          id: string
+          response_body: string | null
+          status: string
+        }
+        Insert: {
+          attempt_number?: number
+          created_at?: string
+          duration_ms?: number | null
+          endpoint_id: string
+          error_message?: string | null
+          event_id: string
+          http_status?: number | null
+          id?: string
+          response_body?: string | null
+          status?: string
+        }
+        Update: {
+          attempt_number?: number
+          created_at?: string
+          duration_ms?: number | null
+          endpoint_id?: string
+          error_message?: string | null
+          event_id?: string
+          http_status?: number | null
+          id?: string
+          response_body?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webhook_deliveries_endpoint_id_fkey"
+            columns: ["endpoint_id"]
+            isOneToOne: false
+            referencedRelation: "webhook_endpoints"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "webhook_deliveries_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "webhook_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      webhook_endpoints: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          events: string[]
+          id: string
+          is_active: boolean
+          secret: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          events?: string[]
+          id?: string
+          is_active?: boolean
+          secret: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          events?: string[]
+          id?: string
+          is_active?: boolean
+          secret?: string
+          updated_at?: string
+          url?: string
+        }
+        Relationships: []
+      }
+      webhook_events: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          event_type: string
+          id: string
+          max_retries: number
+          next_retry_at: string | null
+          payload: Json
+          processed_at: string | null
+          retry_count: number
+          source: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          event_type: string
+          id?: string
+          max_retries?: number
+          next_retry_at?: string | null
+          payload?: Json
+          processed_at?: string | null
+          retry_count?: number
+          source?: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          event_type?: string
+          id?: string
+          max_retries?: number
+          next_retry_at?: string | null
+          payload?: Json
+          processed_at?: string | null
+          retry_count?: number
+          source?: string
+          status?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -2282,6 +2414,10 @@ export type Database = {
       admin_toggle_user_ban: { Args: { _user_id: string; _lock: boolean }; Returns: undefined }
       calculate_loyalty_tier: { Args: { points: number }; Returns: string }
       check_referral_limit: { Args: { p_user_id: string }; Returns: boolean }
+      emit_webhook_event: {
+        Args: { _event_type: string; _payload: Json; _source: string }
+        Returns: string
+      }
       generate_referral_code: { Args: { p_user_id: string }; Returns: string }
       get_user_permissions: {
         Args: { _user_id: string }

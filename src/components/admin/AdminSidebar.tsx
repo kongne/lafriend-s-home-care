@@ -36,6 +36,7 @@ import {
   UserCheck,
   LayoutDashboard,
   Quote,
+  Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -91,6 +92,7 @@ const menuItems = [
   { icon: HardDrive, label: "Backup Center", value: "backup-center", path: "/admin?tab=backup-center" },
   { icon: Settings, label: "Settings", value: "enterprise-settings", path: "/admin?tab=enterprise-settings" },
   { icon: Quote, label: "Témoignages", value: "testimonials", path: "/admin?tab=testimonials" },
+  { icon: Zap, label: "Webhooks", value: "webhooks", path: "/admin?tab=webhooks" },
 ];
 
 const SidebarContent = ({ 

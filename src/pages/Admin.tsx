@@ -50,6 +50,7 @@ import { BackupCenter } from "@/components/admin/BackupCenter";
 import { SettingsManager } from "@/components/admin/SettingsManager";
 import { SuperAdminDashboard } from "@/components/admin/SuperAdminDashboard";
 import { TestimonialManagement } from "@/components/admin/TestimonialManagement";
+import { WebhookManagement } from "@/components/admin/WebhookManagement";
 import { PermissionGuard } from "@/components/admin/PermissionGuard";
 import { exportToCSV, bookingColumns, contactColumns, subscriberColumns } from "@/lib/exportCsv";
 import { exportToPDF } from "@/lib/exportPdf";
@@ -1144,6 +1145,9 @@ const Admin = () => {
 
       case "testimonials":
         return <PermissionGuard permission="testimonials.view"><TestimonialManagement /></PermissionGuard>;
+
+      case "webhooks":
+        return <PermissionGuard permission="webhooks.view"><WebhookManagement /></PermissionGuard>;
 
       default:
         return <div className="text-center py-12 text-muted-foreground">Section en construction</div>;

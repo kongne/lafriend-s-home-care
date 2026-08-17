@@ -44,3 +44,11 @@ verify_jwt = true
 
 [functions.send-cancellation-notification]
 verify_jwt = true
+
+[functions.process-webhooks]
+# Cron-triggered - uses CRON_SECRET header verification instead of JWT
+verify_jwt = false
+
+[functions.webhook-receiver]
+# Inbound webhooks from external services - no JWT required
+verify_jwt = false
