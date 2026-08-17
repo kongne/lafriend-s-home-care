@@ -4,11 +4,11 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRoles, useUserRoles, usePermissions } from '@/hooks/useRBAC';
 import { writeAuditLog } from '@/lib/audit';
 import { useToast } from '@/hooks/use-toast';
-import { Search, Filter, Users, UserCheck, UserX, Lock, Unlock, RotateCcw, Shield, Key, Activity, LogOut, Eye, Loader2, Mail, ChevronLeft, ChevronRight, X as XIcon, Trash2, AlertTriangle } from 'lucide-react';
+import { Users, UserCheck, UserX, Lock, Unlock, Shield, Key, Activity, LogOut, Eye, Loader2, ChevronLeft, ChevronRight, X as XIcon, AlertTriangle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { format } from 'date-fns';
@@ -27,9 +27,18 @@ interface UserProfile {
   is_suspended?: boolean;
 }
 
+interface ConfirmState {
+  type: 'lock' | 'unlock' | 'bulkLock' | 'bulkUnlock' | 'resetPassword' | 'forceLogout' | 'removeRole';
+  userId?: string;
+  userName?: string;
+  lock?: boolean;
+  roleId?: string;
+  roleName?: string;
+  count?: number;
+}
+
 export function UserManager() {
   const { user } = useAuth();
-  const { roles } = useRoles();
   const { can } = usePermissions();
   const { toast } = useToast();
   const [profiles, setProfiles] = useState<UserProfile[]>([]);
@@ -40,7 +49,7 @@ export function UserManager() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [page, setPage] = useState(1);
   const [bulkAction, setBulkAction] = useState('');
-  const [confirmDialog, setConfirmDialog] = useState<{ type: string; userId: string; userName: string; lock?: boolean } | null>(null);
+  const [confirm, setConfirm] = useState<ConfirmState | null>(null);
   const [acting, setActing] = useState(false);
   const pageSize = 20;
 
@@ -101,73 +110,177 @@ export function UserManager() {
     else setSelectedIds(new Set(paginated.map(p => p.user_id)));
   };
 
-  const handleBulkAction = async () => {
+  const handleBulkApply = () => {
     if (!canEdit) {
       toast({ title: "Accès refusé", description: "Permission requise: users.edit", variant: "destructive" });
       return;
     }
+    if (!bulkAction || selectedIds.size === 0) return;
+    setConfirm({
+      type: bulkAction === 'lock' ? 'bulkLock' : 'bulkUnlock',
+      count: selectedIds.size,
+    });
+  };
+
+  const executeBulkAction = async () => {
+    if (!confirm || !confirm.type.startsWith('bulk')) return;
+    const lock = confirm.type === 'bulkLock';
     const ids = Array.from(selectedIds);
-    if (!ids.length || !bulkAction) return;
+    setActing(true);
+    let success = 0;
+    let failed = 0;
     for (const uid of ids) {
       try {
-        if (bulkAction === 'lock') {
-          await supabase.rpc("admin_toggle_user_ban", { _user_id: uid, _lock: true });
-        } else if (bulkAction === 'unlock') {
-          await supabase.rpc("admin_toggle_user_ban", { _user_id: uid, _lock: false });
-        }
-      } catch (err) { console.error(err); }
+        const { error } = await supabase.rpc("admin_toggle_user_ban", { _user_id: uid, _lock: lock });
+        if (error) throw error;
+        success++;
+      } catch {
+        failed++;
+      }
     }
-    await writeAuditLog({ action: `user_bulk_${bulkAction}`, module: 'users', description: `Bulk ${bulkAction} on ${ids.length} users`, new_value: { ids, action: bulkAction } }, user?.id);
+    await writeAuditLog({ action: `user_bulk_${lock ? 'lock' : 'unlock'}`, module: 'users', description: `Bulk ${lock ? 'lock' : 'unlock'}: ${success} ok, ${failed} failed`, new_value: { ids, action: lock ? 'lock' : 'unlock', success, failed } }, user?.id);
     setSelectedIds(new Set());
     setBulkAction('');
     fetchProfiles();
-    toast({ title: "Action effectuée", description: `${bulkAction} appliqué à ${ids.length} utilisateur(s).` });
+    toast({
+      title: failed === 0 ? "Action effectuée" : "Action partielle",
+      description: failed === 0
+        ? `${lock ? 'Verrouillage' : 'Déverrouillage'} appliqué à ${success} utilisateur(s).`
+        : `${success} réussi(s), ${failed} échoué(s).`,
+      variant: failed > 0 ? "destructive" : "default",
+    });
+    setConfirm(null);
+    setActing(false);
   };
 
-  const handleLockToggle = async (uid: string, lock: boolean) => {
+  const handleLockToggle = (uid: string, lock: boolean) => {
     if (!canEdit) {
       toast({ title: "Accès refusé", description: "Permission requise: users.edit", variant: "destructive" });
       return;
     }
     const target = profiles.find(p => p.user_id === uid);
-    setConfirmDialog({ type: lock ? 'lock' : 'unlock', userId: uid, userName: target?.full_name || uid.slice(0, 8), lock });
+    setConfirm({ type: lock ? 'lock' : 'unlock', userId: uid, userName: target?.full_name || uid.slice(0, 8), lock });
   };
 
   const executeLockToggle = async () => {
-    if (!confirmDialog) return;
+    if (!confirm || !confirm.userId || confirm.type !== 'lock' && confirm.type !== 'unlock') return;
     setActing(true);
     try {
-      await supabase.rpc("admin_toggle_user_ban", { _user_id: confirmDialog.userId, _lock: confirmDialog.lock });
-      await writeAuditLog({ action: confirmDialog.lock ? 'user_locked' : 'user_unlocked', module: 'users', description: `${confirmDialog.lock ? 'Locked' : 'Unlocked'} user ${confirmDialog.userName}` }, user?.id);
+      const { error } = await supabase.rpc("admin_toggle_user_ban", { _user_id: confirm.userId, _lock: confirm.lock });
+      if (error) throw error;
+      await writeAuditLog({ action: confirm.lock ? 'user_locked' : 'user_unlocked', module: 'users', description: `${confirm.lock ? 'Locked' : 'Unlocked'} user ${confirm.userName}` }, user?.id);
       fetchProfiles();
-      toast({ title: confirmDialog.lock ? "Utilisateur verrouillé" : "Utilisateur déverrouillé", description: `${confirmDialog.userName} a été ${confirmDialog.lock ? 'verrouillé' : 'déverrouillé'}.` });
+      toast({ title: confirm.lock ? "Utilisateur verrouillé" : "Utilisateur déverrouillé", description: `${confirm.userName} a été ${confirm.lock ? 'verrouillé' : 'déverrouillé'}.` });
     } catch (err: any) {
       toast({ title: "Erreur", description: err.message || "Action échouée.", variant: "destructive" });
     } finally {
       setActing(false);
-      setConfirmDialog(null);
+      setConfirm(null);
     }
   };
 
-  const getConfirmDialogTitle = () => {
-    if (!confirmDialog) return '';
-    switch (confirmDialog.type) {
+  const getConfirmTitle = () => {
+    if (!confirm) return '';
+    switch (confirm.type) {
       case 'lock': return 'Verrouiller le compte';
       case 'unlock': return 'Déverrouiller le compte';
+      case 'bulkLock': return `Verrouiller ${confirm.count} compte(s)`;
+      case 'bulkUnlock': return `Déverrouiller ${confirm.count} compte(s)`;
       case 'resetPassword': return 'Réinitialiser le mot de passe';
       case 'forceLogout': return 'Forcer la déconnexion';
-      default: return 'Confirmer l\'action';
+      case 'removeRole': return 'Retirer le rôle';
+      default: return 'Confirmer';
     }
   };
 
-  const getConfirmDialogDescription = () => {
-    if (!confirmDialog) return '';
-    switch (confirmDialog.type) {
-      case 'lock': return `Êtes-vous sûr de vouloir verrouiller le compte de ${confirmDialog.userName} ? L'utilisateur ne pourra plus se connecter.`;
-      case 'unlock': return `Êtes-vous sûr de vouloir déverrouiller le compte de ${confirmDialog.userName} ?`;
-      case 'resetPassword': return `Envoyer un email de réinitialisation du mot de passe à ${confirmDialog.userName} ?`;
-      case 'forceLogout': return `Forcer la déconnexion de ${confirmDialog.userName} ? Toutes ses sessions actives seront terminées.`;
+  const getConfirmDescription = () => {
+    if (!confirm) return '';
+    switch (confirm.type) {
+      case 'lock': return `Êtes-vous sûr de vouloir verrouiller le compte de ${confirm.userName} ? L'utilisateur ne pourra plus se connecter.`;
+      case 'unlock': return `Êtes-vous sûr de vouloir déverrouiller le compte de ${confirm.userName} ?`;
+      case 'bulkLock': return `Verrouiller ${confirm.count} compte(s) sélectionné(s) ? Les utilisateurs ne pourront plus se connecter.`;
+      case 'bulkUnlock': return `Déverrouiller ${confirm.count} compte(s) sélectionné(s) ?`;
+      case 'resetPassword': return `Envoyer un email de réinitialisation du mot de passe à ${confirm.userName} ?`;
+      case 'forceLogout': return `Forcer la déconnexion de ${confirm.userName} ? Toutes ses sessions actives seront terminées.`;
+      case 'removeRole': return `Retirer le rôle « ${confirm.roleName} » de ${confirm.userName} ?`;
       default: return '';
+    }
+  };
+
+  const executeConfirm = async () => {
+    if (!confirm) return;
+    switch (confirm.type) {
+      case 'lock':
+      case 'unlock':
+        await executeLockToggle();
+        break;
+      case 'bulkLock':
+      case 'bulkUnlock':
+        await executeBulkAction();
+        break;
+      case 'resetPassword':
+        await executeResetPassword();
+        break;
+      case 'forceLogout':
+        await executeForceLogout();
+        break;
+      case 'removeRole':
+        await executeRemoveRole();
+        break;
+    }
+  };
+
+  const executeResetPassword = async () => {
+    if (!confirm?.userId || !selectedUser) return;
+    setActing(true);
+    try {
+      if (!selectedUser.email || selectedUser.email === 'unknown') {
+        throw new Error("Email inconnu — impossible d'envoyer la réinitialisation.");
+      }
+      const { error } = await supabase.auth.resetPasswordForEmail(selectedUser.email, {
+        redirectTo: `${window.location.origin}/auth/reset-password`,
+      });
+      if (error) throw error;
+      await writeAuditLog({ action: 'password_reset_sent', module: 'users', description: `Password reset sent to ${selectedUser.email}`, severity: 'info' }, user?.id);
+      toast({ title: "Email envoyé", description: `Un lien de réinitialisation a été envoyé à ${selectedUser.email}.` });
+    } catch (err: any) {
+      toast({ title: "Erreur", description: err.message || "Échec de l'envoi.", variant: "destructive" });
+    } finally {
+      setActing(false);
+      setConfirm(null);
+    }
+  };
+
+  const executeForceLogout = async () => {
+    if (!confirm?.userId || !selectedUser) return;
+    setActing(true);
+    try {
+      const { data, error } = await supabase.rpc('admin_revoke_user_sessions', { _user_id: selectedUser.user_id });
+      if (error) throw error;
+      await writeAuditLog({ action: 'user_force_logout', module: 'users', description: `Force logout on ${selectedUser.full_name || selectedUser.user_id.slice(0, 8)}`, severity: 'warning' }, user?.id);
+      toast({ title: "Déconnexion forcée", description: `${data || 0} session(s) active(s) terminée(s).` });
+    } catch (err: any) {
+      toast({ title: "Erreur", description: err.message || "Échec de la déconnexion forcée.", variant: "destructive" });
+    } finally {
+      setActing(false);
+      setConfirm(null);
+    }
+  };
+
+  const executeRemoveRole = async () => {
+    if (!confirm?.userId || !confirm?.roleId) return;
+    setActing(true);
+    try {
+      const { error } = await supabase.from('user_roles').delete()
+        .eq('user_id', confirm.userId).eq('role_id', confirm.roleId);
+      if (error) throw error;
+      await writeAuditLog({ action: 'role_changed', module: 'rbac', description: `Removed role '${confirm.roleName}' from user ${confirm.userId.slice(0, 8)}`, severity: 'warning' }, user?.id);
+      toast({ title: "Rôle retiré", description: `Le rôle « ${confirm.roleName} » a été retiré.` });
+    } catch (err: any) {
+      toast({ title: "Erreur", description: err.message || "Échec du retrait.", variant: "destructive" });
+    } finally {
+      setActing(false);
+      setConfirm(null);
     }
   };
 
@@ -186,7 +299,6 @@ export function UserManager() {
 
       <div className="flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input placeholder="Search users..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -210,7 +322,7 @@ export function UserManager() {
                 <SelectItem value="unlock">Unlock Accounts</SelectItem>
               </SelectContent>
             </Select>
-            <Button size="sm" onClick={handleBulkAction} disabled={!bulkAction}>Apply</Button>
+            <Button size="sm" onClick={handleBulkApply} disabled={!bulkAction}>Apply</Button>
           </div>
         </div>
       )}
@@ -295,20 +407,26 @@ export function UserManager() {
         </CardContent>
       </Card>
 
-      <UserDetailDialog user={selectedUser} onClose={() => setSelectedUser(null)} canEdit={canEdit} />
+      <UserDetailDialog
+        user={selectedUser}
+        onClose={() => setSelectedUser(null)}
+        canEdit={canEdit}
+        onConfirm={(c) => setConfirm(c)}
+      />
 
-      <Dialog open={!!confirmDialog} onOpenChange={() => setConfirmDialog(null)}>
+      {/* Global confirmation dialog */}
+      <Dialog open={!!confirm} onOpenChange={() => !acting && setConfirm(null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-destructive" />
-              {getConfirmDialogTitle()}
+              {getConfirmTitle()}
             </DialogTitle>
-            <DialogDescription>{getConfirmDialogDescription()}</DialogDescription>
+            <DialogDescription>{getConfirmDescription()}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirmDialog(null)}>Annuler</Button>
-            <Button variant="destructive" onClick={executeLockToggle} disabled={acting}>
+            <Button variant="outline" onClick={() => setConfirm(null)} disabled={acting}>Annuler</Button>
+            <Button variant="destructive" onClick={executeConfirm} disabled={acting}>
               {acting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Confirmer
             </Button>
@@ -319,76 +437,48 @@ export function UserManager() {
   );
 }
 
-function UserDetailDialog({ user: userProfile, onClose, canEdit }: { user: UserProfile | null; onClose: () => void; canEdit: boolean }) {
+function UserDetailDialog({
+  user: userProfile,
+  onClose,
+  canEdit,
+  onConfirm,
+}: {
+  user: UserProfile | null;
+  onClose: () => void;
+  canEdit: boolean;
+  onConfirm: (state: ConfirmState) => void;
+}) {
   const { roles } = useRoles();
-  const { userRoles, assignRole, removeRole } = useUserRoles(userProfile?.user_id || null);
   const { user } = useAuth();
   const { toast } = useToast();
-  const [sessions, setSessions] = useState<any[]>([]);
-  const [confirmAction, setConfirmAction] = useState<string | null>(null);
+  const [userRoles, setUserRoles] = useState<{ role_id: string; role_name: string; assigned_at: string }[]>([]);
+  const [rolesLoading, setRolesLoading] = useState(false);
+
+  const fetchUserRoles = async (userId: string) => {
+    setRolesLoading(true);
+    const { data, error } = await (supabase as any).rpc('get_user_roles_with_details', { _user_id: userId });
+    if (!error && data) setUserRoles(data);
+    setRolesLoading(false);
+  };
 
   useEffect(() => {
-    if (!userProfile) return;
-    (supabase as any).from('user_sessions').select('*').eq('user_id', userProfile.user_id).order('logged_in_at', { ascending: false }).limit(5).then(({ data }) => {
-      if (data) setSessions(data);
-    });
-  }, [userProfile]);
+    if (!userProfile) { setUserRoles([]); return; }
+    fetchUserRoles(userProfile.user_id);
+  }, [userProfile?.user_id]);
 
   const handleAssignRole = async (roleId: string) => {
-    if (!canEdit) {
-      toast({ title: "Accès refusé", description: "Permission requise: users.edit", variant: "destructive" });
-      return;
-    }
+    if (!canEdit || !userProfile) return;
     try {
-      await assignRole(roleId);
-      await writeAuditLog({ action: 'role_changed', module: 'rbac', description: `Assigned role to user ${userProfile?.user_id?.slice(0, 8)}`, new_value: { user_id: userProfile?.user_id, role_id: roleId } }, user?.id);
+      const { error } = await (supabase as any).from('user_roles').upsert(
+        { user_id: userProfile.user_id, role_id: roleId },
+        { onConflict: 'user_id,role_id', ignoreDuplicates: false }
+      );
+      if (error) throw error;
+      await writeAuditLog({ action: 'role_changed', module: 'rbac', description: `Assigned role to user ${userProfile.user_id.slice(0, 8)}`, new_value: { user_id: userProfile.user_id, role_id: roleId } }, user?.id);
+      await fetchUserRoles(userProfile.user_id);
       toast({ title: "Rôle assigné", description: "Le rôle a été assigné avec succès." });
     } catch (err: any) {
       toast({ title: "Erreur", description: err.message || "Échec de l'assignation.", variant: "destructive" });
-    }
-  };
-
-  const handleRemoveRole = async (roleId: string, roleName: string) => {
-    if (!canEdit) return;
-    try {
-      await removeRole(roleId);
-      await writeAuditLog({ action: 'role_changed', module: 'rbac', description: `Removed role '${roleName}' from user ${userProfile?.user_id?.slice(0, 8)}`, severity: 'warning' }, user?.id);
-      toast({ title: "Rôle retiré", description: `Le rôle "${roleName}" a été retiré.` });
-    } catch (err: any) {
-      toast({ title: "Erreur", description: err.message || "Échec du retrait.", variant: "destructive" });
-    }
-  };
-
-  const handleSendResetPassword = async () => {
-    if (!userProfile?.email || userProfile.email === 'unknown') {
-      toast({ title: "Erreur", description: "Email inconnu — impossible d'envoyer la réinitialisation.", variant: "destructive" });
-      return;
-    }
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(userProfile.email, {
-        redirectTo: `${window.location.origin}/auth/reset-password`,
-      });
-      if (error) throw error;
-      await writeAuditLog({ action: 'password_reset_sent', module: 'users', description: `Password reset sent to ${userProfile.email}`, severity: 'info' }, user?.id);
-      toast({ title: "Email envoyé", description: `Un lien de réinitialisation a été envoyé à ${userProfile.email}.` });
-    } catch (err: any) {
-      toast({ title: "Erreur", description: err.message || "Échec de l'envoi.", variant: "destructive" });
-    }
-  };
-
-  const handleForceLogout = async () => {
-    if (!userProfile) return;
-    try {
-      const { error } = await supabase.rpc('admin_revoke_user_sessions' as any, { _user_id: userProfile.user_id });
-      if (error) {
-        const { error: updateErr } = await (supabase as any).from('user_sessions').update({ is_active: false }).eq('user_id', userProfile.user_id).eq('is_active', true);
-        if (updateErr) throw updateErr;
-      }
-      await writeAuditLog({ action: 'user_force_logout', module: 'users', description: `Force logout on ${userProfile.full_name || userProfile.user_id.slice(0, 8)}`, severity: 'warning' }, user?.id);
-      setSessions((s: any[]) => s.map((sess: any) => ({ ...sess, is_active: false })));
-      toast({ title: "Déconnexion forcée", description: "Toutes les sessions actives ont été terminées." });
-    } catch (err: any) {
-      toast({ title: "Erreur", description: err.message || "Échec de la déconnexion forcée.", variant: "destructive" });
     }
   };
 
@@ -417,10 +507,10 @@ function UserDetailDialog({ user: userProfile, onClose, canEdit }: { user: UserP
 
           {canEdit && (
             <div className="flex flex-wrap gap-2 pt-2 border-t">
-              <Button variant="outline" size="sm" onClick={() => { handleSendResetPassword(); setConfirmAction(null); }}>
+              <Button variant="outline" size="sm" onClick={() => onConfirm({ type: 'resetPassword', userId: userProfile.user_id, userName: userProfile.full_name || userProfile.user_id.slice(0, 8) })}>
                 <Key className="h-4 w-4 mr-2" />Reset Password
               </Button>
-              <Button variant="outline" size="sm" onClick={handleForceLogout} className="text-destructive hover:text-destructive">
+              <Button variant="outline" size="sm" onClick={() => onConfirm({ type: 'forceLogout', userId: userProfile.user_id, userName: userProfile.full_name || userProfile.user_id.slice(0, 8) })} className="text-destructive hover:text-destructive">
                 <LogOut className="h-4 w-4 mr-2" />Force Logout
               </Button>
             </div>
@@ -430,17 +520,31 @@ function UserDetailDialog({ user: userProfile, onClose, canEdit }: { user: UserP
             <h4 className="text-sm font-medium mb-3">Roles</h4>
             <div className="space-y-3">
               <div className="flex flex-wrap gap-2">
-                {userRoles.map(ur => (
-                  <Badge key={ur.role_id} variant="secondary" className="flex items-center gap-2">
-                    {ur.role_name}
-                    {canEdit && (
-                      <button onClick={() => handleRemoveRole(ur.role_id, ur.role_name)} className="hover:text-destructive transition-colors">
-                        <XIcon className="h-3 w-3" />
-                      </button>
-                    )}
-                  </Badge>
-                ))}
-                {userRoles.length === 0 && <span className="text-sm text-muted-foreground">No roles assigned</span>}
+                {rolesLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                ) : userRoles.length === 0 ? (
+                  <span className="text-sm text-muted-foreground">No roles assigned</span>
+                ) : (
+                  userRoles.map(ur => (
+                    <Badge key={ur.role_id} variant="secondary" className="flex items-center gap-2">
+                      {ur.role_name || ur.role_id.slice(0, 8)}
+                      {canEdit && (
+                        <button
+                          onClick={() => onConfirm({
+                            type: 'removeRole',
+                            userId: userProfile.user_id,
+                            userName: userProfile.full_name || userProfile.user_id.slice(0, 8),
+                            roleId: ur.role_id,
+                            roleName: ur.role_name || ur.role_id.slice(0, 8),
+                          })}
+                          className="hover:text-destructive transition-colors"
+                        >
+                          <XIcon className="h-3 w-3" />
+                        </button>
+                      )}
+                    </Badge>
+                  ))
+                )}
               </div>
               {canEdit && (
                 <Select onValueChange={handleAssignRole}>
@@ -457,28 +561,45 @@ function UserDetailDialog({ user: userProfile, onClose, canEdit }: { user: UserP
 
           <div className="border-t pt-4">
             <h4 className="text-sm font-medium mb-3">Sessions</h4>
-            {sessions.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No active sessions</p>
-            ) : (
-              <div className="space-y-2">
-                {sessions.map(s => (
-                  <div key={s.id} className="flex items-center justify-between p-2 bg-muted rounded text-sm">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className={s.is_active ? 'text-green-500' : 'text-muted-foreground'}>
-                          {s.is_active ? <UserCheck className="h-3 w-3" /> : <UserX className="h-3 w-3" />}
-                        </span>
-                        <span>{s.browser || 'Unknown'} on {s.os || 'Unknown'}</span>
-                      </div>
-                      <div className="text-xs text-muted-foreground">{s.ip_address || 'N/A'} · {format(new Date(s.logged_in_at), 'PPp')}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+            <UserSessions userId={userProfile.user_id} />
           </div>
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function UserSessions({ userId }: { userId: string }) {
+  const [sessions, setSessions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    (supabase as any).from('user_sessions').select('*').eq('user_id', userId).order('logged_in_at', { ascending: false }).limit(5).then(({ data }) => {
+      if (data) setSessions(data);
+      setLoading(false);
+    });
+  }, [userId]);
+
+  if (loading) return <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />;
+
+  if (sessions.length === 0) return <p className="text-sm text-muted-foreground">No active sessions</p>;
+
+  return (
+    <div className="space-y-2">
+      {sessions.map(s => (
+        <div key={s.id} className="flex items-center justify-between p-2 bg-muted rounded text-sm">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className={s.is_active ? 'text-green-500' : 'text-muted-foreground'}>
+                {s.is_active ? <UserCheck className="h-3 w-3" /> : <UserX className="h-3 w-3" />}
+              </span>
+              <span>{s.browser || 'Unknown'} on {s.os || 'Unknown'}</span>
+            </div>
+            <div className="text-xs text-muted-foreground">{s.ip_address || 'N/A'} · {format(new Date(s.logged_in_at), 'PPp')}</div>
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }

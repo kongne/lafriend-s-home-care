@@ -138,29 +138,30 @@ export function useUserRoles(userId: string | null) {
   const [userRoles, setUserRoles] = useState<{ role_id: string; role_name: string; assigned_at: string }[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const fetchRoles = useCallback(async () => {
     if (!userId) { setUserRoles([]); setLoading(false); return; }
-    let mounted = true;
-    (supabase as any).rpc('get_user_roles_with_details', { _user_id: userId }).then(({ data, error }: any) => {
-      if (mounted && !error && data) setUserRoles(data);
-      if (mounted) setLoading(false);
-    });
-    return () => { mounted = false; };
+    const { data, error } = await (supabase as any).rpc('get_user_roles_with_details', { _user_id: userId });
+    if (!error && data) setUserRoles(data);
+    setLoading(false);
   }, [userId]);
+
+  useEffect(() => { fetchRoles(); }, [fetchRoles]);
 
   const assignRole = async (roleId: string) => {
     if (!userId) return;
-    await (supabase as any).from('user_roles').upsert(
+    const { error } = await (supabase as any).from('user_roles').upsert(
       { user_id: userId, role_id: roleId },
       { onConflict: 'user_id,role_id', ignoreDuplicates: false }
     );
-    setUserRoles(p => [...p.filter(r => r.role_id !== roleId), { role_id: roleId, role_name: '', assigned_at: new Date().toISOString() }]);
+    if (error) throw error;
+    await fetchRoles();
   };
 
   const removeRole = async (roleId: string) => {
     if (!userId) return;
-    await (supabase as any).from('user_roles').delete().eq('user_id', userId).eq('role_id', roleId);
-    setUserRoles(p => p.filter(r => r.role_id !== roleId));
+    const { error } = await (supabase as any).from('user_roles').delete().eq('user_id', userId).eq('role_id', roleId);
+    if (error) throw error;
+    await fetchRoles();
   };
 
   return { userRoles, loading, assignRole, removeRole };
